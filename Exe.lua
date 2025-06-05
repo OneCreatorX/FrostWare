@@ -78,7 +78,7 @@ local function createInterface()
     st.Size = UDim2.new(1, -30, 0, 35)
     st.Position = UDim2.new(0, 15, 0, 50)
     st.BackgroundTransparency = 1
-    st.Text = "🔒 Access required. Copy URL and verify in browser."
+    st.Text = "🔒 Access required. Copy the URL and enter your HWID in the browser."
     st.TextColor3 = Color3.fromRGB(148, 163, 184)
     st.TextSize = 14
     st.Font = Enum.Font.Gotham
@@ -153,45 +153,17 @@ local function createInterface()
     it.Size = UDim2.new(1, -30, 0, 35)
     it.Position = UDim2.new(0, 15, 0, 195)
     it.BackgroundTransparency = 1
-    it.Text = "1. Copy URL → 2. Complete 2 steps → 3. Return to Roblox"
+    it.Text = "1. Copy URL → 2. Enter HWID → 3. Complete steps → 4. Refresh"
     it.TextColor3 = Color3.fromRGB(100, 116, 139)
     it.TextSize = 11
     it.Font = Enum.Font.Gotham
     it.TextWrapped = true
     it.Parent = fr
     
-    local function updateButtonState(button, isHovered)
-        local tween = game:GetService("TweenService"):Create(
-            button,
-            TweenInfo.new(0.2, Enum.EasingStyle.Quad),
-            {Size = isHovered and button.Size + UDim2.new(0, 4, 0, 2) or button.Size - UDim2.new(0, 4, 0, 2)}
-        )
-        tween:Play()
-    end
-    
-    cb.MouseEnter:Connect(function() updateButtonState(cb, true) end)
-    cb.MouseLeave:Connect(function() updateButtonState(cb, false) end)
-    
     cb.MouseButton1Click:Connect(function()
-        setclipboard(getgenv()._frostw .. "/verify?hwid=" .. hwid)
-        st.Text = "🔗 URL copied! Complete 2 steps in browser."
+        setclipboard(getgenv()._frostw .. "/start")
+        st.Text = "🔗 URL copied! Paste it in your browser to start."
         st.TextColor3 = Color3.fromRGB(34, 197, 94)
-        
-        local successTween = game:GetService("TweenService"):Create(
-            cb,
-            TweenInfo.new(0.1, Enum.EasingStyle.Quad),
-            {BackgroundColor3 = Color3.fromRGB(34, 197, 94)}
-        )
-        successTween:Play()
-        
-        wait(0.5)
-        
-        local resetTween = game:GetService("TweenService"):Create(
-            cb,
-            TweenInfo.new(0.3, Enum.EasingStyle.Quad),
-            {BackgroundColor3 = Color3.fromRGB(96, 165, 250)}
-        )
-        resetTween:Play()
     end)
     
     db.MouseButton1Click:Connect(function()
@@ -218,40 +190,15 @@ local function createInterface()
     end)
     
     xb.MouseButton1Click:Connect(function()
-        local closeTween = game:GetService("TweenService"):Create(
-            fr,
-            TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In),
-            {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}
-        )
-        closeTween:Play()
-        closeTween.Completed:Connect(function()
-            sg:Destroy()
-        end)
-    end)
-    
-    local openTween = game:GetService("TweenService"):Create(
-        fr,
-        TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-        {Size = UDim2.new(0, 420, 0, 240)}
-    )
-    fr.Size = UDim2.new(0, 0, 0, 0)
-    fr.Position = UDim2.new(0.5, 0, 0.5, 0)
-    openTween:Play()
-    openTween.Completed:Connect(function()
-        fr.Position = UDim2.new(0.5, -210, 0.5, -120)
+        sg:Destroy()
     end)
 end
 
-print("[FrostWare] 🔍 Checking Redis access...")
 local hasAccess, accessData = checkAccess()
 
 if hasAccess then
-    local hours = math.floor(accessData.hoursRemaining or 0)
-    print("[FrostWare] ✅ Access valid - " .. hours .. " hours remaining")
-    print("[FrostWare] 🚀 Loading script...")
     loadstring(game:HttpGet(getgenv()._frost))()
 else
-    print("[FrostWare] ❌ No Redis access found - Opening verification interface...")
     repeat task.wait(0.1) until game:IsLoaded()
     createInterface()
 end
