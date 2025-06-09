@@ -22,7 +22,7 @@ local function checkAccess()
     return false, nil
 end
 
-local function createInterface()
+local function ct()
     local sg = Instance.new("ScreenGui")
     sg.Name = "FrostWare_" .. tostring(math.random(1000, 9999))
     sg.Parent = gethui()
@@ -200,5 +200,5 @@ if hasAccess then
     loadstring(game:HttpGet(getgenv()._frost))()
 else
     repeat task.wait(0.1) until game:IsLoaded()
-    createInterface()
+    ct()
 end
