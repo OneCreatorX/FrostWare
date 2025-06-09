@@ -4,7 +4,7 @@ local requestFunc = request or http_request or syn_request
 local function checkAccess()
     local success, response = pcall(function()
         return requestFunc({
-            Url = getgenv()._frostw .. "/check-access/" .. hwid,
+            Url = getgenv()._frostw .. "/status/" .. hwid,
             Method = "GET",
             Headers = {
                 ["User-Agent"] = "Roblox/WinInet",
@@ -161,7 +161,7 @@ local function createInterface()
     it.Parent = fr
     
     cb.MouseButton1Click:Connect(function()
-        setclipboard(getgenv()._frostw .. "/start")
+        setclipboard(getgenv()._frostw .. "/")
         st.Text = "🔗 URL copied! Paste it in your browser to start."
         st.TextColor3 = Color3.fromRGB(34, 197, 94)
     end)
