@@ -1,4 +1,4 @@
-import { makeWASocket, Browsers, useMultiFileAuthState, downloadMediaMessage } from "@whiskeysockets/baileys"
+const { makeWASocket, useMultiFileAuthState, Browsers, downloadMediaMessage } = await import("@whiskeysockets/baileys");
 import express from "express"
 import qrcode from "qrcode"
 import { fileURLToPath } from "url"
