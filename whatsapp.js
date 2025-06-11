@@ -1,63 +1,3 @@
-#!/bin/bash
-
-set -e
-
-DOMAIN="system.heatherx.site"
-PORT=8433
-APP_DIR="whatsapp-https-app"
-
-echo "🔒 Instalando WhatsApp HTTPS App"
-echo "==============================="
-
-if ! command -v node &> /dev/null || [[ $(node -v | cut -d'v' -f2 | cut -d'.' -f1) -lt 18 ]]; then
-    echo "📦 Instalando Node.js 20 LTS..."
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-    apt install -y nodejs build-essential python3 libvips-dev
-fi
-
-if ! command -v certbot &> /dev/null; then
-    echo "📦 Instalando Certbot..."
-    apt install -y certbot
-fi
-
-if [ ! -d "/etc/letsencrypt/live/$DOMAIN" ]; then
-    echo "🔑 Obteniendo certificado SSL para $DOMAIN..."
-    certbot certonly --standalone -d $DOMAIN --non-interactive --agree-tos --email admin@$DOMAIN
-fi
-
-echo "🔑 Configurando permisos para certificados SSL..."
-chmod -R 755 /etc/letsencrypt/live
-chmod -R 755 /etc/letsencrypt/archive
-
-echo "🗂️ Creando directorio de aplicación..."
-mkdir -p $APP_DIR
-cd $APP_DIR
-
-echo "📝 Creando package.json..."
-cat > package.json << 'EOF'
-{
-  "name": "whatsapp-https-interface",
-  "version": "1.0.0",
-  "type": "module",
-  "description": "WhatsApp Web Interface with HTTPS",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.8",
-    "body-parser": "^1.20.2",
-    "express": "^4.18.2",
-    "qrcode": "^1.5.3"
-  }
-}
-EOF
-
-echo "📦 Instalando dependencias npm..."
-npm install
-
-echo "📝 Creando servidor HTTPS..."
-cat > server.js << 'EOF'
 import makeWASocket, { Browsers, useMultiFileAuthState, downloadMediaMessage } from "@whiskeysockets/baileys"
 import express from "express"
 import qrcode from "qrcode"
@@ -69,7 +9,7 @@ import { createWriteStream } from "fs"
 import bodyParser from "body-parser"
 
 const CONFIG = {
-  PORT: 8433,
+  PORT: 443,
   DOMAIN: "system.heatherx.site",
   SSL_KEY: `/etc/letsencrypt/live/system.heatherx.site/privkey.pem`,
   SSL_CERT: `/etc/letsencrypt/live/system.heatherx.site/cert.pem`,
@@ -416,21 +356,21 @@ const htmlContent = `<!DOCTYPE html>
       const date = new Date(message.timestamp * 1000)
       const timeString = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 
-      let content = `<div class="message-text">${escapeHtml(message.text)}</div>`
+      let content = \`<div class="message-text">\${escapeHtml(message.text)}</div>\`
 
       if (message.hasMedia && message.mediaPath) {
         if (message.mediaType === "image") {
-          content += `<img src="${message.mediaPath}" class="message-media" alt="Image" />`
+          content += \`<img src="\${message.mediaPath}" class="message-media" alt="Image" />\`
         } else if (message.mediaType === "audio") {
-          content += `<audio controls src="${message.mediaPath}" class="message-media"></audio>`
+          content += \`<audio controls src="\${message.mediaPath}" class="message-media"></audio>\`
         } else if (message.mediaType === "video") {
-          content += `<video controls src="${message.mediaPath}" class="message-media"></video>`
+          content += \`<video controls src="\${message.mediaPath}" class="message-media"></video>\`
         } else {
-          content += `<a href="${message.mediaPath}" target="_blank" download>Download file</a>`
+          content += \`<a href="\${message.mediaPath}" target="_blank" download>Download file</a>\`
         }
       }
 
-      content += `<div class="message-time">${timeString}</div>`
+      content += \`<div class="message-time">\${timeString}</div>\`
       messageElement.innerHTML = content
 
       messagesList.appendChild(messageElement)
@@ -453,10 +393,10 @@ const htmlContent = `<!DOCTYPE html>
 
         const isMe = chat.id === myNumber
 
-        chatElement.innerHTML = `
-          <strong>${isMe ? "Myself" : chatName}</strong>
-          <p>${escapeHtml(chat.lastMessage.substring(0, 30))}${chat.lastMessage.length > 30 ? "..." : ""}</p>
-        `
+        chatElement.innerHTML = \`
+          <strong>\${isMe ? "Myself" : chatName}</strong>
+          <p>\${escapeHtml(chat.lastMessage.substring(0, 30))}\${chat.lastMessage.length > 30 ? "..." : ""}</p>
+        \`
 
         chatElement.addEventListener("click", () => {
           currentChat = chat.id
@@ -509,7 +449,7 @@ const htmlContent = `<!DOCTYPE html>
 
     function formatPhoneNumber(number) {
       if (number.length > 10) {
-        return `+${number.substring(0, number.length - 10)} ${number.substring(number.length - 10)}`
+        return \`+\${number.substring(0, number.length - 10)} \${number.substring(number.length - 10)}\`
       }
       return number
     }
@@ -547,16 +487,18 @@ const htmlContent = `<!DOCTYPE html>
     setInterval(checkStatus, 10000)
   </script>
 </body>
-</html>`;
+</html>`
 
-await fs.promises.writeFile("public/index.html", htmlContent);
+await fs.promises.writeFile("public/index.html", htmlContent)
+
+let sock // Declare sock outside the startWhatsApp function
 
 async function startWhatsApp() {
   const auth = await useMultiFileAuthState("auth_info")
   state = auth.state
   saveCreds = auth.saveCreds
 
-  const sock = makeWASocket({
+  sock = makeWASocket({
     auth: state,
     browser: Browsers.ubuntu("WhatsApp-Web-Interface"),
     printQRInTerminal: false,
@@ -707,7 +649,7 @@ app.post("/api/send", async (req, res) => {
       recipient = to.replace(/[^\d]/g, "") + "@s.whatsapp.net"
     }
 
-    await whatsappClient.sendMessage(recipient, { text: message })
+    await sock.sendMessage(recipient, { text: message })
     res.json({ success: true, message: "Message sent" })
   } catch (error) {
     console.error("Error sending message:", error)
@@ -725,7 +667,8 @@ try {
   const server = https.createServer(httpsOptions, app)
 
   server.listen(CONFIG.PORT, "0.0.0.0", () => {
-    console.log(`HTTPS Server running at https://${CONFIG.DOMAIN}:${CONFIG.PORT}`)
+    console.log(`HTTPS Server running at https://${CONFIG.DOMAIN}`)
+    console.log(`WhatsApp Web Interface available at https://${CONFIG.DOMAIN}`)
   })
 } catch (error) {
   console.error("Error starting HTTPS server:", error)
@@ -743,38 +686,3 @@ process.on("uncaughtException", (err) => {
 process.on("unhandledRejection", (err) => {
   console.error("Unhandled rejection:", err)
 })
-EOF
-
-if command -v pm2 &> /dev/null; then
-    echo "🔄 Stopping existing PM2 process..."
-    pm2 delete whatsapp-web 2>/dev/null || true
-    pm2 delete whatsapp-https 2>/dev/null || true
-    echo "🚀 Starting with PM2..."
-    pm2 start server.js --name whatsapp-https
-    pm2 save
-else
-    echo "📦 Installing PM2 for process management..."
-    npm install -g pm2
-    echo "🚀 Starting with PM2..."
-    pm2 start server.js --name whatsapp-https
-    pm2 startup
-    pm2 save
-fi
-
-echo "🔧 Configurando firewall..."
-if command -v ufw &> /dev/null; then
-    ufw allow $PORT/tcp
-fi
-
-echo ""
-echo "✅ ¡Instalación completada exitosamente!"
-echo "🌐 Accede a tu WhatsApp Web Interface en:"
-echo "   https://$DOMAIN:$PORT"
-echo ""
-echo "📱 Para escanear el código QR, abre la URL en tu navegador"
-echo "🔧 Para gestionar la aplicación:"
-echo "   pm2 status          - Verificar estado"
-echo "   pm2 logs whatsapp-https - Ver logs"
-echo "   pm2 restart whatsapp-https - Reiniciar app"
-echo ""
-echo "🎉 ¡Tu WhatsApp Web App con HTTPS está funcionando en el puerto $PORT!"
