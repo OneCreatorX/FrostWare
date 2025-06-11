@@ -216,6 +216,36 @@ const htmlContent = `<!DOCTYPE html>
       content: "➤";
       font-size: 18px;
     }
+    .qr-container {
+      text-align: center;
+      padding: 50px;
+      background: white;
+      margin: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .qr-container h1 {
+      color: #128c7e;
+      margin-bottom: 20px;
+    }
+    .qr-container img {
+      max-width: 300px;
+      border: 2px solid #128c7e;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    .qr-container button {
+      background: #128c7e;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .qr-container button:hover {
+      background: #0f7a6f;
+    }
     @media (max-width: 768px) {
       .main-content {
         flex-direction: column;
@@ -234,10 +264,22 @@ const htmlContent = `<!DOCTYPE html>
   <div class="container">
     <header>
       <h1>WhatsApp Web Interface</h1>
-      <div id="status" class="status-connected">Connected</div>
+      <div id="status" class="status-disconnected">Disconnected</div>
     </header>
     
-    <div class="main-content">
+    <div id="qr-section" class="qr-container" style="display: none;">
+      <h1>📱 Scan with WhatsApp</h1>
+      <div id="qr-image"></div>
+      <p>Open WhatsApp → Linked Devices → Link Device</p>
+      <button onclick="location.reload()">Refresh QR</button>
+    </div>
+    
+    <div id="loading-section" class="qr-container">
+      <h1>⏳ Generating QR code...</h1>
+      <p>Please wait...</p>
+    </div>
+    
+    <div id="main-content" class="main-content" style="display: none;">
       <div class="sidebar">
         <div class="self-chat">
           <h3>Send message to myself</h3>
@@ -277,6 +319,10 @@ const htmlContent = `<!DOCTYPE html>
     const sendButton = document.getElementById("send-button")
     const selfMessageInput = document.getElementById("self-message")
     const sendSelfButton = document.getElementById("send-self")
+    const qrSection = document.getElementById("qr-section")
+    const loadingSection = document.getElementById("loading-section")
+    const mainContent = document.getElementById("main-content")
+    const qrImage = document.getElementById("qr-image")
 
     async function checkStatus() {
       try {
@@ -286,6 +332,9 @@ const htmlContent = `<!DOCTYPE html>
         if (data.connected) {
           statusElement.textContent = "Connected"
           statusElement.className = "status-connected"
+          qrSection.style.display = "none"
+          loadingSection.style.display = "none"
+          mainContent.style.display = "flex"
           loadMessages()
 
           if (!myNumber) {
@@ -299,12 +348,24 @@ const htmlContent = `<!DOCTYPE html>
               }
             }
           }
-        } else {
-          statusElement.textContent = "Disconnected"
+        } else if (data.hasQR) {
+          statusElement.textContent = "Scan QR Code"
           statusElement.className = "status-disconnected"
-          setTimeout(() => {
-            window.location.reload()
-          }, 5000)
+          loadingSection.style.display = "none"
+          mainContent.style.display = "none"
+          qrSection.style.display = "block"
+          
+          const qrResponse = await fetch("/api/qr")
+          const qrData = await qrResponse.json()
+          if (qrData.qr) {
+            qrImage.innerHTML = \`<img src="\${qrData.qr}" alt="QR Code" />\`
+          }
+        } else {
+          statusElement.textContent = "Generating QR..."
+          statusElement.className = "status-disconnected"
+          qrSection.style.display = "none"
+          mainContent.style.display = "none"
+          loadingSection.style.display = "block"
         }
       } catch (error) {
         console.error("Error checking status:", error)
@@ -484,14 +545,14 @@ const htmlContent = `<!DOCTYPE html>
     })
 
     checkStatus()
-    setInterval(checkStatus, 10000)
+    setInterval(checkStatus, 3000)
   </script>
 </body>
 </html>`
 
 await fs.promises.writeFile("public/index.html", htmlContent)
 
-let sock // Declare sock outside the startWhatsApp function
+let sock
 
 async function startWhatsApp() {
   const auth = await useMultiFileAuthState("auth_info")
@@ -597,26 +658,7 @@ async function startWhatsApp() {
 await startWhatsApp()
 
 app.get("/", (req, res) => {
-  if (isConnected) {
-    res.sendFile(join(__dirname, "public", "index.html"))
-  } else if (qrCodeDataURL) {
-    res.send(`
-      <div style="text-align: center; font-family: Arial; padding: 50px;">
-        <h1>📱 Scan with WhatsApp</h1>
-        <img src="${qrCodeDataURL}" style="max-width: 300px; border: 2px solid #128c7e; border-radius: 10px;" />
-        <p style="margin: 20px 0;">Open WhatsApp → Linked Devices → Link Device</p>
-        <button onclick="location.reload()" style="background: #128c7e; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Refresh QR</button>
-      </div>
-    `)
-  } else {
-    res.send(`
-      <div style="text-align: center; font-family: Arial; padding: 50px;">
-        <h1>⏳ Generating QR code...</h1>
-        <p>Please wait...</p>
-        <script>setTimeout(() => location.reload(), 3000)</script>
-      </div>
-    `)
-  }
+  res.sendFile(join(__dirname, "public", "index.html"))
 })
 
 app.use("/media", express.static(mediaDir))
@@ -625,6 +667,12 @@ app.get("/api/status", (req, res) => {
   res.json({
     connected: isConnected,
     hasQR: !!qrCodeDataURL,
+  })
+})
+
+app.get("/api/qr", (req, res) => {
+  res.json({
+    qr: qrCodeDataURL,
   })
 })
 
