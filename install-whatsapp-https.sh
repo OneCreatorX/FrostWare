@@ -11,23 +11,23 @@ echo "==============================="
 
 if ! command -v node &> /dev/null || [[ $(node -v | cut -d'v' -f2 | cut -d'.' -f1) -lt 18 ]]; then
     echo "📦 Instalando Node.js 20 LTS..."
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-    sudo apt install -y nodejs build-essential python3 libvips-dev
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    apt install -y nodejs build-essential python3 libvips-dev
 fi
 
 if ! command -v certbot &> /dev/null; then
     echo "📦 Instalando Certbot..."
-    sudo apt install -y certbot
+    apt install -y certbot
 fi
 
 if [ ! -d "/etc/letsencrypt/live/$DOMAIN" ]; then
     echo "🔑 Obteniendo certificado SSL para $DOMAIN..."
-    sudo certbot certonly --standalone -d $DOMAIN
+    certbot certonly --standalone -d $DOMAIN --non-interactive --agree-tos --email admin@$DOMAIN
 fi
 
 echo "🔑 Configurando permisos para certificados SSL..."
-sudo chmod -R 755 /etc/letsencrypt/live
-sudo chmod -R 755 /etc/letsencrypt/archive
+chmod -R 755 /etc/letsencrypt/live
+chmod -R 755 /etc/letsencrypt/archive
 
 echo "🗂️ Creando directorio de aplicación..."
 mkdir -p $APP_DIR
@@ -748,12 +748,13 @@ EOF
 if command -v pm2 &> /dev/null; then
     echo "🔄 Stopping existing PM2 process..."
     pm2 delete whatsapp-web 2>/dev/null || true
+    pm2 delete whatsapp-https 2>/dev/null || true
     echo "🚀 Starting with PM2..."
     pm2 start server.js --name whatsapp-https
     pm2 save
 else
     echo "📦 Installing PM2 for process management..."
-    sudo npm install -g pm2
+    npm install -g pm2
     echo "🚀 Starting with PM2..."
     pm2 start server.js --name whatsapp-https
     pm2 startup
@@ -762,7 +763,7 @@ fi
 
 echo "🔧 Configurando firewall..."
 if command -v ufw &> /dev/null; then
-    sudo ufw allow $PORT/tcp
+    ufw allow $PORT/tcp
 fi
 
 echo ""
