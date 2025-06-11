@@ -1,5 +1,4 @@
-const { makeWASocket, useMultiFileAuthState, Browsers, downloadMediaMessage } = await import("@whiskeysockets/baileys");
-
+import makeWASocket, { Browsers, useMultiFileAuthState, downloadMediaMessage } from "@whiskeysockets/baileys"
 import express from "express"
 import qrcode from "qrcode"
 import { fileURLToPath } from "url"
@@ -17,21 +16,22 @@ const CONFIG = {
   SSL_KEY: `/etc/letsencrypt/live/system.heatherx.site/privkey.pem`,
   SSL_CERT: `/etc/letsencrypt/live/system.heatherx.site/cert.pem`,
   SSL_CA: `/etc/letsencrypt/live/system.heatherx.site/chain.pem`,
+  MAX_SESSIONS: 10,
 }
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const app = express()
-let qrCodeDataURL = null
-let isConnected = false
-let whatsappClient = null
-const messageHistory = []
-let state, saveCreds
-let myNumber = null
+
+const activeSessions = new Map()
+const waitingQueue = []
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/")
+    const sessionId = req.headers["session-id"]
+    const sessionDir = join(__dirname, "uploads", sessionId || "temp")
+    fs.mkdirSync(sessionDir, { recursive: true })
+    cb(null, sessionDir)
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname)
@@ -51,6 +51,7 @@ try {
   await fs.promises.mkdir(mediaDir, { recursive: true })
   await fs.promises.mkdir(uploadsDir, { recursive: true })
   await fs.promises.mkdir("public", { recursive: true })
+  await fs.promises.mkdir("sessions", { recursive: true })
 } catch (err) {
   console.error("Error creating directories:", err)
 }
@@ -92,6 +93,10 @@ const htmlContent = `<!DOCTYPE html>
       align-items: center;
       box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     }
+    .session-info {
+      font-size: 14px;
+      opacity: 0.8;
+    }
     .status-connected {
       background: linear-gradient(45deg, #4CAF50, #45a049);
       padding: 8px 16px;
@@ -105,6 +110,13 @@ const htmlContent = `<!DOCTYPE html>
       border-radius: 20px;
       font-size: 14px;
       box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+    }
+    .status-waiting {
+      background: linear-gradient(45deg, #ff9800, #f57c00);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
     }
     .main-content {
       display: flex;
@@ -183,6 +195,11 @@ const htmlContent = `<!DOCTYPE html>
     .btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
     }
     .message-section {
       padding: 20px;
@@ -339,20 +356,6 @@ const htmlContent = `<!DOCTYPE html>
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    .progress-bar {
-      width: 100%;
-      height: 4px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 2px;
-      margin: 10px 0;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(45deg, #4CAF50, #45a049);
-      width: 0%;
-      transition: width 0.3s ease;
-    }
     .audio-player {
       background: rgba(255,255,255,0.2);
       border-radius: 25px;
@@ -388,6 +391,22 @@ const htmlContent = `<!DOCTYPE html>
       margin: 10px 0;
       box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     }
+    .waiting-container {
+      text-align: center;
+      padding: 50px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      margin: 20px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+      color: white;
+    }
+    .queue-position {
+      font-size: 48px;
+      font-weight: bold;
+      margin: 20px 0;
+      color: #ff9800;
+    }
     @media (max-width: 768px) {
       .main-content {
         flex-direction: column;
@@ -402,9 +421,20 @@ const htmlContent = `<!DOCTYPE html>
 <body>
   <div class="container">
     <header>
-      <h1>📱 Personal WhatsApp Interface</h1>
+      <div>
+        <h1>📱 Personal WhatsApp Interface</h1>
+        <div class="session-info" id="session-info">Session: Loading...</div>
+      </div>
       <div id="status" class="status-disconnected">Disconnected</div>
     </header>
+    
+    <div id="waiting-section" class="waiting-container" style="display: none;">
+      <h1>⏳ Queue Full</h1>
+      <div class="queue-position" id="queue-position">0</div>
+      <p>You are in position <span id="position-text">0</span> in the queue</p>
+      <p>Maximum <span id="max-sessions">10</span> sessions allowed simultaneously</p>
+      <div class="loading-spinner"></div>
+    </div>
     
     <div id="qr-section" class="qr-container" style="display: none;">
       <h1>📱 Scan with WhatsApp</h1>
@@ -447,7 +477,7 @@ const htmlContent = `<!DOCTYPE html>
       <div class="chat-area">
         <div class="chat-header">
           <h2>💬 My Messages</h2>
-          <p>Personal chat with myself</p>
+          <p id="user-info">Personal chat with myself</p>
         </div>
         <div class="messages" id="messages"></div>
       </div>
@@ -455,20 +485,33 @@ const htmlContent = `<!DOCTYPE html>
   </div>
   
   <script>
+    let sessionId = localStorage.getItem('whatsapp-session-id') || generateSessionId()
+    localStorage.setItem('whatsapp-session-id', sessionId)
+    
+    function generateSessionId() {
+      return 'session-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now()
+    }
+
     const statusElement = document.getElementById("status")
+    const sessionInfoElement = document.getElementById("session-info")
     const messagesList = document.getElementById("messages")
     const messageInput = document.getElementById("message-input")
     const sendMessageBtn = document.getElementById("send-message-btn")
     const qrSection = document.getElementById("qr-section")
     const loadingSection = document.getElementById("loading-section")
+    const waitingSection = document.getElementById("waiting-section")
     const mainContent = document.getElementById("main-content")
     const qrImage = document.getElementById("qr-image")
     const uploadArea = document.getElementById("upload-area")
     const fileInput = document.getElementById("file-input")
     const urlInput = document.getElementById("url-input")
     const downloadSendBtn = document.getElementById("download-send-btn")
+    const userInfo = document.getElementById("user-info")
+    const queuePosition = document.getElementById("queue-position")
+    const positionText = document.getElementById("position-text")
+    const maxSessions = document.getElementById("max-sessions")
 
-    let myNumber = null
+    sessionInfoElement.textContent = \`Session: \${sessionId.split('-')[1]}\`
 
     uploadArea.addEventListener('click', () => fileInput.click())
     uploadArea.addEventListener('dragover', (e) => {
@@ -502,6 +545,9 @@ const htmlContent = `<!DOCTYPE html>
       try {
         const response = await fetch('/api/upload', {
           method: 'POST',
+          headers: {
+            'session-id': sessionId
+          },
           body: formData
         })
         const result = await response.json()
@@ -524,7 +570,10 @@ const htmlContent = `<!DOCTYPE html>
       try {
         const response = await fetch('/api/download-send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'session-id': sessionId
+          },
           body: JSON.stringify({ url })
         })
         const result = await response.json()
@@ -542,13 +591,16 @@ const htmlContent = `<!DOCTYPE html>
 
     sendMessageBtn.addEventListener('click', async () => {
       const message = messageInput.value.trim()
-      if (!message || !myNumber) return
+      if (!message) return
 
       try {
         const response = await fetch('/api/send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to: myNumber, message })
+          headers: { 
+            'Content-Type': 'application/json',
+            'session-id': sessionId
+          },
+          body: JSON.stringify({ message })
         })
         const result = await response.json()
         if (result.success) {
@@ -569,18 +621,33 @@ const htmlContent = `<!DOCTYPE html>
 
     async function checkStatus() {
       try {
-        const response = await fetch("/api/status")
+        const response = await fetch("/api/status", {
+          headers: {
+            'session-id': sessionId
+          }
+        })
         const data = await response.json()
 
-        if (data.connected) {
+        if (data.waiting) {
+          statusElement.textContent = \`Waiting (\${data.position}/\${data.maxSessions})\`
+          statusElement.className = "status-waiting"
+          qrSection.style.display = "none"
+          loadingSection.style.display = "none"
+          mainContent.style.display = "none"
+          waitingSection.style.display = "block"
+          queuePosition.textContent = data.position
+          positionText.textContent = data.position
+          maxSessions.textContent = data.maxSessions
+        } else if (data.connected) {
           statusElement.textContent = "Connected"
           statusElement.className = "status-connected"
           qrSection.style.display = "none"
           loadingSection.style.display = "none"
+          waitingSection.style.display = "none"
           mainContent.style.display = "flex"
           
-          if (!myNumber) {
-            myNumber = data.myNumber
+          if (data.userNumber) {
+            userInfo.textContent = \`Connected as: \${data.userNumber}\`
           }
           
           loadMessages()
@@ -588,10 +655,15 @@ const htmlContent = `<!DOCTYPE html>
           statusElement.textContent = "Scan QR Code"
           statusElement.className = "status-disconnected"
           loadingSection.style.display = "none"
+          waitingSection.style.display = "none"
           mainContent.style.display = "none"
           qrSection.style.display = "block"
           
-          const qrResponse = await fetch("/api/qr")
+          const qrResponse = await fetch("/api/qr", {
+            headers: {
+              'session-id': sessionId
+            }
+          })
           const qrData = await qrResponse.json()
           if (qrData.qr) {
             qrImage.innerHTML = \`<img src="\${qrData.qr}" alt="QR Code" />\`
@@ -600,6 +672,7 @@ const htmlContent = `<!DOCTYPE html>
           statusElement.textContent = "Generating QR..."
           statusElement.className = "status-disconnected"
           qrSection.style.display = "none"
+          waitingSection.style.display = "none"
           mainContent.style.display = "none"
           loadingSection.style.display = "block"
         }
@@ -610,15 +683,15 @@ const htmlContent = `<!DOCTYPE html>
 
     async function loadMessages() {
       try {
-        const response = await fetch("/api/messages")
+        const response = await fetch("/api/messages", {
+          headers: {
+            'session-id': sessionId
+          }
+        })
         const messages = await response.json()
-        
-        const myMessages = messages.filter(msg => 
-          msg.from === myNumber || msg.to === myNumber
-        )
 
         messagesList.innerHTML = ""
-        myMessages.forEach(displayMessage)
+        messages.forEach(displayMessage)
         messagesList.scrollTop = messagesList.scrollHeight
       } catch (error) {
         console.error("Error loading messages:", error)
@@ -716,121 +789,194 @@ const htmlContent = `<!DOCTYPE html>
 
 await fs.promises.writeFile("public/index.html", htmlContent)
 
-let sock
-// Removing redeclaration of saveCreds
-// let saveCreds
+class SessionManager {
+  constructor() {
+    this.sessions = new Map()
+    this.waitingQueue = []
+    this.maxSessions = CONFIG.MAX_SESSIONS
+  }
 
-async function startWhatsApp() {
-  const auth = await useMultiFileAuthState("auth_info")
-  state = auth.state
-  saveCreds = auth.saveCreds
-
-  sock = makeWASocket({
-    auth: state,
-    browser: Browsers.ubuntu("WhatsApp-Web-Interface"),
-    printQRInTerminal: false,
-  })
-
-  sock.ev.on("creds.update", saveCreds)
-
-  sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect, qr } = update
-
-    if (qr) {
-      console.log("New QR code generated")
-      qrCodeDataURL = await qrcode.toDataURL(qr)
-    }
-
-    if (connection === "close") {
-      const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401
-      console.log("Connection closed:", lastDisconnect?.error)
-
-      if (shouldReconnect) {
-        console.log("Reconnecting...")
-        whatsappClient = await startWhatsApp()
+  createSession(sessionId) {
+    if (this.sessions.size >= this.maxSessions) {
+      if (!this.waitingQueue.includes(sessionId)) {
+        this.waitingQueue.push(sessionId)
       }
-      isConnected = false
-    } else if (connection === "open") {
-      console.log("WhatsApp connected successfully!")
-      isConnected = true
-      qrCodeDataURL = null
-      myNumber = sock.user.id.split(":")[0] + "@s.whatsapp.net"
-      console.log("My number:", myNumber)
+      return {
+        waiting: true,
+        position: this.waitingQueue.indexOf(sessionId) + 1,
+        maxSessions: this.maxSessions,
+      }
     }
-  })
 
-  sock.ev.on("messages.upsert", async ({ messages }) => {
-    for (const message of messages) {
-      if (message.message) {
-        console.log("Message received:", message.key.id)
+    if (!this.sessions.has(sessionId)) {
+      this.sessions.set(sessionId, {
+        id: sessionId,
+        sock: null,
+        qrCode: null,
+        isConnected: false,
+        userNumber: null,
+        messageHistory: [],
+        createdAt: Date.now(),
+      })
+    }
 
-        const formattedMessage = {
-          id: message.key.id,
-          from: message.key.remoteJid,
-          to: message.key.participant || message.key.remoteJid,
-          timestamp: message.messageTimestamp,
-          text:
-            message.message.conversation ||
-            (message.message.extendedTextMessage && message.message.extendedTextMessage.text) ||
-            "Multimedia content",
-          hasMedia:
-            !!message.message.imageMessage ||
-            !!message.message.documentMessage ||
-            !!message.message.audioMessage ||
-            !!message.message.videoMessage,
-          mediaType: message.message.imageMessage
-            ? "image"
-            : message.message.documentMessage
-              ? "document"
-              : message.message.audioMessage
-                ? "audio"
-                : message.message.videoMessage
-                  ? "video"
-                  : null,
+    return { waiting: false, session: this.sessions.get(sessionId) }
+  }
+
+  getSession(sessionId) {
+    return this.sessions.get(sessionId)
+  }
+
+  removeSession(sessionId) {
+    this.sessions.delete(sessionId)
+    this.processQueue()
+  }
+
+  processQueue() {
+    if (this.waitingQueue.length > 0 && this.sessions.size < this.maxSessions) {
+      const nextSessionId = this.waitingQueue.shift()
+      this.createSession(nextSessionId)
+    }
+  }
+
+  getQueuePosition(sessionId) {
+    const position = this.waitingQueue.indexOf(sessionId)
+    return position >= 0 ? position + 1 : 0
+  }
+}
+
+const sessionManager = new SessionManager()
+
+async function startWhatsAppSession(sessionId) {
+  const sessionData = sessionManager.getSession(sessionId)
+  if (!sessionData) return null
+
+  try {
+    const authDir = join(__dirname, "sessions", sessionId)
+    await fs.promises.mkdir(authDir, { recursive: true })
+
+    const auth = await useMultiFileAuthState(authDir)
+    const state = auth.state
+    const saveCreds = auth.saveCreds
+
+    const sock = makeWASocket({
+      auth: state,
+      browser: Browsers.ubuntu("WhatsApp-Web-Interface"),
+      printQRInTerminal: false,
+    })
+
+    sessionData.sock = sock
+
+    sock.ev.on("creds.update", saveCreds)
+
+    sock.ev.on("connection.update", async (update) => {
+      const { connection, lastDisconnect, qr } = update
+
+      if (qr) {
+        console.log(`New QR code generated for session ${sessionId}`)
+        sessionData.qrCode = await qrcode.toDataURL(qr)
+      }
+
+      if (connection === "close") {
+        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401
+        console.log(`Connection closed for session ${sessionId}:`, lastDisconnect?.error)
+
+        if (shouldReconnect) {
+          console.log(`Reconnecting session ${sessionId}...`)
+          setTimeout(() => startWhatsAppSession(sessionId), 3000)
+        } else {
+          sessionManager.removeSession(sessionId)
         }
+        sessionData.isConnected = false
+      } else if (connection === "open") {
+        console.log(`WhatsApp connected successfully for session ${sessionId}!`)
+        sessionData.isConnected = true
+        sessionData.qrCode = null
+        sessionData.userNumber = sock.user.id.split(":")[0]
+        console.log(`User number for session ${sessionId}:`, sessionData.userNumber)
+      }
+    })
 
-        if (formattedMessage.hasMedia) {
-          try {
-            const buffer = await downloadMediaMessage(
-              message,
-              "buffer",
-              {},
-              {
-                logger: console,
-                reuploadRequest: sock.updateMediaMessage,
-              },
-            )
+    sock.ev.on("messages.upsert", async ({ messages }) => {
+      for (const message of messages) {
+        if (message.message) {
+          const userJid = sessionData.userNumber + "@s.whatsapp.net"
 
-            const extension =
-              formattedMessage.mediaType === "image"
-                ? "jpg"
-                : formattedMessage.mediaType === "video"
-                  ? "mp4"
-                  : formattedMessage.mediaType === "audio"
-                    ? "ogg"
-                    : "bin"
+          if (message.key.remoteJid === userJid || message.key.participant === userJid) {
+            console.log(`Message received for session ${sessionId}:`, message.key.id)
 
-            const fileName = `${message.key.id}.${extension}`
-            const filePath = join(mediaDir, fileName)
+            const formattedMessage = {
+              id: message.key.id,
+              from: message.key.remoteJid,
+              timestamp: message.messageTimestamp,
+              text:
+                message.message.conversation ||
+                (message.message.extendedTextMessage && message.message.extendedTextMessage.text) ||
+                "Multimedia content",
+              hasMedia:
+                !!message.message.imageMessage ||
+                !!message.message.documentMessage ||
+                !!message.message.audioMessage ||
+                !!message.message.videoMessage,
+              mediaType: message.message.imageMessage
+                ? "image"
+                : message.message.documentMessage
+                  ? "document"
+                  : message.message.audioMessage
+                    ? "audio"
+                    : message.message.videoMessage
+                      ? "video"
+                      : null,
+            }
 
-            const writeStream = createWriteStream(filePath)
-            writeStream.write(buffer)
-            writeStream.end()
+            if (formattedMessage.hasMedia) {
+              try {
+                const buffer = await downloadMediaMessage(
+                  message,
+                  "buffer",
+                  {},
+                  {
+                    logger: console,
+                    reuploadRequest: sock.updateMediaMessage,
+                  },
+                )
 
-            formattedMessage.mediaPath = `/media/${fileName}`
-          } catch (error) {
-            console.error("Error downloading media:", error)
+                const extension =
+                  formattedMessage.mediaType === "image"
+                    ? "jpg"
+                    : formattedMessage.mediaType === "video"
+                      ? "mp4"
+                      : formattedMessage.mediaType === "audio"
+                        ? "ogg"
+                        : "bin"
+
+                const fileName = `${sessionId}-${message.key.id}.${extension}`
+                const filePath = join(mediaDir, fileName)
+
+                const writeStream = createWriteStream(filePath)
+                writeStream.write(buffer)
+                writeStream.end()
+
+                formattedMessage.mediaPath = `/media/${fileName}`
+              } catch (error) {
+                console.error("Error downloading media:", error)
+              }
+            }
+
+            sessionData.messageHistory.unshift(formattedMessage)
+            if (sessionData.messageHistory.length > 200) {
+              sessionData.messageHistory.pop()
+            }
           }
         }
-
-        messageHistory.unshift(formattedMessage)
-        if (messageHistory.length > 200) messageHistory.pop()
       }
-    }
-  })
+    })
 
-  whatsappClient = sock
-  return sock
+    return sock
+  } catch (error) {
+    console.error(`Error starting WhatsApp session ${sessionId}:`, error)
+    return null
+  }
 }
 
 async function downloadFileFromUrl(url) {
@@ -864,24 +1010,21 @@ async function downloadFileFromUrl(url) {
     }
 
     const buffer = await response.arrayBuffer()
-    const filePath = join(uploadsDir, filename)
-
-    await fs.promises.writeFile(filePath, Buffer.from(buffer))
-
-    return { filename, filePath, size: buffer.byteLength }
+    return { filename, buffer, size: buffer.byteLength }
   } catch (error) {
     console.error("Error downloading file:", error)
     throw error
   }
 }
 
-async function sendFileToMyself(filePath, filename) {
-  if (!isConnected || !myNumber) {
-    throw new Error("WhatsApp not connected or number not detected")
+async function sendFileToUser(sessionId, fileBuffer, filename) {
+  const sessionData = sessionManager.getSession(sessionId)
+  if (!sessionData || !sessionData.isConnected || !sessionData.userNumber) {
+    throw new Error("Session not connected or user number not detected")
   }
 
   try {
-    const fileBuffer = await fs.promises.readFile(filePath)
+    const userJid = sessionData.userNumber + "@s.whatsapp.net"
     const fileExtension = path.extname(filename).toLowerCase()
 
     let messageOptions = {}
@@ -909,10 +1052,8 @@ async function sendFileToMyself(filePath, filename) {
       }
     }
 
-    await sock.sendMessage(myNumber, messageOptions)
-    console.log("File sent successfully:", filename)
-
-    await fs.promises.unlink(filePath)
+    await sessionData.sock.sendMessage(userJid, messageOptions)
+    console.log(`File sent successfully to session ${sessionId}:`, filename)
 
     return true
   } catch (error) {
@@ -920,8 +1061,6 @@ async function sendFileToMyself(filePath, filename) {
     throw error
   }
 }
-
-await startWhatsApp()
 
 app.get("/", (req, res) => {
   res.sendFile(join(__dirname, "public", "index.html"))
@@ -931,37 +1070,76 @@ app.use("/media", express.static(mediaDir))
 app.use("/uploads", express.static(uploadsDir))
 
 app.get("/api/status", (req, res) => {
+  const sessionId = req.headers["session-id"]
+  if (!sessionId) {
+    return res.status(400).json({ error: "Session ID required" })
+  }
+
+  const result = sessionManager.createSession(sessionId)
+
+  if (result.waiting) {
+    return res.json({
+      waiting: true,
+      position: result.position,
+      maxSessions: result.maxSessions,
+    })
+  }
+
+  const sessionData = result.session
+
   res.json({
-    connected: isConnected,
-    hasQR: !!qrCodeDataURL,
-    myNumber: myNumber,
+    waiting: false,
+    connected: sessionData.isConnected,
+    hasQR: !!sessionData.qrCode,
+    userNumber: sessionData.userNumber,
   })
+
+  if (!sessionData.sock && !sessionData.qrCode) {
+    startWhatsAppSession(sessionId)
+  }
 })
 
 app.get("/api/qr", (req, res) => {
+  const sessionId = req.headers["session-id"]
+  const sessionData = sessionManager.getSession(sessionId)
+
+  if (!sessionData) {
+    return res.status(404).json({ error: "Session not found" })
+  }
+
   res.json({
-    qr: qrCodeDataURL,
+    qr: sessionData.qrCode,
   })
 })
 
 app.get("/api/messages", (req, res) => {
-  const myMessages = messageHistory.filter((msg) => msg.from === myNumber || msg.to === myNumber)
-  res.json(myMessages.reverse())
+  const sessionId = req.headers["session-id"]
+  const sessionData = sessionManager.getSession(sessionId)
+
+  if (!sessionData) {
+    return res.status(404).json({ error: "Session not found" })
+  }
+
+  res.json(sessionData.messageHistory.slice().reverse())
 })
 
 app.post("/api/send", async (req, res) => {
-  if (!isConnected || !whatsappClient) {
-    return res.status(400).json({ success: false, error: "WhatsApp not connected" })
+  const sessionId = req.headers["session-id"]
+  const sessionData = sessionManager.getSession(sessionId)
+
+  if (!sessionData || !sessionData.isConnected) {
+    return res.status(400).json({ success: false, error: "Session not connected" })
   }
 
   try {
-    const { to, message } = req.body
+    const { message } = req.body
 
-    if (!to || !message) {
-      return res.status(400).json({ success: false, error: "Missing parameters" })
+    if (!message) {
+      return res.status(400).json({ success: false, error: "Message is required" })
     }
 
-    await sock.sendMessage(to, { text: message })
+    const userJid = sessionData.userNumber + "@s.whatsapp.net"
+    await sessionData.sock.sendMessage(userJid, { text: message })
     res.json({ success: true, message: "Message sent" })
   } catch (error) {
     console.error("Error sending message:", error)
@@ -971,11 +1149,15 @@ app.post("/api/send", async (req, res) => {
 
 app.post("/api/upload", upload.single("file"), async (req, res) => {
   try {
+    const sessionId = req.headers["session-id"]
+
     if (!req.file) {
       return res.status(400).json({ success: false, error: "No file uploaded" })
     }
 
-    await sendFileToMyself(req.file.path, req.file.originalname)
+    const fileBuffer = await fs.promises.readFile(req.file.path)
+    await sendFileToUser(sessionId, fileBuffer, req.file.originalname)
+    await fs.promises.unlink(req.file.path)
 
     res.json({
       success: true,
@@ -990,6 +1172,7 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
 
 app.post("/api/download-send", async (req, res) => {
   try {
+    const sessionId = req.headers["session-id"]
     const { url } = req.body
 
     if (!url) {
@@ -997,7 +1180,7 @@ app.post("/api/download-send", async (req, res) => {
     }
 
     const downloadResult = await downloadFileFromUrl(url)
-    await sendFileToMyself(downloadResult.filePath, downloadResult.filename)
+    await sendFileToUser(sessionId, Buffer.from(downloadResult.buffer), downloadResult.filename)
 
     res.json({
       success: true,
@@ -1021,7 +1204,8 @@ try {
 
   server.listen(CONFIG.PORT, "0.0.0.0", () => {
     console.log(`HTTPS Server running at https://${CONFIG.DOMAIN}`)
-    console.log(`WhatsApp Personal Interface available at https://${CONFIG.DOMAIN}`)
+    console.log(`WhatsApp Multi-Session Interface available at https://${CONFIG.DOMAIN}`)
+    console.log(`Maximum sessions: ${CONFIG.MAX_SESSIONS}`)
   })
 } catch (error) {
   console.error("Error starting HTTPS server:", error)
@@ -1031,6 +1215,19 @@ try {
     console.log(`HTTP Server running at http://0.0.0.0:${CONFIG.PORT}`)
   })
 }
+
+setInterval(
+  () => {
+    const now = Date.now()
+    for (const [sessionId, sessionData] of sessionManager.sessions) {
+      if (now - sessionData.createdAt > 24 * 60 * 60 * 1000) {
+        console.log(`Cleaning up old session: ${sessionId}`)
+        sessionManager.removeSession(sessionId)
+      }
+    }
+  },
+  60 * 60 * 1000,
+)
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught exception:", err)
