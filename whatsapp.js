@@ -1,5 +1,4 @@
-const { makeWASocket, useMultiFileAuthState, Browsers, downloadMediaMessage } = await import("@whiskeysockets/baileys");
-
+const { makeWASocket, useMultiFileAuthState, Browsers, downloadMediaMessage } = await import("@whiskeysockets/baileys")
 import express from "express"
 import qrcode from "qrcode"
 import { fileURLToPath } from "url"
@@ -10,6 +9,8 @@ import { createWriteStream } from "fs"
 import bodyParser from "body-parser"
 import multer from "multer"
 import path from "path"
+import crypto from "crypto"
+import ytdl from "ytdl-core"
 
 const CONFIG = {
   PORT: 443,
@@ -18,6 +19,7 @@ const CONFIG = {
   SSL_CERT: `/etc/letsencrypt/live/system.heatherx.site/cert.pem`,
   SSL_CA: `/etc/letsencrypt/live/system.heatherx.site/chain.pem`,
   MAX_SESSIONS: 10,
+  AUTO_DOWNLOAD_DELAY: 7000,
 }
 
 const __filename = fileURLToPath(import.meta.url)
@@ -26,6 +28,50 @@ const app = express()
 
 const activeSessions = new Map()
 const waitingQueue = []
+const userAgents = [
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0",
+]
+
+function generateSecureSessionId() {
+  const timestamp = Date.now().toString(36)
+  const randomBytes = crypto.randomBytes(32).toString("hex")
+  const hash = crypto
+    .createHash("sha256")
+    .update(timestamp + randomBytes)
+    .digest("hex")
+  return `ws_${timestamp}_${hash.substring(0, 48)}_${crypto.randomBytes(16).toString("hex")}`
+}
+
+function getRandomUserAgent() {
+  return userAgents[Math.floor(Math.random() * userAgents.length)]
+}
+
+function createBrowserHeaders(userAgent, referer = null) {
+  const headers = {
+    "User-Agent": userAgent,
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9,es;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    DNT: "1",
+    Connection: "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Cache-Control": "max-age=0",
+  }
+
+  if (referer) {
+    headers["Referer"] = referer
+  }
+
+  return headers
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -95,8 +141,10 @@ const htmlContent = `<!DOCTYPE html>
       box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     }
     .session-info {
-      font-size: 14px;
+      font-size: 12px;
       opacity: 0.8;
+      max-width: 300px;
+      word-break: break-all;
     }
     .status-connected {
       background: linear-gradient(45deg, #4CAF50, #45a049);
@@ -118,6 +166,13 @@ const htmlContent = `<!DOCTYPE html>
       border-radius: 20px;
       font-size: 14px;
       box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+    }
+    .status-downloading {
+      background: linear-gradient(45deg, #2196F3, #1976D2);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
     }
     .main-content {
       display: flex;
@@ -201,6 +256,26 @@ const htmlContent = `<!DOCTYPE html>
       opacity: 0.6;
       cursor: not-allowed;
       transform: none;
+    }
+    .auto-download-info {
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      margin-top: 5px;
+      text-align: center;
+    }
+    .download-progress {
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    .download-progress-bar {
+      height: 100%;
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      width: 0%;
+      transition: width 0.3s ease;
     }
     .message-section {
       padding: 20px;
@@ -408,6 +483,15 @@ const htmlContent = `<!DOCTYPE html>
       margin: 20px 0;
       color: #ff9800;
     }
+    .url-type-indicator {
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      margin-top: 5px;
+      padding: 5px 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      display: inline-block;
+    }
     @media (max-width: 768px) {
       .main-content {
         flex-direction: column;
@@ -415,6 +499,10 @@ const htmlContent = `<!DOCTYPE html>
       .sidebar {
         width: 100%;
         height: auto;
+      }
+      .session-info {
+        max-width: 200px;
+        font-size: 10px;
       }
     }
   </style>
@@ -463,8 +551,13 @@ const htmlContent = `<!DOCTYPE html>
             <input type="file" id="file-input" class="file-input" multiple accept="*/*">
           </div>
           <div class="url-section">
-            <input type="text" id="url-input" class="url-input" placeholder="Enter URL to download and send...">
+            <input type="text" id="url-input" class="url-input" placeholder="Enter URL to auto-download and send...">
+            <div id="url-type" class="url-type-indicator" style="display: none;"></div>
+            <div class="download-progress" id="download-progress" style="display: none;">
+              <div class="download-progress-bar" id="download-progress-bar"></div>
+            </div>
             <button id="download-send-btn" class="btn">📥 Download & Send</button>
+            <div class="auto-download-info">Auto-download starts in 7 seconds after URL entry</div>
           </div>
         </div>
         
@@ -486,11 +579,25 @@ const htmlContent = `<!DOCTYPE html>
   </div>
   
   <script>
-    let sessionId = localStorage.getItem('whatsapp-session-id') || generateSessionId()
-    localStorage.setItem('whatsapp-session-id', sessionId)
+    let sessionId = getSessionFromUrl() || generateSecureSessionId()
+    updateUrlWithSession(sessionId)
     
-    function generateSessionId() {
-      return 'session-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now()
+    function getSessionFromUrl() {
+      const urlParams = new URLSearchParams(window.location.search)
+      return urlParams.get('session')
+    }
+    
+    function generateSecureSessionId() {
+      const timestamp = Date.now().toString(36)
+      const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('')
+      const combined = timestamp + randomBytes
+      return \`ws_\${timestamp}_\${btoa(combined).replace(/[+/=]/g, '').substring(0, 48)}_\${Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('')}\`
+    }
+    
+    function updateUrlWithSession(sessionId) {
+      const url = new URL(window.location)
+      url.searchParams.set('session', sessionId)
+      window.history.replaceState({}, '', url)
     }
 
     const statusElement = document.getElementById("status")
@@ -511,8 +618,94 @@ const htmlContent = `<!DOCTYPE html>
     const queuePosition = document.getElementById("queue-position")
     const positionText = document.getElementById("position-text")
     const maxSessions = document.getElementById("max-sessions")
+    const urlType = document.getElementById("url-type")
+    const downloadProgress = document.getElementById("download-progress")
+    const downloadProgressBar = document.getElementById("download-progress-bar")
 
-    sessionInfoElement.textContent = \`Session: \${sessionId.split('-')[1]}\`
+    let autoDownloadTimer = null
+    let userAgent = navigator.userAgent
+    let browserInfo = {
+      language: navigator.language,
+      platform: navigator.platform,
+      cookieEnabled: navigator.cookieEnabled,
+      onLine: navigator.onLine,
+      screen: {
+        width: screen.width,
+        height: screen.height,
+        colorDepth: screen.colorDepth
+      },
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    }
+
+    sessionInfoElement.textContent = \`Session: \${sessionId.substring(3, 15)}...\`
+
+    function detectUrlType(url) {
+      try {
+        const urlObj = new URL(url)
+        const hostname = urlObj.hostname.toLowerCase()
+        
+        if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+          return { type: 'YouTube Video', icon: '🎥', color: '#ff0000' }
+        } else if (hostname.includes('instagram.com')) {
+          return { type: 'Instagram Media', icon: '📸', color: '#e4405f' }
+        } else if (hostname.includes('tiktok.com')) {
+          return { type: 'TikTok Video', icon: '🎵', color: '#000000' }
+        } else if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
+          return { type: 'Twitter Media', icon: '🐦', color: '#1da1f2' }
+        } else if (url.match(/\\.(jpg|jpeg|png|gif|webp)$/i)) {
+          return { type: 'Image File', icon: '🖼️', color: '#4caf50' }
+        } else if (url.match(/\\.(mp4|avi|mov|mkv|webm)$/i)) {
+          return { type: 'Video File', icon: '🎬', color: '#2196f3' }
+        } else if (url.match(/\\.(mp3|wav|ogg|m4a|flac)$/i)) {
+          return { type: 'Audio File', icon: '🎵', color: '#ff9800' }
+        } else if (url.match(/\\.(pdf|doc|docx|txt|zip|rar)$/i)) {
+          return { type: 'Document', icon: '📄', color: '#9c27b0' }
+        } else {
+          return { type: 'Web Content', icon: '🌐', color: '#607d8b' }
+        }
+      } catch {
+        return { type: 'Invalid URL', icon: '❌', color: '#f44336' }
+      }
+    }
+
+    urlInput.addEventListener('input', (e) => {
+      const url = e.target.value.trim()
+      
+      if (autoDownloadTimer) {
+        clearTimeout(autoDownloadTimer)
+      }
+      
+      if (url) {
+        const urlInfo = detectUrlType(url)
+        urlType.innerHTML = \`\${urlInfo.icon} \${urlInfo.type}\`
+        urlType.style.backgroundColor = urlInfo.color + '20'
+        urlType.style.borderLeft = \`3px solid \${urlInfo.color}\`
+        urlType.style.display = 'inline-block'
+        
+        downloadSendBtn.textContent = '⏳ Auto-download in 7s...'
+        downloadSendBtn.disabled = true
+        
+        let countdown = 7
+        const countdownInterval = setInterval(() => {
+          countdown--
+          downloadSendBtn.textContent = \`⏳ Auto-download in \${countdown}s...\`
+          if (countdown <= 0) {
+            clearInterval(countdownInterval)
+          }
+        }, 1000)
+        
+        autoDownloadTimer = setTimeout(() => {
+          clearInterval(countdownInterval)
+          if (urlInput.value.trim() === url) {
+            downloadAndSend(url)
+          }
+        }, 7000)
+      } else {
+        urlType.style.display = 'none'
+        downloadSendBtn.textContent = '📥 Download & Send'
+        downloadSendBtn.disabled = false
+      }
+    })
 
     uploadArea.addEventListener('click', () => fileInput.click())
     uploadArea.addEventListener('dragover', (e) => {
@@ -547,7 +740,9 @@ const htmlContent = `<!DOCTYPE html>
         const response = await fetch('/api/upload', {
           method: 'POST',
           headers: {
-            'session-id': sessionId
+            'session-id': sessionId,
+            'user-agent': userAgent,
+            'browser-info': JSON.stringify(browserInfo)
           },
           body: formData
         })
@@ -561,25 +756,47 @@ const htmlContent = `<!DOCTYPE html>
       }
     }
 
-    downloadSendBtn.addEventListener('click', async () => {
-      const url = urlInput.value.trim()
+    async function downloadAndSend(url) {
       if (!url) return
 
       downloadSendBtn.textContent = '⏳ Downloading...'
       downloadSendBtn.disabled = true
+      downloadProgress.style.display = 'block'
+      
+      statusElement.textContent = 'Downloading...'
+      statusElement.className = 'status-downloading'
 
       try {
         const response = await fetch('/api/download-send', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'session-id': sessionId
+            'session-id': sessionId,
+            'user-agent': userAgent,
+            'browser-info': JSON.stringify(browserInfo)
           },
-          body: JSON.stringify({ url })
+          body: JSON.stringify({ url, userAgent, browserInfo })
         })
+        
+        if (response.body) {
+          const reader = response.body.getReader()
+          const contentLength = +response.headers.get('Content-Length')
+          let receivedLength = 0
+          
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            
+            receivedLength += value.length
+            const progress = contentLength ? (receivedLength / contentLength) * 100 : 50
+            downloadProgressBar.style.width = progress + '%'
+          }
+        }
+        
         const result = await response.json()
         if (result.success) {
           urlInput.value = ''
+          urlType.style.display = 'none'
           setTimeout(loadMessages, 1000)
         }
       } catch (error) {
@@ -587,7 +804,19 @@ const htmlContent = `<!DOCTYPE html>
       } finally {
         downloadSendBtn.textContent = '📥 Download & Send'
         downloadSendBtn.disabled = false
+        downloadProgress.style.display = 'none'
+        downloadProgressBar.style.width = '0%'
+        statusElement.textContent = 'Connected'
+        statusElement.className = 'status-connected'
       }
+    }
+
+    downloadSendBtn.addEventListener('click', () => {
+      const url = urlInput.value.trim()
+      if (autoDownloadTimer) {
+        clearTimeout(autoDownloadTimer)
+      }
+      downloadAndSend(url)
     })
 
     sendMessageBtn.addEventListener('click', async () => {
@@ -599,7 +828,8 @@ const htmlContent = `<!DOCTYPE html>
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'session-id': sessionId
+            'session-id': sessionId,
+            'user-agent': userAgent
           },
           body: JSON.stringify({ message })
         })
@@ -624,7 +854,9 @@ const htmlContent = `<!DOCTYPE html>
       try {
         const response = await fetch("/api/status", {
           headers: {
-            'session-id': sessionId
+            'session-id': sessionId,
+            'user-agent': userAgent,
+            'browser-info': JSON.stringify(browserInfo)
           }
         })
         const data = await response.json()
@@ -648,7 +880,7 @@ const htmlContent = `<!DOCTYPE html>
           mainContent.style.display = "flex"
           
           if (data.userNumber) {
-            userInfo.textContent = \`Connected as: \${data.userNumber}\`
+            userInfo.textContent = \`Connected as: +\${data.userNumber}\`
           }
           
           loadMessages()
@@ -818,6 +1050,8 @@ class SessionManager {
         userNumber: null,
         messageHistory: [],
         createdAt: Date.now(),
+        userAgent: null,
+        browserInfo: null,
       })
     }
 
@@ -980,9 +1214,60 @@ async function startWhatsAppSession(sessionId) {
   }
 }
 
-async function downloadFileFromUrl(url) {
+function isYouTubeUrl(url) {
+  return /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/.test(url)
+}
+
+async function downloadYouTubeVideo(url, userAgent) {
   try {
-    const response = await fetch(url)
+    const info = await ytdl.getInfo(url)
+    const format = ytdl.chooseFormat(info.formats, { quality: "highestaudio", filter: "audioonly" })
+
+    if (!format) {
+      throw new Error("No suitable format found")
+    }
+
+    const title = info.videoDetails.title.replace(/[^\w\s-]/g, "").trim()
+    const filename = `${title}.${format.container}`
+
+    const stream = ytdl(url, {
+      format: format,
+      requestOptions: {
+        headers: {
+          "User-Agent": userAgent,
+        },
+      },
+    })
+
+    const chunks = []
+
+    return new Promise((resolve, reject) => {
+      stream.on("data", (chunk) => chunks.push(chunk))
+      stream.on("end", () => {
+        const buffer = Buffer.concat(chunks)
+        resolve({ filename, buffer, size: buffer.length })
+      })
+      stream.on("error", reject)
+    })
+  } catch (error) {
+    console.error("Error downloading YouTube video:", error)
+    throw error
+  }
+}
+
+async function downloadFileFromUrl(url, userAgent, browserInfo) {
+  try {
+    if (isYouTubeUrl(url)) {
+      return await downloadYouTubeVideo(url, userAgent)
+    }
+
+    const headers = createBrowserHeaders(userAgent)
+
+    const response = await fetch(url, {
+      headers,
+      redirect: "follow",
+    })
+
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
     const contentType = response.headers.get("content-type") || ""
@@ -995,7 +1280,7 @@ async function downloadFileFromUrl(url) {
       const urlPath = new URL(url).pathname
       const urlFilename = urlPath.split("/").pop()
       if (urlFilename && urlFilename.includes(".")) {
-        filename = urlFilename
+        filename = decodeURIComponent(urlFilename)
       } else {
         const ext = contentType.includes("image")
           ? ".jpg"
@@ -1005,13 +1290,15 @@ async function downloadFileFromUrl(url) {
               ? ".mp3"
               : contentType.includes("pdf")
                 ? ".pdf"
-                : ".bin"
+                : contentType.includes("text")
+                  ? ".txt"
+                  : ".bin"
         filename = `download-${Date.now()}${ext}`
       }
     }
 
     const buffer = await response.arrayBuffer()
-    return { filename, buffer, size: buffer.byteLength }
+    return { filename, buffer: Buffer.from(buffer), size: buffer.byteLength }
   } catch (error) {
     console.error("Error downloading file:", error)
     throw error
@@ -1035,12 +1322,12 @@ async function sendFileToUser(sessionId, fileBuffer, filename) {
         image: fileBuffer,
         caption: filename,
       }
-    } else if ([".mp4", ".avi", ".mov", ".mkv"].includes(fileExtension)) {
+    } else if ([".mp4", ".avi", ".mov", ".mkv", ".webm"].includes(fileExtension)) {
       messageOptions = {
         video: fileBuffer,
         caption: filename,
       }
-    } else if ([".mp3", ".wav", ".ogg", ".m4a"].includes(fileExtension)) {
+    } else if ([".mp3", ".wav", ".ogg", ".m4a", ".aac"].includes(fileExtension)) {
       messageOptions = {
         audio: fileBuffer,
         mimetype: "audio/mp4",
@@ -1064,7 +1351,13 @@ async function sendFileToUser(sessionId, fileBuffer, filename) {
 }
 
 app.get("/", (req, res) => {
-  res.sendFile(join(__dirname, "public", "index.html"))
+  const sessionId = req.query.session
+  if (sessionId && /^ws_[a-zA-Z0-9_]{60,}$/.test(sessionId)) {
+    res.sendFile(join(__dirname, "public", "index.html"))
+  } else {
+    const newSessionId = generateSecureSessionId()
+    res.redirect(`/?session=${newSessionId}`)
+  }
 })
 
 app.use("/media", express.static(mediaDir))
@@ -1072,6 +1365,9 @@ app.use("/uploads", express.static(uploadsDir))
 
 app.get("/api/status", (req, res) => {
   const sessionId = req.headers["session-id"]
+  const userAgent = req.headers["user-agent"]
+  const browserInfo = req.headers["browser-info"]
+
   if (!sessionId) {
     return res.status(400).json({ error: "Session ID required" })
   }
@@ -1087,6 +1383,9 @@ app.get("/api/status", (req, res) => {
   }
 
   const sessionData = result.session
+
+  if (userAgent) sessionData.userAgent = userAgent
+  if (browserInfo) sessionData.browserInfo = JSON.parse(browserInfo)
 
   res.json({
     waiting: false,
@@ -1174,18 +1473,21 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
 app.post("/api/download-send", async (req, res) => {
   try {
     const sessionId = req.headers["session-id"]
+    const userAgent = req.headers["user-agent"] || getRandomUserAgent()
+    const browserInfo = req.headers["browser-info"] ? JSON.parse(req.headers["browser-info"]) : {}
     const { url } = req.body
 
     if (!url) {
       return res.status(400).json({ success: false, error: "URL is required" })
     }
 
-    const downloadResult = await downloadFileFromUrl(url)
-    await sendFileToUser(sessionId, Buffer.from(downloadResult.buffer), downloadResult.filename)
+    const downloadResult = await downloadFileFromUrl(url, userAgent, browserInfo)
+    await sendFileToUser(sessionId, downloadResult.buffer, downloadResult.filename)
 
     res.json({
       success: true,
       filename: downloadResult.filename,
+      size: downloadResult.size,
       message: "File downloaded and sent successfully",
     })
   } catch (error) {
@@ -1205,7 +1507,7 @@ try {
 
   server.listen(CONFIG.PORT, "0.0.0.0", () => {
     console.log(`HTTPS Server running at https://${CONFIG.DOMAIN}`)
-    console.log(`WhatsApp Multi-Session Interface available at https://${CONFIG.DOMAIN}`)
+    console.log(`WhatsApp Advanced Session Interface available at https://${CONFIG.DOMAIN}`)
     console.log(`Maximum sessions: ${CONFIG.MAX_SESSIONS}`)
   })
 } catch (error) {
