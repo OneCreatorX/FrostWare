@@ -10,7 +10,10 @@ import bodyParser from "body-parser"
 import multer from "multer"
 import path from "path"
 import crypto from "crypto"
-import ytdl from "ytdl-core"
+import { exec } from "child_process"
+import { promisify } from "util"
+
+const execAsync = promisify(exec)
 
 const CONFIG = {
   PORT: 443,
@@ -93,12 +96,14 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 const mediaDir = join(__dirname, "media")
 const uploadsDir = join(__dirname, "uploads")
+const tempDir = join(__dirname, "temp")
 
 try {
   await fs.promises.mkdir(mediaDir, { recursive: true })
   await fs.promises.mkdir(uploadsDir, { recursive: true })
   await fs.promises.mkdir("public", { recursive: true })
   await fs.promises.mkdir("sessions", { recursive: true })
+  await fs.promises.mkdir(tempDir, { recursive: true })
 } catch (err) {
   console.error("Error creating directories:", err)
 }
@@ -652,6 +657,14 @@ const htmlContent = `<!DOCTYPE html>
           return { type: 'TikTok Video', icon: '🎵', color: '#000000' }
         } else if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
           return { type: 'Twitter Media', icon: '🐦', color: '#1da1f2' }
+        } else if (hostname.includes('facebook.com') || hostname.includes('fb.watch')) {
+          return { type: 'Facebook Video', icon: '📘', color: '#1877f2' }
+        } else if (hostname.includes('reddit.com')) {
+          return { type: 'Reddit Media', icon: '🔴', color: '#ff4500' }
+        } else if (hostname.includes('pinterest.com')) {
+          return { type: 'Pinterest Image', icon: '📌', color: '#bd081c' }
+        } else if (hostname.includes('linkedin.com')) {
+          return { type: 'LinkedIn Media', icon: '💼', color: '#0077b5' }
         } else if (url.match(/\\.(jpg|jpeg|png|gif|webp)$/i)) {
           return { type: 'Image File', icon: '🖼️', color: '#4caf50' }
         } else if (url.match(/\\.(mp4|avi|mov|mkv|webm)$/i)) {
@@ -778,29 +791,17 @@ const htmlContent = `<!DOCTYPE html>
           body: JSON.stringify({ url, userAgent, browserInfo })
         })
         
-        if (response.body) {
-          const reader = response.body.getReader()
-          const contentLength = +response.headers.get('Content-Length')
-          let receivedLength = 0
-          
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-            
-            receivedLength += value.length
-            const progress = contentLength ? (receivedLength / contentLength) * 100 : 50
-            downloadProgressBar.style.width = progress + '%'
-          }
-        }
-        
         const result = await response.json()
         if (result.success) {
           urlInput.value = ''
           urlType.style.display = 'none'
           setTimeout(loadMessages, 1000)
+        } else {
+          alert('Download failed: ' + result.error)
         }
       } catch (error) {
         console.error('Error downloading file:', error)
+        alert('Download failed: ' + error.message)
       } finally {
         downloadSendBtn.textContent = '📥 Download & Send'
         downloadSendBtn.disabled = false
@@ -1214,51 +1215,155 @@ async function startWhatsAppSession(sessionId) {
   }
 }
 
-function isYouTubeUrl(url) {
-  return /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/.test(url)
+function detectPlatform(url) {
+  const hostname = new URL(url).hostname.toLowerCase()
+
+  if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) {
+    return "youtube"
+  } else if (hostname.includes("instagram.com")) {
+    return "instagram"
+  } else if (hostname.includes("tiktok.com")) {
+    return "tiktok"
+  } else if (hostname.includes("twitter.com") || hostname.includes("x.com")) {
+    return "twitter"
+  } else if (hostname.includes("facebook.com") || hostname.includes("fb.watch")) {
+    return "facebook"
+  } else if (hostname.includes("reddit.com")) {
+    return "reddit"
+  } else if (hostname.includes("pinterest.com")) {
+    return "pinterest"
+  } else if (hostname.includes("linkedin.com")) {
+    return "linkedin"
+  }
+
+  return "generic"
 }
 
-async function downloadYouTubeVideo(url, userAgent) {
+async function downloadWithYtDlp(url, userAgent) {
   try {
-    const info = await ytdl.getInfo(url)
-    const format = ytdl.chooseFormat(info.formats, { quality: "highestaudio", filter: "audioonly" })
+    const outputDir = tempDir
+    const outputTemplate = join(outputDir, "%(title)s.%(ext)s")
 
-    if (!format) {
-      throw new Error("No suitable format found")
+    const command = `yt-dlp --user-agent "${userAgent}" --format "best[height<=720]/best" --output "${outputTemplate}" "${url}"`
+
+    console.log(`Executing: ${command}`)
+    const { stdout, stderr } = await execAsync(command, {
+      timeout: 120000,
+      maxBuffer: 1024 * 1024 * 50,
+    })
+
+    if (stderr && !stderr.includes("WARNING")) {
+      console.error("yt-dlp stderr:", stderr)
     }
 
-    const title = info.videoDetails.title.replace(/[^\w\s-]/g, "").trim()
-    const filename = `${title}.${format.container}`
+    const files = await fs.promises.readdir(outputDir)
+    const downloadedFile = files.find(
+      (file) =>
+        file.includes(".mp4") ||
+        file.includes(".webm") ||
+        file.includes(".mkv") ||
+        file.includes(".mp3") ||
+        file.includes(".m4a") ||
+        file.includes(".jpg") ||
+        file.includes(".png"),
+    )
 
-    const stream = ytdl(url, {
-      format: format,
-      requestOptions: {
-        headers: {
-          "User-Agent": userAgent,
-        },
-      },
-    })
+    if (!downloadedFile) {
+      throw new Error("No file downloaded")
+    }
 
-    const chunks = []
+    const filePath = join(outputDir, downloadedFile)
+    const buffer = await fs.promises.readFile(filePath)
 
-    return new Promise((resolve, reject) => {
-      stream.on("data", (chunk) => chunks.push(chunk))
-      stream.on("end", () => {
-        const buffer = Buffer.concat(chunks)
-        resolve({ filename, buffer, size: buffer.length })
-      })
-      stream.on("error", reject)
-    })
+    await fs.promises.unlink(filePath)
+
+    return {
+      filename: downloadedFile,
+      buffer: buffer,
+      size: buffer.length,
+    }
   } catch (error) {
-    console.error("Error downloading YouTube video:", error)
+    console.error("yt-dlp download error:", error)
+    throw error
+  }
+}
+
+async function downloadWithGalleryDl(url, userAgent) {
+  try {
+    const outputDir = tempDir
+
+    const command = `gallery-dl --user-agent "${userAgent}" --dest "${outputDir}" "${url}"`
+
+    console.log(`Executing: ${command}`)
+    const { stdout, stderr } = await execAsync(command, {
+      timeout: 60000,
+      maxBuffer: 1024 * 1024 * 20,
+    })
+
+    if (stderr && !stderr.includes("WARNING")) {
+      console.error("gallery-dl stderr:", stderr)
+    }
+
+    const findFiles = async (dir) => {
+      const files = []
+      const items = await fs.promises.readdir(dir, { withFileTypes: true })
+
+      for (const item of items) {
+        const fullPath = join(dir, item.name)
+        if (item.isDirectory()) {
+          files.push(...(await findFiles(fullPath)))
+        } else if (item.isFile() && !item.name.startsWith(".")) {
+          files.push(fullPath)
+        }
+      }
+
+      return files
+    }
+
+    const allFiles = await findFiles(outputDir)
+    const mediaFiles = allFiles.filter((file) => {
+      const ext = path.extname(file).toLowerCase()
+      return [".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm", ".mkv", ".mp3", ".m4a"].includes(ext)
+    })
+
+    if (mediaFiles.length === 0) {
+      throw new Error("No media files downloaded")
+    }
+
+    const filePath = mediaFiles[0]
+    const buffer = await fs.promises.readFile(filePath)
+    const filename = path.basename(filePath)
+
+    for (const file of mediaFiles) {
+      try {
+        await fs.promises.unlink(file)
+      } catch (e) {}
+    }
+
+    return {
+      filename: filename,
+      buffer: buffer,
+      size: buffer.length,
+    }
+  } catch (error) {
+    console.error("gallery-dl download error:", error)
     throw error
   }
 }
 
 async function downloadFileFromUrl(url, userAgent, browserInfo) {
   try {
-    if (isYouTubeUrl(url)) {
-      return await downloadYouTubeVideo(url, userAgent)
+    const platform = detectPlatform(url)
+
+    if (platform === "youtube") {
+      return await downloadWithYtDlp(url, userAgent)
+    } else if (["instagram", "tiktok", "twitter", "facebook", "reddit", "pinterest"].includes(platform)) {
+      try {
+        return await downloadWithGalleryDl(url, userAgent)
+      } catch (error) {
+        console.log("gallery-dl failed, trying yt-dlp...")
+        return await downloadWithYtDlp(url, userAgent)
+      }
     }
 
     const headers = createBrowserHeaders(userAgent)
@@ -1266,6 +1371,7 @@ async function downloadFileFromUrl(url, userAgent, browserInfo) {
     const response = await fetch(url, {
       headers,
       redirect: "follow",
+      timeout: 30000,
     })
 
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
