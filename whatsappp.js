@@ -24,6 +24,8 @@ const CONFIG = {
   SESSION_DURATION: 10 * 60 * 1000,
   COOLDOWN_DURATION: 30 * 60 * 1000,
   MAX_DATA_PER_SESSION: 1024 * 1024 * 1024,
+  QR_REFRESH_INTERVAL: 45000,
+  CONNECTION_TIMEOUT: 60000,
 }
 
 const __filename = fileURLToPath(import.meta.url)
@@ -35,6 +37,8 @@ const sessionData = new Map()
 const userRegistry = new Map()
 const qrCodes = new Map()
 const cookiesStorage = new Map()
+const qrTimers = new Map()
+const connectionStates = new Map()
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -133,6 +137,7 @@ const htmlContent = `<!DOCTYPE html>
     .status-connected { background: linear-gradient(45deg, #4CAF50, #45a049); }
     .status-disconnected { background: linear-gradient(45deg, #f44336, #d32f2f); }
     .status-waiting { background: linear-gradient(45deg, #ff9800, #f57c00); }
+    .status-connecting { background: linear-gradient(45deg, #2196F3, #1976D2); }
     .qr-container {
       text-align: center;
       padding: 50px;
@@ -157,6 +162,12 @@ const htmlContent = `<!DOCTYPE html>
       cursor: pointer;
       font-size: 16px;
       transition: all 0.3s ease;
+      margin: 10px;
+    }
+    .qr-timer {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-top: 10px;
     }
     .main-content {
       flex: 1;
@@ -250,7 +261,7 @@ const htmlContent = `<!DOCTYPE html>
     .stats {
       display: flex;
       justify-content: space-between;
-      color: rgba(255,255,255,0.8);
+      color: rgba(255, 255, 255, 0.8);
       font-size: 12px;
       margin-top: 10px;
     }
@@ -262,7 +273,7 @@ const htmlContent = `<!DOCTYPE html>
     .quality-btn {
       flex: 1;
       padding: 10px;
-      background: rgba(255,255,255,0.2);
+      background: rgba(255, 255, 255, 0.2);
       border: none;
       border-radius: 8px;
       color: white;
@@ -273,7 +284,7 @@ const htmlContent = `<!DOCTYPE html>
       background: linear-gradient(45deg, #667eea, #764ba2);
     }
     .loading-spinner {
-      border: 3px solid rgba(255,255,255,0.3);
+      border: 3px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
       border-top: 3px solid white;
       width: 30px;
@@ -293,6 +304,11 @@ const htmlContent = `<!DOCTYPE html>
       color: white;
       text-align: center;
       margin: 20px 0;
+    }
+    .connection-info {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -316,8 +332,10 @@ const htmlContent = `<!DOCTYPE html>
     <div id="qr-section" class="qr-container" style="display: none;">
       <h1>📱 Scan QR Code</h1>
       <div id="qr-image"></div>
-      <p>Open WhatsApp → Linked Devices → Link Device</p>
-      <button onclick="location.reload()">Refresh QR</button>
+      <div class="qr-timer">QR refreshes in: <span id="qr-countdown">45</span>s</div>
+      <div class="connection-info">Keep WhatsApp open and scan quickly</div>
+      <button onclick="refreshQR()">Refresh Now</button>
+      <button onclick="location.reload()">New Session</button>
     </div>
     
     <div id="loading-section" class="qr-container">
@@ -378,6 +396,7 @@ const htmlContent = `<!DOCTYPE html>
       loadingSection: document.getElementById("loading-section"),
       mainContent: document.getElementById("main-content"),
       qrImage: document.getElementById("qr-image"),
+      qrCountdown: document.getElementById("qr-countdown"),
       cookiesUploadArea: document.getElementById("cookies-upload-area"),
       cookiesInput: document.getElementById("cookies-input"),
       cookiesStatus: document.getElementById("cookies-status"),
@@ -391,6 +410,9 @@ const htmlContent = `<!DOCTYPE html>
     let selectedQuality = '480';
     let sessionTimer = null;
     let cooldownTimer = null;
+    let qrTimer = null;
+    let qrCountdownTimer = null;
+    let qrCountdown = 45;
 
     elements.sessionInfo.textContent = \`Session: \${sessionId.substring(0, 8)}...\`;
 
@@ -559,6 +581,32 @@ const htmlContent = `<!DOCTYPE html>
       }, 1000);
     }
 
+    function startQRCountdown() {
+      if (qrCountdownTimer) clearInterval(qrCountdownTimer);
+      
+      qrCountdown = 45;
+      elements.qrCountdown.textContent = qrCountdown;
+      
+      qrCountdownTimer = setInterval(() => {
+        qrCountdown--;
+        elements.qrCountdown.textContent = qrCountdown;
+        
+        if (qrCountdown <= 0) {
+          clearInterval(qrCountdownTimer);
+          refreshQR();
+        }
+      }, 1000);
+    }
+
+    function refreshQR() {
+      fetch(\`/api/refresh-qr?session=\${sessionId}\`, { method: 'POST' })
+        .then(() => {
+          setTimeout(checkStatus, 1000);
+        });
+    }
+
+    window.refreshQR = refreshQR;
+
     async function checkStatus() {
       try {
         const response = await fetch(\`/api/status?session=\${sessionId}\`);
@@ -581,6 +629,8 @@ const htmlContent = `<!DOCTYPE html>
           elements.mainContent.style.display = 'block';
           elements.sessionStats.style.display = 'flex';
           
+          if (qrCountdownTimer) clearInterval(qrCountdownTimer);
+          
           if (result.sessionTime) {
             startSessionTimer(result.sessionTime);
           }
@@ -599,7 +649,19 @@ const htmlContent = `<!DOCTYPE html>
           
           if (result.qr) {
             elements.qrImage.innerHTML = \`<img src="\${result.qr}" alt="QR Code" />\`;
+            if (!qrCountdownTimer) {
+              startQRCountdown();
+            }
           }
+        } else if (result.status === 'connecting') {
+          elements.status.textContent = 'Connecting...';
+          elements.status.className = 'status status-connecting';
+          elements.cooldownSection.style.display = 'none';
+          elements.qrSection.style.display = 'none';
+          elements.mainContent.style.display = 'none';
+          elements.loadingSection.style.display = 'block';
+          
+          if (qrCountdownTimer) clearInterval(qrCountdownTimer);
         } else {
           elements.status.textContent = 'Initializing...';
           elements.status.className = 'status status-disconnected';
@@ -607,6 +669,8 @@ const htmlContent = `<!DOCTYPE html>
           elements.qrSection.style.display = 'none';
           elements.mainContent.style.display = 'none';
           elements.loadingSection.style.display = 'block';
+          
+          if (qrCountdownTimer) clearInterval(qrCountdownTimer);
         }
       } catch (error) {
         elements.status.textContent = 'Connection Error';
@@ -615,7 +679,7 @@ const htmlContent = `<!DOCTYPE html>
     }
 
     checkStatus();
-    setInterval(checkStatus, 3000);
+    setInterval(checkStatus, 5000);
   </script>
 </body>
 </html>`
@@ -649,6 +713,38 @@ app.post("/api/cookies", upload.single("cookiesFile"), async (req, res) => {
     fs.unlinkSync(req.file.path)
 
     res.json({ success: true, message: "Cookies loaded successfully" })
+  } catch (error) {
+    res.json({ success: false, error: error.message })
+  }
+})
+
+app.post("/api/refresh-qr", async (req, res) => {
+  try {
+    const sessionId = req.query.session
+    if (!sessionId) {
+      return res.json({ success: false, error: "Session ID required" })
+    }
+
+    if (qrTimers.has(sessionId)) {
+      clearTimeout(qrTimers.get(sessionId))
+    }
+
+    qrCodes.delete(sessionId)
+    connectionStates.set(sessionId, "requesting_qr")
+
+    if (activeSessions.has(sessionId)) {
+      const sock = activeSessions.get(sessionId)
+      try {
+        sock.end()
+      } catch (err) {}
+      activeSessions.delete(sessionId)
+    }
+
+    setTimeout(() => {
+      createWhatsAppSession(sessionId)
+    }, 2000)
+
+    res.json({ success: true })
   } catch (error) {
     res.json({ success: false, error: error.message })
   }
@@ -830,6 +926,11 @@ app.get("/api/status", async (req, res) => {
       }
     }
 
+    const connectionState = connectionStates.get(sessionId)
+    if (connectionState === "connecting") {
+      return res.json({ status: "connecting" })
+    }
+
     if (qrCodes.has(sessionId)) {
       return res.json({ status: "qr", qr: qrCodes.get(sessionId) })
     }
@@ -851,6 +952,11 @@ function getUserPhoneFromSession(sessionId) {
 
 function cleanupSession(sessionId) {
   try {
+    if (qrTimers.has(sessionId)) {
+      clearTimeout(qrTimers.get(sessionId))
+      qrTimers.delete(sessionId)
+    }
+
     if (activeSessions.has(sessionId)) {
       const sock = activeSessions.get(sessionId)
       const session = sessionData.get(sessionId)
@@ -871,6 +977,7 @@ function cleanupSession(sessionId) {
     sessionData.delete(sessionId)
     qrCodes.delete(sessionId)
     cookiesStorage.delete(sessionId)
+    connectionStates.delete(sessionId)
 
     const sessionDir = join(tempDir, sessionId)
     if (fs.existsSync(sessionDir)) {
@@ -891,11 +998,17 @@ function cleanupSession(sessionId) {
 
 async function createWhatsAppSession(sessionId) {
   try {
+    if (activeSessions.has(sessionId)) {
+      return
+    }
+
     const sessionDir = join(__dirname, "sessions", sessionId)
     fs.mkdirSync(sessionDir, { recursive: true })
 
     const tempSessionDir = join(tempDir, sessionId)
     fs.mkdirSync(tempSessionDir, { recursive: true })
+
+    connectionStates.set(sessionId, "initializing")
 
     const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
 
@@ -903,25 +1016,72 @@ async function createWhatsAppSession(sessionId) {
       auth: state,
       printQRInTerminal: false,
       browser: Browsers.macOS("Desktop"),
-      defaultQueryTimeoutMs: 60000,
+      defaultQueryTimeoutMs: CONFIG.CONNECTION_TIMEOUT,
+      connectTimeoutMs: CONFIG.CONNECTION_TIMEOUT,
+      qrTimeout: CONFIG.QR_REFRESH_INTERVAL,
     })
+
+    let qrGenerated = false
 
     sock.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect, qr } = update
 
-      if (qr) {
-        const qrDataURL = await qrcode.toDataURL(qr, { scale: 8 })
+      if (qr && !qrGenerated) {
+        qrGenerated = true
+        connectionStates.set(sessionId, "qr_ready")
+
+        const qrDataURL = await qrcode.toDataURL(qr, {
+          scale: 8,
+          margin: 2,
+          color: {
+            dark: "#000000",
+            light: "#FFFFFF",
+          },
+        })
         qrCodes.set(sessionId, qrDataURL)
+
+        if (qrTimers.has(sessionId)) {
+          clearTimeout(qrTimers.get(sessionId))
+        }
+
+        const qrTimer = setTimeout(() => {
+          qrCodes.delete(sessionId)
+          qrGenerated = false
+
+          if (activeSessions.has(sessionId) && !activeSessions.get(sessionId).user) {
+            try {
+              sock.end()
+            } catch (err) {}
+            activeSessions.delete(sessionId)
+
+            setTimeout(() => {
+              createWhatsAppSession(sessionId)
+            }, 2000)
+          }
+        }, CONFIG.QR_REFRESH_INTERVAL)
+
+        qrTimers.set(sessionId, qrTimer)
       }
 
       if (connection === "close") {
         const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401
+
         cleanupSession(sessionId)
+
         if (shouldReconnect) {
           setTimeout(() => createWhatsAppSession(sessionId), 5000)
         }
+      } else if (connection === "connecting") {
+        connectionStates.set(sessionId, "connecting")
       } else if (connection === "open") {
+        connectionStates.set(sessionId, "connected")
         qrCodes.delete(sessionId)
+        qrGenerated = false
+
+        if (qrTimers.has(sessionId)) {
+          clearTimeout(qrTimers.get(sessionId))
+          qrTimers.delete(sessionId)
+        }
 
         const userPhone = sock.user.id.split(":")[0]
 
