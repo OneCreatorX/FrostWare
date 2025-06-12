@@ -1,8 +1,8 @@
-const express = require('express')
-const multer = require('multer')
-const fs = require('fs')
-const https = require('https')
-const { exec } = require('child_process')
+import express from 'express'
+import multer from 'multer'
+import fs from 'fs'
+import https from 'https'
+import { exec } from 'child_process'
 
 const app = express()
 const upload = multer({ dest: 'uploads/' })
