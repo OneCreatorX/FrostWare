@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const CONFIG = {
-  PORT: 8433,
+  PORT: 433,
   DOMAIN: "system.heatherx.site",
   SSL_KEY: `/etc/letsencrypt/live/system.heatherx.site/privkey.pem`,
   SSL_CERT: `/etc/letsencrypt/live/system.heatherx.site/cert.pem`,
