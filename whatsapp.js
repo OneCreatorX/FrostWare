@@ -10,6 +10,7 @@ import multer from "multer"
 import crypto from "crypto"
 import { exec } from "child_process"
 import { promisify } from "util"
+import path from "path"
 
 const execAsync = promisify(exec)
 
@@ -82,7 +83,7 @@ function createBrowserHeaders(userAgent, referer = null) {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const sessionId = req.headers["session-id"]
+    const sessionId = req.headers["session-id"] || req.query.session
     const sessionDir = join(__dirname, "uploads", sessionId || "temp")
     fs.mkdirSync(sessionDir, { recursive: true })
     cb(null, sessionDir)
@@ -104,17 +105,16 @@ const tempDir = join(__dirname, "temp")
 const cookiesDir = join(__dirname, "cookies")
 
 try {
-  await fs.promises.mkdir(mediaDir, { recursive: true })
-  await fs.promises.mkdir(uploadsDir, { recursive: true })
-  await fs.promises.mkdir("public", { recursive: true })
-  await fs.promises.mkdir("sessions", { recursive: true })
-  await fs.promises.mkdir(tempDir, { recursive: true })
-  await fs.promises.mkdir(cookiesDir, { recursive: true })
-} catch (err) {
-  console.error("Error creating directories:", err)
-}
+  fs.mkdirSync(mediaDir, { recursive: true })
+  fs.mkdirSync(uploadsDir, { recursive: true })
+  fs.mkdirSync("public", { recursive: true })
+  fs.mkdirSync("sessions", { recursive: true })
+  fs.mkdirSync(tempDir, { recursive: true })
+  fs.mkdirSync(cookiesDir, { recursive: true })
+} catch (err) {}
 
-const htmlContent = `<!DOCTYPE html>
+const htmlContent =
+  `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -1074,7 +1074,6 @@ const htmlContent = `<!DOCTYPE html>
 
     sessionInfoElement.textContent = \`Session: \${sessionId.substring(3, 15)}...\`
 
-    // Format selection modal
     formatTabs.forEach(tab => {
       tab.addEventListener('click', () => {
         const tabType = tab.dataset.tab
@@ -1147,7 +1146,6 @@ const htmlContent = `<!DOCTYPE html>
           throw new Error(result.error)
         }
       } catch (error) {
-        console.error('Error fetching formats:', error)
         formatLoading.style.display = 'none'
         formatError.style.display = 'block'
         formatError.textContent = 'Error: ' + (error.message || 'Failed to load formats')
@@ -1223,7 +1221,6 @@ const htmlContent = `<!DOCTYPE html>
         audioFormats.appendChild(formatItem)
       })
       
-      // Auto-select first format in each category
       if (availableFormats.video.length > 0) {
         const bestVideo = videoFormats.querySelector('.format-item')
         if (bestVideo) {
@@ -1248,7 +1245,6 @@ const htmlContent = `<!DOCTYPE html>
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
     }
 
-    // Cookies handling
     cookiesUploadArea.addEventListener('click', () => cookiesInput.click())
     cookiesUploadArea.addEventListener('dragover', (e) => {
       e.preventDefault()
@@ -1279,13 +1275,10 @@ const htmlContent = `<!DOCTYPE html>
         
         if (cookiesData.cookies && Array.isArray(cookiesData.cookies)) {
           const formData = new FormData()
-          formData.append('cookies', text)
+          formData.append('cookiesFile', file)
           
-          const response = await fetch('/api/upload-cookies', {
+          const response = await fetch(\`/api/cookies?session=\${sessionId}\`, {
             method: 'POST',
-            headers: {
-              'session-id': sessionId
-            },
             body: formData
           })
           
@@ -1294,7 +1287,6 @@ const htmlContent = `<!DOCTYPE html>
             hasCookies = true
             cookiesStatus.textContent = \`✅ Cookies loaded - \${cookiesData.cookies.length} cookies from \${cookiesData.url}\`
             cookiesStatus.classList.add('loaded')
-            console.log('Cookies uploaded successfully')
           } else {
             throw new Error(result.error)
           }
@@ -1302,7 +1294,6 @@ const htmlContent = `<!DOCTYPE html>
           throw new Error('Invalid cookies format')
         }
       } catch (error) {
-        console.error('Error uploading cookies:', error)
         cookiesStatus.textContent = '❌ Error loading cookies: ' + error.message
         cookiesStatus.classList.remove('loaded')
       }
@@ -1329,13 +1320,13 @@ const htmlContent = `<!DOCTYPE html>
           return { type: 'Pinterest Image', icon: '📌', color: '#bd081c' }
         } else if (hostname.includes('linkedin.com')) {
           return { type: 'LinkedIn Media', icon: '💼', color: '#0077b5' }
-        } else if (url.match(/\\.(jpg|jpeg|png|gif|webp)$/i)) {
+        } else if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
           return { type: 'Image File', icon: '🖼️', color: '#4caf50' }
-        } else if (url.match(/\\.(mp4|avi|mov|mkv|webm)$/i)) {
+        } else if (url.match(/\.(mp4|avi|mov|mkv|webm)$/i)) {
           return { type: 'Video File', icon: '🎬', color: '#2196f3' }
-        } else if (url.match(/\\.(mp3|wav|ogg|m4a|flac)$/i)) {
+        } else if (url.match(/\.(mp3|wav|ogg|m4a|flac)$/i)) {
           return { type: 'Audio File', icon: '🎵', color: '#ff9800' }
-        } else if (url.match(/\\.(pdf|doc|docx|txt|zip|rar)$/i)) {
+        } else if (url.match(/\.(pdf|doc|docx|txt|zip|rar)$/i)) {
           return { type: 'Document', icon: '📄', color: '#9c27b0' }
         } else {
           return { type: 'Web Content', icon: '🌐', color: '#607d8b' }
@@ -1431,27 +1422,17 @@ const htmlContent = `<!DOCTYPE html>
       formData.append('file', file)
 
       try {
-        const response = await fetch('/api/upload', {
+        const response = await fetch(\`/api/upload?session=\${sessionId}\`, {
           method: 'POST',
-          headers: {
-            'session-id': sessionId,
-            'user-agent': userAgent,
-            'browser-info': JSON.stringify(browserInfo),
-            'show-messages': settings.showMessages,
-            'download-media': settings.downloadMedia
-          },
           body: formData
         })
         const result = await response.json()
         if (result.success) {
-          console.log('File uploaded and sent:', result.filename)
           if (settings.showMessages) {
             setTimeout(loadMessages, 1000)
           }
         }
-      } catch (error) {
-        console.error('Error uploading file:', error)
-      }
+      } catch (error) {}
     }
 
     async function downloadAndSend(url) {
@@ -1476,17 +1457,10 @@ const htmlContent = `<!DOCTYPE html>
       statusElement.className = 'status-downloading'
 
       try {
-        const response = await fetch('/api/download-send', {
+        const response = await fetch(\`/api/download?session=\${sessionId}\`, {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'session-id': sessionId,
-            'user-agent': userAgent,
-            'browser-info': JSON.stringify(browserInfo),
-            'show-messages': settings.showMessages,
-            'download-media': settings.downloadMedia
-          },
-          body: JSON.stringify({ url, userAgent, browserInfo })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
         })
         
         const result = await response.json()
@@ -1501,8 +1475,7 @@ const htmlContent = `<!DOCTYPE html>
           alert('Download failed: ' + result.error)
         }
       } catch (error) {
-        console.error('Error downloading file:', error)
-        alert('Download failed: ' + error.message)
+        alert('Download failed: ' + (error.message || 'Unknown error'))
       } finally {
         downloadSendBtn.textContent = '📥 Download & Send'
         downloadSendBtn.disabled = false
@@ -1524,22 +1497,10 @@ const htmlContent = `<!DOCTYPE html>
       statusElement.className = 'status-downloading'
 
       try {
-        const response = await fetch('/api/download-format', {
+        const response = await fetch(\`/api/download-format?session=\${sessionId}\`, {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'session-id': sessionId,
-            'user-agent': userAgent,
-            'browser-info': JSON.stringify(browserInfo),
-            'show-messages': settings.showMessages,
-            'download-media': settings.downloadMedia
-          },
-          body: JSON.stringify({ 
-            url, 
-            formatId: format.formatId,
-            userAgent, 
-            browserInfo 
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, formatId: format.formatId })
         })
         
         const result = await response.json()
@@ -1554,8 +1515,7 @@ const htmlContent = `<!DOCTYPE html>
           alert('Download failed: ' + result.error)
         }
       } catch (error) {
-        console.error('Error downloading file:', error)
-        alert('Download failed: ' + error.message)
+        alert('Download failed: ' + (error.message || 'Unknown error'))
       } finally {
         downloadSendBtn.textContent = '📥 Download & Send'
         downloadSendBtn.disabled = false
@@ -1585,14 +1545,9 @@ const htmlContent = `<!DOCTYPE html>
       if (!message) return
 
       try {
-        const response = await fetch('/api/send', {
+        const response = await fetch(\`/api/send?session=\${sessionId}\`, {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'session-id': sessionId,
-            'user-agent': userAgent,
-            'show-messages': settings.showMessages
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message })
         })
         const result = await response.json()
@@ -1602,9 +1557,7 @@ const htmlContent = `<!DOCTYPE html>
             setTimeout(loadMessages, 1000)
           }
         }
-      } catch (error) {
-        console.error('Error sending message:', error)
-      }
+      } catch (error) {}
     })
 
     messageInput.addEventListener('keypress', (e) => {
@@ -1623,9 +1576,7 @@ const htmlContent = `<!DOCTYPE html>
         if (result.success) {
           displayMessages(result.messages)
         }
-      } catch (error) {
-        console.error('Error loading messages:', error)
-      }
+      } catch (error) {}
     }
 
     function displayMessages(messages) {
@@ -1669,75 +1620,67 @@ const htmlContent = `<!DOCTYPE html>
         const response = await fetch(\`/api/status?session=\${sessionId}\`)
         const result = await response.json()
         
-        if (result.waiting) {
-          showWaitingScreen(result.position, result.maxSessions)
-          return
-        }
-        
-        if (result.qr) {
-          showQRCode(result.qr)
-        } else if (result.connected) {
-          showMainInterface(result.user)
-        } else {
-          showLoadingScreen()
-        }
-        
-        if (result.connected) {
+        if (result.status === 'waiting') {
+          qrSection.style.display = 'none'
+          loadingSection.style.display = 'none'
+          mainContent.style.display = 'none'
+          waitingSection.style.display = 'block'
+          
+          queuePosition.textContent = result.position
+          positionText.textContent = result.position
+          maxSessions.textContent = result.maxSessions
+          
+          statusElement.textContent = \`Waiting (Position \${result.position})\`
+          statusElement.className = 'status-waiting'
+        } else if (result.status === 'qr') {
+          waitingSection.style.display = 'none'
+          loadingSection.style.display = 'none'
+          mainContent.style.display = 'none'
+          qrSection.style.display = 'block'
+          
+          if (result.qr) {
+            qrImage.innerHTML = \`<img src="\${result.qr}" alt="QR
+          
+           {
+            qrImage.innerHTML = ` < img
+src = "${result.qr}"
+alt =
+  "QR Code" >
+  `
+          }
+          \
+          statusElement.textContent = 'Scan QR Code'
+          statusElement.className = 'status-disconnected'
+        } else if (result.status === 'connected') {
+          waitingSection.style.display = 'none'
+          qrSection.style.display = 'none'
+          loadingSection.style.display = 'none'
+          mainContent.style.display = 'flex'
+          
           statusElement.textContent = 'Connected'
           statusElement.className = 'status-connected'
+          
+          if (result.user) {
+            userInfo.textContent = `
+Connected as
+: $
+{
+  result.user.name || result.user.id
+}
+;`
+          }
+          
+          if (settings.showMessages) {
+            loadMessages()
+          }
         } else {
           statusElement.textContent = 'Disconnected'
           statusElement.className = 'status-disconnected'
         }
       } catch (error) {
-        console.error('Error checking status:', error)
-        statusElement.textContent = 'Error'
+        statusElement.textContent = 'Connection Error'
         statusElement.className = 'status-disconnected'
       }
-    }
-
-    function showWaitingScreen(position, maxSessions) {
-      qrSection.style.display = 'none'
-      loadingSection.style.display = 'none'
-      mainContent.style.display = 'none'
-      waitingSection.style.display = 'block'
-      
-      queuePosition.textContent = position
-      positionText.textContent = position
-      maxSessions.textContent = maxSessions
-      
-      statusElement.textContent = \`Waiting (Position \${position})\`
-      statusElement.className = 'status-waiting'
-    }
-
-    function showQRCode(qrData) {
-      qrSection.style.display = 'block'
-      loadingSection.style.display = 'none'
-      mainContent.style.display = 'none'
-      waitingSection.style.display = 'none'
-      qrImage.innerHTML = \`<img src="\${qrData}" alt="QR Code">\`
-    }
-
-    function showMainInterface(user) {
-      qrSection.style.display = 'none'
-      loadingSection.style.display = 'none'
-      waitingSection.style.display = 'none'
-      mainContent.style.display = 'flex'
-      
-      if (user) {
-        userInfo.textContent = \`Connected as: \${user.name || user.id}\`
-      }
-      
-      if (settings.showMessages) {
-        loadMessages()
-      }
-    }
-
-    function showLoadingScreen() {
-      qrSection.style.display = 'none'
-      loadingSection.style.display = 'block'
-      mainContent.style.display = 'none'
-      waitingSection.style.display = 'none'
     }
 
     loadSettings()
@@ -1747,716 +1690,589 @@ const htmlContent = `<!DOCTYPE html>
 </body>
 </html>`
 
-await fs.promises.writeFile("public/index.html", htmlContent)
+fs.writeFileSync("public/index.html", htmlContent)
 
 app.get("/", (req, res) => {
   res.sendFile(join(__dirname, "public", "index.html"))
 })
 
-app.get("/api/status", async (req, res) => {
-  const sessionId = req.query.session
-  if (!sessionId) {
-    return res.json({ error: "Session ID required" })
-  }
-
-  const session = activeSessions.get(sessionId)
-  if (!session) {
-    const queueIndex = waitingQueue.findIndex((q) => q.sessionId === sessionId)
-    if (queueIndex !== -1) {
-      return res.json({
-        waiting: true,
-        position: queueIndex + 1,
-        maxSessions: CONFIG.MAX_SESSIONS,
-      })
-    }
-
-    if (activeSessions.size >= CONFIG.MAX_SESSIONS) {
-      if (!waitingQueue.find((q) => q.sessionId === sessionId)) {
-        waitingQueue.push({ sessionId, timestamp: Date.now() })
-      }
-      const position = waitingQueue.findIndex((q) => q.sessionId === sessionId) + 1
-      return res.json({
-        waiting: true,
-        position,
-        maxSessions: CONFIG.MAX_SESSIONS,
-      })
-    }
-
-    try {
-      const sessionDir = join(__dirname, "sessions", sessionId)
-      await fs.promises.mkdir(sessionDir, { recursive: true })
-
-      const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
-      let sock
-      try {
-        sock = makeWASocket({
-          auth: state,
-          printQRInTerminal: false,
-          browser: Browsers.macOS("Desktop"),
-          generateHighQualityLinkPreview: true,
-        })
-      } catch (e) {
-        console.log(e)
-      }
-
-      const sessionData = {
-        sock,
-        saveCreds,
-        qr: null,
-        connected: false,
-        user: null,
-        messages: [],
-        lastActivity: Date.now(),
-      }
-
-      sock.ev.on("creds.update", saveCreds)
-
-      sock.ev.on("connection.update", async (update) => {
-        const { connection, lastDisconnect, qr } = update
-
-        if (qr) {
-          try {
-            const qrImage = await qrcode.toDataURL(qr)
-            sessionData.qr = qrImage
-          } catch (err) {
-            console.error("QR generation error:", err)
-          }
-        }
-
-        if (connection === "close") {
-          const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401
-          console.log("Connection closed due to", lastDisconnect?.error, ", reconnecting", shouldReconnect)
-
-          if (shouldReconnect) {
-            setTimeout(() => {
-              if (activeSessions.has(sessionId)) {
-                activeSessions.delete(sessionId)
-                processQueue()
-              }
-            }, 3000)
-          } else {
-            activeSessions.delete(sessionId)
-            processQueue()
-          }
-        } else if (connection === "open") {
-          console.log("WhatsApp connection opened for session:", sessionId)
-          sessionData.connected = true
-          sessionData.qr = null
-          sessionData.user = sock.user
-        }
-      })
-
-      sock.ev.on("messages.upsert", async (m) => {
-        sessionData.lastActivity = Date.now()
-        const message = m.messages[0]
-        if (!message.key.fromMe) return
-
-        const messageData = {
-          id: message.key.id,
-          text: message.message?.conversation || message.message?.extendedTextMessage?.text || "",
-          timestamp: Date.now(),
-          media: null,
-        }
-
-        if (
-          message.message?.imageMessage ||
-          message.message?.videoMessage ||
-          message.message?.audioMessage ||
-          message.message?.documentMessage
-        ) {
-          try {
-            const mediaType = message.message.imageMessage
-              ? "image"
-              : message.message.videoMessage
-                ? "video"
-                : message.message.audioMessage
-                  ? "audio"
-                  : "document"
-
-            const mediaMessage = message.message[mediaType + "Message"]
-            const buffer = await downloadMediaMessage(message, "buffer", {})
-
-            const extension =
-              mediaType === "image" ? "jpg" : mediaType === "video" ? "mp4" : mediaType === "audio" ? "mp3" : "bin"
-            const filename = `${Date.now()}-${sessionId}.${extension}`
-            const filepath = join(mediaDir, filename)
-
-            await fs.promises.writeFile(filepath, buffer)
-
-            messageData.media = {
-              type: mediaType,
-              filename,
-              size: buffer.length,
-              mimetype: mediaMessage.mimetype,
-            }
-
-            if (CONFIG.AUTO_DELETE_AFTER_SEND) {
-              setTimeout(async () => {
-                try {
-                  await fs.promises.unlink(filepath)
-                  console.log(`Auto-deleted file: ${filename}`)
-                } catch (err) {
-                  console.error(`Error auto-deleting file ${filename}:`, err)
-                }
-              }, 300000)
-            }
-          } catch (err) {
-            console.error("Error processing media:", err)
-          }
-        }
-
-        sessionData.messages.push(messageData)
-        if (sessionData.messages.length > 100) {
-          sessionData.messages = sessionData.messages.slice(-50)
-        }
-      })
-
-      activeSessions.set(sessionId, sessionData)
-      processQueue()
-    } catch (error) {
-      console.error("Error creating session:", error)
-      return res.json({ error: "Failed to create session" })
-    }
-  }
-
-  const sessionData = activeSessions.get(sessionId)
-  if (!sessionData) {
-    return res.json({ error: "Session not found" })
-  }
-
-  res.json({
-    connected: sessionData.connected,
-    qr: sessionData.qr,
-    user: sessionData.user,
-    waiting: false,
-  })
-})
-
-function processQueue() {
-  while (waitingQueue.length > 0 && activeSessions.size < CONFIG.MAX_SESSIONS) {
-    const next = waitingQueue.shift()
-    console.log(`Processing queued session: ${next.sessionId}`)
-  }
-}
-
-app.get("/api/messages", (req, res) => {
-  const sessionId = req.query.session
-  const session = activeSessions.get(sessionId)
-
-  if (!session) {
-    return res.json({ error: "Session not found" })
-  }
-
-  res.json({
-    success: true,
-    messages: session.messages || [],
-  })
-})
-
-app.post("/api/send", async (req, res) => {
-  const sessionId = req.headers["session-id"]
-  const { message } = req.body
-  const session = activeSessions.get(sessionId)
-
-  if (!session || !session.connected) {
-    return res.json({ error: "Session not connected" })
-  }
-
+app.post("/api/cookies", upload.single("cookiesFile"), async (req, res) => {
   try {
-    const userJid = session.user.id
-    await session.sock.sendMessage(userJid, { text: message })
-
-    session.lastActivity = Date.now()
-    res.json({ success: true })
-  } catch (error) {
-    console.error("Error sending message:", error)
-    res.json({ error: "Failed to send message" })
-  }
-})
-
-app.post("/api/upload", upload.single("file"), async (req, res) => {
-  const sessionId = req.headers["session-id"]
-  const session = activeSessions.get(sessionId)
-
-  if (!session || !session.connected) {
-    return res.json({ error: "Session not connected" })
-  }
-
-  if (!req.file) {
-    return res.json({ error: "No file uploaded" })
-  }
-
-  try {
-    const userJid = session.user.id
-    const filePath = req.file.path
-    const mimeType = req.file.mimetype
-
-    let messageContent = {}
-
-    if (mimeType.startsWith("image/")) {
-      messageContent = {
-        image: { url: filePath },
-        caption: req.file.originalname,
-      }
-    } else if (mimeType.startsWith("video/")) {
-      messageContent = {
-        video: { url: filePath },
-        caption: req.file.originalname,
-      }
-    } else if (mimeType.startsWith("audio/")) {
-      messageContent = {
-        audio: { url: filePath },
-        mimetype: mimeType,
-      }
-    } else {
-      messageContent = {
-        document: { url: filePath },
-        mimetype: mimeType,
-        fileName: req.file.originalname,
-      }
+    const sessionId = req.headers["session-id"] || req.query.session
+    if (!sessionId) {
+      return res.json({ success: false, error: "Session ID required" })
     }
 
-    await session.sock.sendMessage(userJid, messageContent)
-
-    if (CONFIG.AUTO_DELETE_AFTER_SEND) {
-      setTimeout(async () => {
-        try {
-          await fs.promises.unlink(filePath)
-          console.log(`Auto-deleted uploaded file: ${req.file.filename}`)
-        } catch (err) {
-          console.error(`Error auto-deleting uploaded file ${req.file.filename}:`, err)
-        }
-      }, 5000)
+    if (!req.file) {
+      return res.json({ success: false, error: "No cookies file uploaded" })
     }
 
-    session.lastActivity = Date.now()
-    res.json({ success: true, filename: req.file.filename })
-  } catch (error) {
-    console.error("Error sending file:", error)
-    res.json({ error: "Failed to send file" })
-  }
-})
-
-app.post("/api/upload-cookies", upload.single("cookies"), async (req, res) => {
-  const sessionId = req.headers["session-id"]
-
-  if (!req.file) {
-    return res.json({ error: "No cookies file uploaded" })
-  }
-
-  try {
-    const cookiesText = await fs.promises.readFile(req.file.path, "utf8")
-    const cookiesData = JSON.parse(cookiesText)
+    const cookiesData = JSON.parse(fs.readFileSync(req.file.path, "utf8"))
 
     if (!cookiesData.cookies || !Array.isArray(cookiesData.cookies)) {
-      throw new Error("Invalid cookies format")
+      return res.json({ success: false, error: "Invalid cookies format" })
     }
 
-    const netscapeCookies = cookiesData.cookies
-      .map((cookie) => {
-        const domain = cookie.domain.startsWith(".") ? cookie.domain : "." + cookie.domain
-        const flag = cookie.httpOnly ? "TRUE" : "FALSE"
-        const path = cookie.path || "/"
-        const secure = cookie.secure ? "TRUE" : "FALSE"
-        const expiration = cookie.expirationDate ? Math.floor(cookie.expirationDate) : 0
-        const name = cookie.name
-        const value = cookie.value
+    const sessionCookiesPath = join(cookiesDir, `${sessionId}.json`)
+    fs.writeFileSync(sessionCookiesPath, JSON.stringify(cookiesData, null, 2))
+    cookiesStorage.set(sessionId, cookiesData)
 
-        return `${domain}\t${flag}\t${path}\t${secure}\t${expiration}\t${name}\t${value}`
-      })
-      .join("\n")
-
-    const cookiesFilePath = join(cookiesDir, `${sessionId}_cookies.txt`)
-    await fs.promises.writeFile(cookiesFilePath, `# Netscape HTTP Cookie File\n${netscapeCookies}`)
-
-    cookiesStorage.set(sessionId, {
-      path: cookiesFilePath,
-      count: cookiesData.cookies.length,
-      domain: cookiesData.url,
-      timestamp: Date.now(),
-    })
-
-    await fs.promises.unlink(req.file.path)
+    fs.unlinkSync(req.file.path)
 
     res.json({
       success: true,
-      message: `Cookies saved successfully`,
-      count: cookiesData.cookies.length,
+      message: `Cookies loaded successfully - ${cookiesData.cookies.length} cookies from ${cookiesData.url}`,
     })
   } catch (error) {
-    console.error("Error processing cookies:", error)
-    res.json({ error: "Failed to process cookies: " + error.message })
+    res.json({ success: false, error: error.message })
   }
 })
 
 app.post("/api/formats", async (req, res) => {
-  const sessionId = req.headers["session-id"]
-  const { url } = req.body
-
-  if (!url) {
-    return res.json({ error: "URL is required" })
-  }
-
   try {
-    const cookiesInfo = cookiesStorage.get(sessionId)
-    let cookiesArg = ""
-    if (cookiesInfo) {
-      cookiesArg = `--cookies "${cookiesInfo.path}"`
+    const { url } = req.body
+    const sessionId = req.headers["session-id"]
+
+    if (!url) {
+      return res.json({ success: false, error: "URL is required" })
     }
 
-    const { stdout } = await execAsync(`yt-dlp --dump-json --no-download ${cookiesArg} "${url}"`, { timeout: 30000 })
+    const cacheKey = `${sessionId}_${url}`
+    if (formatCache.has(cacheKey)) {
+      return res.json({ success: true, formats: formatCache.get(cacheKey) })
+    }
 
+    const userAgent = getRandomUserAgent()
+    const headers = createBrowserHeaders(userAgent)
+
+    let ytDlpCommand = `yt-dlp --no-warnings --dump-json --user-agent "${userAgent}"`
+
+    const sessionCookiesPath = join(cookiesDir, `${sessionId}.json`)
+    if (fs.existsSync(sessionCookiesPath)) {
+      ytDlpCommand += ` --cookies "${sessionCookiesPath}"`
+    }
+
+    ytDlpCommand += ` "${url}"`
+
+    const { stdout } = await execAsync(ytDlpCommand)
     const videoInfo = JSON.parse(stdout.trim())
-    const formats = []
 
-    if (videoInfo.formats) {
-      videoInfo.formats.forEach((format) => {
-        if (format.format_id && (format.vcodec !== "none" || format.acodec !== "none")) {
-          formats.push({
-            formatId: format.format_id,
-            container: format.ext,
-            qualityLabel: format.format_note || format.quality,
-            height: format.height,
-            width: format.width,
-            fps: format.fps,
-            vcodec: format.vcodec,
-            acodec: format.acodec,
-            filesize: format.filesize || format.filesize_approx,
-            abr: format.abr,
-            asr: format.asr,
-            hasVideo: format.vcodec && format.vcodec !== "none",
-            hasAudio: format.acodec && format.acodec !== "none",
-          })
-        }
-      })
+    if (!videoInfo.formats) {
+      return res.json({ success: false, error: "No formats available" })
     }
 
-    // Sort formats by quality
-    const videoFormats = formats.filter((f) => f.hasVideo).sort((a, b) => (b.height || 0) - (a.height || 0))
+    const formats = videoInfo.formats
+      .filter((f) => f.url && (f.vcodec !== "none" || f.acodec !== "none"))
+      .map((f) => ({
+        formatId: f.format_id,
+        container: f.ext,
+        qualityLabel: f.format_note || f.quality,
+        hasVideo: f.vcodec && f.vcodec !== "none",
+        hasAudio: f.acodec && f.acodec !== "none",
+        width: f.width,
+        height: f.height,
+        fps: f.fps,
+        vcodec: f.vcodec,
+        acodec: f.acodec,
+        abr: f.abr,
+        asr: f.asr,
+        filesize: f.filesize || f.filesize_approx,
+        url: f.url,
+      }))
+      .sort((a, b) => {
+        if (a.hasVideo && b.hasVideo) {
+          return (b.height || 0) - (a.height || 0)
+        }
+        if (a.hasAudio && b.hasAudio) {
+          return (b.abr || 0) - (a.abr || 0)
+        }
+        return 0
+      })
 
-    const audioFormats = formats.filter((f) => !f.hasVideo && f.hasAudio).sort((a, b) => (b.abr || 0) - (a.abr || 0))
+    formatCache.set(cacheKey, formats)
+    setTimeout(() => formatCache.delete(cacheKey), 300000)
 
-    res.json({
-      success: true,
-      formats: [...videoFormats, ...audioFormats],
-      title: videoInfo.title,
-      duration: videoInfo.duration,
-    })
+    res.json({ success: true, formats })
   } catch (error) {
-    console.error("Error fetching formats:", error)
-    res.json({ error: "Failed to fetch formats: " + error.message })
+    res.json({ success: false, error: error.message })
   }
 })
 
 app.post("/api/download-format", async (req, res) => {
-  const sessionId = req.headers["session-id"]
-  const { url, formatId, userAgent, browserInfo } = req.body
-  const session = activeSessions.get(sessionId)
-
-  if (!session || !session.connected) {
-    return res.json({ error: "Session not connected" })
-  }
-
-  if (!url || !formatId) {
-    return res.json({ error: "URL and format ID are required" })
-  }
-
   try {
-    const tempFilename = `download_${Date.now()}_${sessionId}`
-    const tempPath = join(tempDir, tempFilename)
+    const { url, formatId } = req.body
+    const sessionId = req.headers["session-id"] || req.query.session
 
-    const cookiesInfo = cookiesStorage.get(sessionId)
-    let cookiesArg = ""
-    if (cookiesInfo) {
-      cookiesArg = `--cookies "${cookiesInfo.path}"`
+    if (!sessionId || !activeSessions.has(sessionId)) {
+      return res.json({ success: false, error: "Invalid session" })
     }
 
-    const command = `yt-dlp -f "${formatId}" ${cookiesArg} --user-agent "${userAgent || getRandomUserAgent()}" -o "${tempPath}.%(ext)s" "${url}"`
-
-    console.log(`Downloading with format ${formatId}:`, url)
-    const { stdout, stderr } = await execAsync(command, { timeout: 300000 })
-
-    const files = await fs.promises.readdir(tempDir)
-    const downloadedFile = files.find((file) => file.startsWith(tempFilename))
-
-    if (!downloadedFile) {
-      throw new Error("Downloaded file not found")
+    if (!url || !formatId) {
+      return res.json({ success: false, error: "URL and format ID are required" })
     }
 
-    const filePath = join(tempDir, downloadedFile)
-    const stats = await fs.promises.stat(filePath)
-    const mimeType = downloadedFile.includes(".mp4")
-      ? "video/mp4"
-      : downloadedFile.includes(".mp3")
-        ? "audio/mp3"
-        : "application/octet-stream"
+    const sock = activeSessions.get(sessionId)
+    const userAgent = getRandomUserAgent()
+    const tempFilePath = join(tempDir, `${Date.now()}_${crypto.randomBytes(8).toString("hex")}`)
 
-    const userJid = session.user.id
-    let messageContent = {}
+    let ytDlpCommand = `yt-dlp --no-warnings -f "${formatId}" --user-agent "${userAgent}"`
 
-    if (mimeType.startsWith("video/")) {
-      messageContent = {
-        video: { url: filePath },
-        caption: `Downloaded: ${url}`,
-      }
-    } else if (mimeType.startsWith("audio/")) {
-      messageContent = {
-        audio: { url: filePath },
-        mimetype: mimeType,
-      }
-    } else {
-      messageContent = {
-        document: { url: filePath },
-        mimetype: mimeType,
-        fileName: downloadedFile,
-      }
+    const sessionCookiesPath = join(cookiesDir, `${sessionId}.json`)
+    if (fs.existsSync(sessionCookiesPath)) {
+      ytDlpCommand += ` --cookies "${sessionCookiesPath}"`
     }
 
-    await session.sock.sendMessage(userJid, messageContent)
+    ytDlpCommand += ` -o "${tempFilePath}.%(ext)s" "${url}"`
+
+    await execAsync(ytDlpCommand)
+
+    const files = fs.readdirSync(tempDir).filter((f) => f.startsWith(path.basename(tempFilePath)))
+    if (files.length === 0) {
+      throw new Error("Download failed - no file created")
+    }
+
+    const downloadedFile = join(tempDir, files[0])
+    const stats = fs.statSync(downloadedFile)
+    const fileBuffer = fs.readFileSync(downloadedFile)
+
+    await sock.sendMessage(sock.user.id, {
+      document: fileBuffer,
+      fileName: files[0],
+      mimetype: getMimeType(files[0]),
+    })
 
     if (CONFIG.AUTO_DELETE_AFTER_SEND) {
-      setTimeout(async () => {
-        try {
-          await fs.promises.unlink(filePath)
-          console.log(`Auto-deleted downloaded file: ${downloadedFile}`)
-        } catch (err) {
-          console.error(`Error auto-deleting downloaded file ${downloadedFile}:`, err)
-        }
-      }, 5000)
+      fs.unlinkSync(downloadedFile)
     }
 
-    session.lastActivity = Date.now()
-    res.json({ success: true, filename: downloadedFile, size: stats.size })
+    res.json({ success: true, message: "Downloaded and sent successfully" })
   } catch (error) {
-    console.error("Error downloading with format:", error)
-    res.json({ error: "Download failed: " + error.message })
+    res.json({ success: false, error: error.message })
   }
 })
 
-app.post("/api/download-send", async (req, res) => {
-  const sessionId = req.headers["session-id"]
-  const { url, userAgent, browserInfo } = req.body
-  const session = activeSessions.get(sessionId)
-
-  if (!session || !session.connected) {
-    return res.json({ error: "Session not connected" })
-  }
-
-  if (!url) {
-    return res.json({ error: "URL is required" })
-  }
-
+app.post("/api/download", async (req, res) => {
   try {
-    const tempFilename = `download_${Date.now()}_${sessionId}`
-    const tempPath = join(tempDir, tempFilename)
+    const { url } = req.body
+    const sessionId = req.headers["session-id"] || req.query.session
 
-    let command = ""
-    const urlLower = url.toLowerCase()
-
-    const cookiesInfo = cookiesStorage.get(sessionId)
-    let cookiesArg = ""
-    if (cookiesInfo) {
-      cookiesArg = `--cookies "${cookiesInfo.path}"`
+    if (!sessionId || !activeSessions.has(sessionId)) {
+      return res.json({ success: false, error: "Invalid session" })
     }
 
-    if (urlLower.includes("youtube.com") || urlLower.includes("youtu.be")) {
-      if (!cookiesInfo) {
-        return res.json({ error: "YouTube downloads require cookies. Please upload J2Team cookies.json file." })
-      }
-      command = `yt-dlp ${cookiesArg} --user-agent "${userAgent || getRandomUserAgent()}" -o "${tempPath}.%(ext)s" "${url}"`
-    } else if (urlLower.includes("instagram.com")) {
-      command = `gallery-dl --user-agent "${userAgent || getRandomUserAgent()}" -d "${tempDir}" "${url}"`
-    } else if (urlLower.includes("tiktok.com")) {
-      command = `yt-dlp --user-agent "${userAgent || getRandomUserAgent()}" -o "${tempPath}.%(ext)s" "${url}"`
-    } else if (urlLower.includes("twitter.com") || urlLower.includes("x.com")) {
-      command = `gallery-dl --user-agent "${userAgent || getRandomUserAgent()}" -d "${tempDir}" "${url}"`
-    } else if (urlLower.includes("facebook.com") || urlLower.includes("fb.watch")) {
-      command = `yt-dlp --user-agent "${userAgent || getRandomUserAgent()}" -o "${tempPath}.%(ext)s" "${url}"`
-    } else if (urlLower.includes("reddit.com")) {
-      command = `gallery-dl --user-agent "${userAgent || getRandomUserAgent()}" -d "${tempDir}" "${url}"`
-    } else if (
-      url.match(/\.(jpg|jpeg|png|gif|webp|mp4|avi|mov|mkv|webm|mp3|wav|ogg|m4a|flac|pdf|doc|docx|txt|zip|rar)$/i)
-    ) {
-      const response = await fetch(url, {
-        headers: createBrowserHeaders(userAgent || getRandomUserAgent()),
-      })
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-
-      const buffer = await response.arrayBuffer()
-      const extension = url.split(".").pop().toLowerCase()
-      const filename = `${tempFilename}.${extension}`
-      const filePath = join(tempDir, filename)
-
-      await fs.promises.writeFile(filePath, Buffer.from(buffer))
-
-      const stats = await fs.promises.stat(filePath)
-      const mimeType = response.headers.get("content-type") || "application/octet-stream"
-
-      const userJid = session.user.id
-      let messageContent = {}
-
-      if (mimeType.startsWith("image/")) {
-        messageContent = {
-          image: { url: filePath },
-          caption: `Downloaded: ${url}`,
-        }
-      } else if (mimeType.startsWith("video/")) {
-        messageContent = {
-          video: { url: filePath },
-          caption: `Downloaded: ${url}`,
-        }
-      } else if (mimeType.startsWith("audio/")) {
-        messageContent = {
-          audio: { url: filePath },
-          mimetype: mimeType,
-        }
-      } else {
-        messageContent = {
-          document: { url: filePath },
-          mimetype: mimeType,
-          fileName: filename,
-        }
-      }
-
-      await session.sock.sendMessage(userJid, messageContent)
-
-      if (CONFIG.AUTO_DELETE_AFTER_SEND) {
-        setTimeout(async () => {
-          try {
-            await fs.promises.unlink(filePath)
-            console.log(`Auto-deleted downloaded file: ${filename}`)
-          } catch (err) {
-            console.error(`Error auto-deleting downloaded file ${filename}:`, err)
-          }
-        }, 5000)
-      }
-
-      session.lastActivity = Date.now()
-      return res.json({ success: true, filename, size: stats.size })
-    } else {
-      command = `yt-dlp --user-agent "${userAgent || getRandomUserAgent()}" -o "${tempPath}.%(ext)s" "${url}"`
+    if (!url) {
+      return res.json({ success: false, error: "URL is required" })
     }
 
-    console.log("Downloading:", url)
-    const { stdout, stderr } = await execAsync(command, { timeout: 300000 })
+    const sock = activeSessions.get(sessionId)
+    const userAgent = getRandomUserAgent()
+    const headers = createBrowserHeaders(userAgent)
+    const tempFilePath = join(tempDir, `${Date.now()}_${crypto.randomBytes(8).toString("hex")}`)
 
-    const files = await fs.promises.readdir(tempDir)
-    const downloadedFiles = files.filter((file) => file.startsWith(tempFilename) || file.includes(sessionId))
+    let ytDlpCommand = `yt-dlp --no-warnings --user-agent "${userAgent}"`
 
-    if (downloadedFiles.length === 0) {
-      throw new Error("No files downloaded")
+    const sessionCookiesPath = join(cookiesDir, `${sessionId}.json`)
+    if (fs.existsSync(sessionCookiesPath)) {
+      ytDlpCommand += ` --cookies "${sessionCookiesPath}"`
     }
 
-    for (const filename of downloadedFiles) {
-      const filePath = join(tempDir, filename)
-      const stats = await fs.promises.stat(filePath)
+    ytDlpCommand += ` -o "${tempFilePath}.%(ext)s" "${url}"`
 
-      if (stats.isFile()) {
-        const mimeType = filename.includes(".mp4")
-          ? "video/mp4"
-          : filename.includes(".jpg") || filename.includes(".jpeg") || filename.includes(".png")
-            ? "image/jpeg"
-            : filename.includes(".mp3")
-              ? "audio/mp3"
-              : "application/octet-stream"
+    await execAsync(ytDlpCommand)
 
-        const userJid = session.user.id
-        let messageContent = {}
-
-        if (mimeType.startsWith("image/")) {
-          messageContent = {
-            image: { url: filePath },
-            caption: `Downloaded: ${url}`,
-          }
-        } else if (mimeType.startsWith("video/")) {
-          messageContent = {
-            video: { url: filePath },
-            caption: `Downloaded: ${url}`,
-          }
-        } else if (mimeType.startsWith("audio/")) {
-          messageContent = {
-            audio: { url: filePath },
-            mimetype: mimeType,
-          }
-        } else {
-          messageContent = {
-            document: { url: filePath },
-            mimetype: mimeType,
-            fileName: filename,
-          }
-        }
-
-        await session.sock.sendMessage(userJid, messageContent)
-
-        if (CONFIG.AUTO_DELETE_AFTER_SEND) {
-          setTimeout(async () => {
-            try {
-              await fs.promises.unlink(filePath)
-              console.log(`Auto-deleted downloaded file: ${filename}`)
-            } catch (err) {
-              console.error(`Error auto-deleting downloaded file ${filename}:`, err)
-            }
-          }, 5000)
-        }
-      }
+    const files = fs.readdirSync(tempDir).filter((f) => f.startsWith(path.basename(tempFilePath)))
+    if (files.length === 0) {
+      throw new Error("Download failed")
     }
 
-    session.lastActivity = Date.now()
-    res.json({ success: true, files: downloadedFiles.length })
+    const downloadedFile = join(tempDir, files[0])
+    const stats = fs.statSync(downloadedFile)
+    const fileBuffer = fs.readFileSync(downloadedFile)
+
+    await sock.sendMessage(sock.user.id, {
+      document: fileBuffer,
+      fileName: files[0],
+      mimetype: getMimeType(files[0]),
+    })
+
+    if (CONFIG.AUTO_DELETE_AFTER_SEND) {
+      fs.unlinkSync(downloadedFile)
+    }
+
+    res.json({ success: true, message: "Downloaded and sent successfully" })
   } catch (error) {
-    console.error("Error downloading file:", error)
-    res.json({ error: "Download failed: " + error.message })
+    res.json({ success: false, error: error.message })
+  }
+})
+
+app.post("/api/upload", upload.single("file"), async (req, res) => {
+  try {
+    const sessionId = req.headers["session-id"] || req.query.session
+    if (!sessionId || !activeSessions.has(sessionId)) {
+      return res.json({ success: false, error: "Invalid session" })
+    }
+
+    const sock = activeSessions.get(sessionId)
+    const file = req.file
+    const fileBuffer = fs.readFileSync(file.path)
+
+    await sock.sendMessage(sock.user.id, {
+      document: fileBuffer,
+      fileName: file.originalname,
+      mimetype: file.mimetype,
+    })
+
+    if (CONFIG.AUTO_DELETE_AFTER_SEND) {
+      fs.unlinkSync(file.path)
+    }
+
+    res.json({ success: true, message: "File sent successfully" })
+  } catch (error) {
+    res.json({ success: false, error: error.message })
+  }
+})
+
+app.post("/api/send", async (req, res) => {
+  try {
+    const { message } = req.body
+    const sessionId = req.headers["session-id"] || req.query.session
+
+    if (!sessionId || !activeSessions.has(sessionId)) {
+      return res.json({ success: false, error: "Invalid session" })
+    }
+
+    const sock = activeSessions.get(sessionId)
+    await sock.sendMessage(sock.user.id, { text: message })
+
+    res.json({ success: true, message: "Message sent successfully" })
+  } catch (error) {
+    res.json({ success: false, error: error.message })
+  }
+})
+
+app.get("/api/messages", async (req, res) => {
+  try {
+    const sessionId = req.query.session
+    if (!sessionId) {
+      return res.json({ success: false, error: "Session ID required" })
+    }
+
+    const messagesFile = join(__dirname, "sessions", sessionId, "messages.json")
+    if (!fs.existsSync(messagesFile)) {
+      return res.json({ success: true, messages: [] })
+    }
+
+    const messages = JSON.parse(fs.readFileSync(messagesFile, "utf8"))
+    res.json({ success: true, messages: messages.slice(-50) })
+  } catch (error) {
+    res.json({ success: false, error: error.message })
+  }
+})
+
+app.get("/api/status", async (req, res) => {
+  try {
+    const sessionId = req.query.session
+    if (!sessionId) {
+      return res.json({ success: false, error: "Session ID required" })
+    }
+
+    if (activeSessions.size >= CONFIG.MAX_SESSIONS && !activeSessions.has(sessionId)) {
+      const position = waitingQueue.indexOf(sessionId)
+      if (position === -1) {
+        waitingQueue.push(sessionId)
+      }
+      return res.json({
+        status: "waiting",
+        position: waitingQueue.indexOf(sessionId) + 1,
+        maxSessions: CONFIG.MAX_SESSIONS,
+      })
+    }
+
+    if (activeSessions.has(sessionId)) {
+      const sock = activeSessions.get(sessionId)
+      if (sock.user) {
+        return res.json({
+          status: "connected",
+          user: {
+            id: sock.user.id,
+            name: sock.user.name || sock.user.id,
+          },
+        })
+      }
+    }
+
+    const qrFile = join(__dirname, "sessions", sessionId, "qr.png")
+    if (fs.existsSync(qrFile)) {
+      const qrData = fs.readFileSync(qrFile, "base64")
+      return res.json({
+        status: "qr",
+        qr: `data:image/png;base64,${qrData}`,
+      })
+    }
+
+    if (!activeSessions.has(sessionId)) {
+      createWhatsAppSession(sessionId)
+    }
+
+    res.json({ status: "initializing" })
+  } catch (error) {
+    res.json({ success: false, error: error.message })
   }
 })
 
 app.use("/media", express.static(mediaDir))
 
-setInterval(
-  () => {
-    const now = Date.now()
-    const inactiveThreshold = 30 * 60 * 1000
+function getMimeType(filename) {
+  const ext = filename.split(".").pop().toLowerCase()
+  const mimeTypes = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    gif: "image/gif",
+    webp: "image/webp",
+    mp4: "video/mp4",
+    avi: "video/avi",
+    mov: "video/quicktime",
+    mkv: "video/x-matroska",
+    webm: "video/webm",
+    mp3: "audio/mpeg",
+    wav: "audio/wav",
+    ogg: "audio/ogg",
+    m4a: "audio/mp4",
+    flac: "audio/flac",
+    pdf: "application/pdf",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    txt: "text/plain",
+    zip: "application/zip",
+    rar: "application/x-rar-compressed",
+  }
+  return mimeTypes[ext] || "application/octet-stream"
+}
 
-    for (const [sessionId, session] of activeSessions.entries()) {
-      if (now - session.lastActivity > inactiveThreshold) {
-        console.log(`Cleaning up inactive session: ${sessionId}`)
-        try {
-          session.sock.end()
-        } catch (err) {
-          console.error("Error ending socket:", err)
-        }
-        activeSessions.delete(sessionId)
+async function createWhatsAppSession(sessionId) {
+  let sock = null
+  try {
+    if (activeSessions.has(sessionId)) return
 
-        const cookiesInfo = cookiesStorage.get(sessionId)
-        if (cookiesInfo) {
-          try {
-            fs.promises.unlink(cookiesInfo.path).catch(() => {})
-          } catch (err) {
-            console.error("Error deleting cookies file:", err)
-          }
-          cookiesStorage.delete(sessionId)
-        }
+    const sessionDir = join(__dirname, "sessions", sessionId)
+    fs.mkdirSync(sessionDir, { recursive: true })
 
-        processQueue()
-      }
-    }
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
 
-    const oldCacheEntries = []
-    for (const [key, entry] of mediaCache.entries()) {
-      if (now - entry.timestamp > 10 * 60 * 1000) {
-        oldCacheEntries.push(key)
-      }
-    }
-
-    oldCacheEntries.forEach((key) => {
-      const entry = mediaCache.get(key)
-      if (entry && entry.filePath) {
-        fs.promises.unlink(entry.filePath).catch(() => {})
-      }
-      mediaCache.delete(key)
+    sock = makeWASocket({
+      auth: state,
+      printQRInTerminal: false,
+      browser: Browsers.macOS("Desktop"),
+      generateHighQualityLinkPreview: true,
+      markOnlineOnConnect: false,
+      syncFullHistory: false,
+      defaultQueryTimeoutMs: 60000,
+      connectTimeoutMs: 60000,
+      keepAliveIntervalMs: 30000,
+      emitOwnEvents: true,
+      fireInitQueries: true,
+      shouldSyncHistoryMessage: () => false,
     })
-  },
-  5 * 60 * 1000,
-)
+
+    activeSessions.set(sessionId, sock)
+
+    sock.ev.on("connection.update", async (update) => {
+      const { connection, lastDisconnect, qr } = update
+
+      if (qr) {
+        try {
+          const qrImage = await qrcode.toDataURL(qr, { width: 300, margin: 2 })
+          const base64Data = qrImage.replace(/^data:image\/png;base64,/, "")
+          const qrPath = join(sessionDir, "qr.png")
+          fs.writeFileSync(qrPath, base64Data, "base64")
+        } catch (err) {}
+      }
+
+      if (connection === "close") {
+        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401
+        if (shouldReconnect) {
+          setTimeout(() => createWhatsAppSession(sessionId), 5000)
+        } else {
+          activeSessions.delete(sessionId)
+          try {
+            fs.rmSync(sessionDir, { recursive: true, force: true })
+          } catch (err) {}
+        }
+      } else if (connection === "open") {
+        const qrPath = join(sessionDir, "qr.png")
+        if (fs.existsSync(qrPath)) {
+          fs.unlinkSync(qrPath)
+        }
+
+        const waitingIndex = waitingQueue.indexOf(sessionId)
+        if (waitingIndex > -1) {
+          waitingQueue.splice(waitingIndex, 1)
+        }
+      }
+    })
+
+    sock.ev.on("creds.update", saveCreds)
+
+    sock.ev.on("messages.upsert", async ({ messages, type }) => {
+      if (type !== "notify") return
+
+      for (const message of messages) {
+        if (message.key.fromMe) {
+          await saveMessage(sessionId, {
+            id: message.key.id,
+            text: message.message?.conversation || message.message?.extendedTextMessage?.text || "",
+            timestamp: new Date(message.messageTimestamp * 1000).toISOString(),
+            media: null,
+          })
+
+          if (
+            message.message?.documentMessage ||
+            message.message?.imageMessage ||
+            message.message?.videoMessage ||
+            message.message?.audioMessage
+          ) {
+            try {
+              if (CONFIG.DOWNLOAD_MEDIA_BY_DEFAULT) {
+                const media = await downloadMediaMessage(message, "buffer", {})
+                if (media) {
+                  const mediaType = getMediaType(message)
+                  const filename = getMediaFilename(message, mediaType)
+                  const mediaPath = join(mediaDir, filename)
+                  fs.writeFileSync(mediaPath, media)
+
+                  await saveMessage(sessionId, {
+                    id: message.key.id + "_media",
+                    text: "",
+                    timestamp: new Date(message.messageTimestamp * 1000).toISOString(),
+                    media: {
+                      type: mediaType,
+                      filename: filename,
+                      size: formatFileSize(media.length),
+                    },
+                  })
+
+                  if (CONFIG.AUTO_DELETE_AFTER_SEND) {
+                    setTimeout(() => {
+                      try {
+                        if (fs.existsSync(mediaPath)) {
+                          fs.unlinkSync(mediaPath)
+                        }
+                      } catch (err) {}
+                    }, 300000)
+                  }
+                }
+              }
+            } catch (err) {}
+          }
+        }
+      }
+    })
+  } catch (error) {
+    activeSessions.delete(sessionId)
+  } finally {
+    if (sock) {
+      sock.ws.on("CB:call", (json) => {
+        console.log("Incoming call", json)
+      })
+    }
+  }
+}
+
+function getMediaType(message) {
+  if (message.message?.imageMessage) return "image"
+  if (message.message?.videoMessage) return "video"
+  if (message.message?.audioMessage) return "audio"
+  if (message.message?.documentMessage) return "document"
+  return "unknown"
+}
+
+function getMediaFilename(message, mediaType) {
+  const timestamp = Date.now()
+  const randomId = crypto.randomBytes(8).toString("hex")
+
+  if (message.message?.documentMessage?.fileName) {
+    return `${timestamp}_${randomId}_${message.message.documentMessage.fileName}`
+  }
+
+  const extensions = {
+    image: "jpg",
+    video: "mp4",
+    audio: "mp3",
+    document: "bin",
+  }
+
+  return `${timestamp}_${randomId}_media.${extensions[mediaType] || "bin"}`
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return "0 Bytes"
+  const k = 1024
+  const sizes = ["Bytes", "KB", "MB", "GB"]
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+}
+
+async function saveMessage(sessionId, messageData) {
+  try {
+    const sessionDir = join(__dirname, "sessions", sessionId)
+    const messagesFile = join(sessionDir, "messages.json")
+
+    let messages = []
+    if (fs.existsSync(messagesFile)) {
+      messages = JSON.parse(fs.readFileSync(messagesFile, "utf8"))
+    }
+
+    messages.push(messageData)
+
+    if (messages.length > 1000) {
+      messages = messages.slice(-500)
+    }
+
+    fs.writeFileSync(messagesFile, JSON.stringify(messages, null, 2))
+  } catch (error) {}
+}
+
+setInterval(() => {
+  if (activeSessions.size < CONFIG.MAX_SESSIONS && waitingQueue.length > 0) {
+    const nextSessionId = waitingQueue.shift()
+    createWhatsAppSession(nextSessionId)
+  }
+}, 5000)
+
+setInterval(() => {
+  try {
+    const tempFiles = fs.readdirSync(tempDir)
+    const now = Date.now()
+
+    tempFiles.forEach((file) => {
+      const filePath = join(tempDir, file)
+      const stats = fs.statSync(filePath)
+      const ageInMinutes = (now - stats.mtime.getTime()) / (1000 * 60)
+
+      if (ageInMinutes > 30) {
+        fs.unlinkSync(filePath)
+      }
+    })
+  } catch (error) {}
+}, 600000)
+
+setInterval(() => {
+  try {
+    const mediaFiles = fs.readdirSync(mediaDir)
+    const now = Date.now()
+
+    mediaFiles.forEach((file) => {
+      const filePath = join(mediaDir, file)
+      const stats = fs.statSync(filePath)
+      const ageInHours = (now - stats.mtime.getTime()) / (1000 * 60 * 60)
+
+      if (ageInHours > 24) {
+        fs.unlinkSync(filePath)
+      }
+    })
+  } catch (error) {}
+}, 3600000)
 
 const sslOptions = {
   key: fs.readFileSync(CONFIG.SSL_KEY),
@@ -2467,10 +2283,32 @@ const sslOptions = {
 const server = https.createServer(sslOptions, app)
 
 server.listen(CONFIG.PORT, () => {
-  console.log(`🚀 WhatsApp Personal Interface running on https://${CONFIG.DOMAIN}:${CONFIG.PORT}`)
-  console.log(`📱 Maximum concurrent sessions: ${CONFIG.MAX_SESSIONS}`)
-  console.log(`⏱️  Auto-download delay: ${CONFIG.AUTO_DOWNLOAD_DELAY / 1000}s`)
-  console.log(`🗑️  Auto-delete after send: ${CONFIG.AUTO_DELETE_AFTER_SEND ? "Enabled" : "Disabled"}`)
-  console.log(`💬 Show messages by default: ${CONFIG.SHOW_MESSAGES_BY_DEFAULT ? "Enabled" : "Disabled"}`)
-  console.log(`📥 Download media by default: ${CONFIG.DOWNLOAD_MEDIA_BY_DEFAULT ? "Enabled" : "Disabled"}`)
+  console.log(`🚀 WhatsApp server running on https://${CONFIG.DOMAIN}:${CONFIG.PORT}`)
+  console.log(`📱 Max sessions: ${CONFIG.MAX_SESSIONS}`)
+  console.log(`⚙️ Auto-delete: ${CONFIG.AUTO_DELETE_AFTER_SEND}`)
+  console.log(`💬 Show messages: ${CONFIG.SHOW_MESSAGES_BY_DEFAULT}`)
+  console.log(`📥 Download media: ${CONFIG.DOWNLOAD_MEDIA_BY_DEFAULT}`)
+})
+
+process.on("SIGINT", () => {
+  console.log("\n🛑 Shutting down gracefully...")
+
+  activeSessions.forEach((sock, sessionId) => {
+    try {
+      sock.end()
+    } catch (error) {}
+  })
+
+  server.close(() => {
+    console.log("✅ Server closed")
+    process.exit(0)
+  })
+})
+
+process.on("uncaughtException", (error) => {
+  console.error("❌ Uncaught Exception:", error.message)
+})
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason)
 })
