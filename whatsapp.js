@@ -1,16 +1,21 @@
+// Importación dinámica de Baileys para compatibilidad
 const { makeWASocket, useMultiFileAuthState, Browsers, downloadMediaMessage } = await import("@whiskeysockets/baileys")
 import express from "express"
+import qrcode from "qrcode"
 import { fileURLToPath } from "url"
 import { dirname, join } from "path"
 import fs from "fs"
+import https from "https"
 import bodyParser from "body-parser"
 import multer from "multer"
+import path from "path"
 import crypto from "crypto"
 import { exec } from "child_process"
 import { promisify } from "util"
 
 const execAsync = promisify(exec)
 
+// Configuración del servidor
 const CONFIG = {
   PORT: 443,
   DOMAIN: "system.heatherx.site",
@@ -28,13 +33,16 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const app = express()
 
-const activeSessions = new Map()
-const sessionStates = new Map()
-const waitingQueue = []
-const mediaCache = new Map()
-const cookiesStorage = new Map()
-const formatCache = new Map()
+// Almacenamiento de sesiones y estados
+const activeSessions = new Map() // Sesiones activas de WhatsApp
+const sessionStates = new Map() // Estados de configuración por sesión
+const waitingQueue = [] // Cola de espera cuando se alcanza el máximo
+const mediaCache = new Map() // Cache de archivos multimedia
+const cookiesStorage = new Map() // Almacenamiento de cookies por sesión
+const formatCache = new Map() // Cache de formatos de video/audio
+const qrCodes = new Map() // Almacenamiento de códigos QR por sesión
 
+// User agents para rotación y evitar detección
 const userAgents = [
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -43,6 +51,10 @@ const userAgents = [
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0",
 ]
 
+/**
+ * Genera un ID de sesión seguro y único
+ * @returns {string} ID de sesión único
+ */
 function generateSecureSessionId() {
   const timestamp = Date.now().toString(36)
   const randomBytes = crypto.randomBytes(32).toString("hex")
@@ -53,53 +65,51 @@ function generateSecureSessionId() {
   return `ws_${timestamp}_${hash.substring(0, 48)}_${crypto.randomBytes(16).toString("hex")}`
 }
 
+/**
+ * Obtiene un user agent aleatorio para evitar detección
+ * @returns {string} User agent aleatorio
+ */
 function getRandomUserAgent() {
   return userAgents[Math.floor(Math.random() * userAgents.length)]
 }
 
-function createBrowserHeaders(userAgent, referer = null) {
-  const headers = {
-    "User-Agent": userAgent,
-    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9,es;q=0.8",
-    "Accept-Encoding": "gzip, deflate, br",
-    DNT: "1",
-    Connection: "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-User": "?1",
-    "Cache-Control": "max-age=0",
-  }
-  if (referer) headers["Referer"] = referer
-  return headers
-}
-
+/**
+ * Convierte cookies de formato J2Team a formato Netscape para yt-dlp
+ * @param {Array} cookies - Array de cookies en formato J2Team
+ * @returns {string} Cookies en formato Netscape
+ */
 function convertJsonToNetscape(cookies) {
   let netscapeFormat = "# Netscape HTTP Cookie File\n"
   netscapeFormat += "# This is a generated file! Do not edit.\n\n"
 
   cookies.forEach((cookie) => {
+    // Extraer datos de la cookie con valores por defecto
     const domain = cookie.domain || ""
     const flag = domain.startsWith(".") ? "TRUE" : "FALSE"
     const path = cookie.path || "/"
     const secure = cookie.secure === true || cookie.secure === "true" ? "TRUE" : "FALSE"
 
+    // Manejar fecha de expiración - convertir a entero Unix timestamp
     let expiration = cookie.expirationDate || cookie.expires || Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60
-    expiration = Math.floor(Number(expiration))
+
+    // Si la fecha viene como decimal, convertir a entero
+    if (typeof expiration === "number") {
+      expiration = Math.floor(expiration)
+    } else if (typeof expiration === "string") {
+      expiration = Math.floor(Number.parseFloat(expiration))
+    }
 
     const name = cookie.name || ""
     const value = cookie.value || ""
 
-    if (domain && name) {
-      netscapeFormat += `${domain}\t${flag}\t${path}\t${secure}\t${expiration}\t${name}\t${value}\n`
-    }
+    // Agregar línea en formato Netscape
+    netscapeFormat += `${domain}\t${flag}\t${path}\t${secure}\t${expiration}\t${name}\t${value}\n`
   })
 
   return netscapeFormat
 }
 
+// Configuración de multer para subida de archivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const sessionId = req.headers["session-id"] || req.query.session
@@ -114,10 +124,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage })
 
+// Middleware de Express
 app.use(express.static("public"))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
+// Crear directorios necesarios
 const mediaDir = join(__dirname, "media")
 const uploadsDir = join(__dirname, "uploads")
 const tempDir = join(__dirname, "temp")
@@ -134,12 +146,1050 @@ try {
   console.error("Error creating directories:", err)
 }
 
-const htmlContent = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>WhatsApp Personal Interface</title><style>*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif}body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh}.container{max-width:1400px;margin:0 auto;height:100vh;display:flex;flex-direction:column;padding:20px}header{background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);color:white;padding:20px;border-radius:15px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 8px 32px rgba(31,38,135,0.37)}.session-info{font-size:12px;opacity:0.8;max-width:300px;word-break:break-all}.settings-btn{background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:14px;margin-left:10px}.settings-btn:hover{background:rgba(255,255,255,0.3)}.status-connected{background:linear-gradient(45deg,#4CAF50,#45a049);padding:8px 16px;border-radius:20px;font-size:14px;box-shadow:0 4px 15px rgba(76,175,80,0.3)}.status-disconnected{background:linear-gradient(45deg,#f44336,#d32f2f);padding:8px 16px;border-radius:20px;font-size:14px;box-shadow:0 4px 15px rgba(244,67,54,0.3)}.status-waiting{background:linear-gradient(45deg,#ff9800,#f57c00);padding:8px 16px;border-radius:20px;font-size:14px;box-shadow:0 4px 15px rgba(255,152,0,0.3)}.status-downloading{background:linear-gradient(45deg,#2196F3,#1976D2);padding:8px 16px;border-radius:20px;font-size:14px;box-shadow:0 4px 15px rgba(33,150,243,0.3)}.main-content{display:flex;height:calc(100vh - 140px);gap:20px}.sidebar{width:350px;background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);border-radius:15px;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(31,38,135,0.37)}.cookies-section{padding:20px;border-bottom:1px solid rgba(255,255,255,0.2)}.cookies-section h3{color:white;margin-bottom:15px;font-size:18px}.cookies-upload-area{border:2px dashed rgba(255,255,255,0.3);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all 0.3s ease;margin-bottom:15px}.cookies-upload-area:hover{border-color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.1)}.cookies-upload-area.dragover{border-color:#4CAF50;background:rgba(76,175,80,0.1)}.cookies-status{font-size:12px;color:rgba(255,255,255,0.8);text-align:center;margin-top:10px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.1)}.cookies-status.loaded{background:rgba(76,175,80,0.2);color:#4CAF50}.file-upload-section{padding:20px;border-bottom:1px solid rgba(255,255,255,0.2)}.file-upload-section h3{color:white;margin-bottom:15px;font-size:18px}.upload-area{border:2px dashed rgba(255,255,255,0.3);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all 0.3s ease;margin-bottom:15px}.upload-area:hover{border-color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.1)}.upload-area.dragover{border-color:#4CAF50;background:rgba(76,175,80,0.1)}.upload-text{color:white;font-size:14px}.file-input{display:none}.url-section{margin-top:15px}.url-input{width:100%;padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,0.2);color:white;placeholder-color:rgba(255,255,255,0.7);margin-bottom:10px}.url-input::placeholder{color:rgba(255,255,255,0.7)}.btn{background:linear-gradient(45deg,#667eea,#764ba2);color:white;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-size:14px;transition:all 0.3s ease;width:100%}.btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(102,126,234,0.4)}.btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}.auto-download-info{font-size:12px;color:rgba(255,255,255,0.7);margin-top:5px;text-align:center}.download-progress{width:100%;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin:10px 0;overflow:hidden}.download-progress-bar{height:100%;background:linear-gradient(45deg,#4CAF50,#45a049);width:0%;transition:width 0.3s ease}.message-section{padding:20px;border-bottom:1px solid rgba(255,255,255,0.2)}.message-section h3{color:white;margin-bottom:15px;font-size:18px}.message-input{width:100%;padding:12px;border:none;border-radius:8px;background:rgba(255,255,255,0.2);color:white;resize:none;height:80px;margin-bottom:10px}.message-input::placeholder{color:rgba(255,255,255,0.7)}.chat-area{flex:1;background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);border-radius:15px;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(31,38,135,0.37)}.chat-header{padding:20px;border-bottom:1px solid rgba(255,255,255,0.2);color:white}.messages{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column}.message{max-width:70%;padding:15px 20px;margin-bottom:15px;border-radius:18px;position:relative;word-wrap:break-word;align-self:flex-end;background:linear-gradient(45deg,#667eea,#764ba2);color:white;box-shadow:0 4px 15px rgba(102,126,234,0.3)}.message-time{font-size:11px;opacity:0.8;text-align:right;margin-top:8px}.message-media{max-width:100%;max-height:300px;margin:10px 0;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2)}.message-file{background:rgba(255,255,255,0.2);padding:15px;border-radius:10px;margin:10px 0;display:flex;align-items:center;gap:10px}.file-icon{width:40px;height:40px;background:rgba(255,255,255,0.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}.file-info{flex:1}.file-name{font-weight:bold;margin-bottom:5px}.file-size{font-size:12px;opacity:0.8}.download-btn{background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 15px;border-radius:6px;cursor:pointer;font-size:12px}.qr-container{text-align:center;padding:50px;background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);margin:20px;border-radius:15px;box-shadow:0 8px 32px rgba(31,38,135,0.37)}.qr-container h1{color:white;margin-bottom:20px;font-size:24px}.qr-container img{max-width:300px;border-radius:15px;margin:20px 0;box-shadow:0 8px 25px rgba(0,0,0,0.3)}.qr-container button{background:linear-gradient(45deg,#667eea,#764ba2);color:white;border:none;padding:15px 30px;border-radius:10px;cursor:pointer;font-size:16px;transition:all 0.3s ease}.qr-container button:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(102,126,234,0.4)}.loading-spinner{border:3px solid rgba(255,255,255,0.3);border-radius:50%;border-top:3px solid white;width:40px;height:40px;animation:spin 1s linear infinite;margin:20px auto}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}.waiting-container{text-align:center;padding:50px;background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);margin:20px;border-radius:15px;box-shadow:0 8px 32px rgba(31,38,135,0.37);color:white}.queue-position{font-size:48px;font-weight:bold;margin:20px 0;color:#ff9800}.url-type-indicator{font-size:12px;color:rgba(255,255,255,0.8);margin-top:5px;padding:5px 10px;background:rgba(255,255,255,0.1);border-radius:15px;display:inline-block}.settings-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:none;justify-content:center;align-items:center;z-index:1000}.settings-content{background:rgba(255,255,255,0.1);backdrop-filter:blur(20px);border-radius:20px;padding:30px;max-width:500px;width:90%;color:white}.settings-content h2{margin-bottom:20px;text-align:center}.setting-item{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:15px;background:rgba(255,255,255,0.1);border-radius:10px}.setting-label{flex:1;margin-right:15px}.setting-description{font-size:12px;opacity:0.8;margin-top:5px}.toggle-switch{position:relative;width:60px;height:30px;background:rgba(255,255,255,0.3);border-radius:15px;cursor:pointer;transition:all 0.3s ease}.toggle-switch.active{background:#4CAF50}.toggle-slider{position:absolute;top:3px;left:3px;width:24px;height:24px;background:white;border-radius:50%;transition:all 0.3s ease}.toggle-switch.active .toggle-slider{transform:translateX(30px)}.close-settings{background:linear-gradient(45deg,#667eea,#764ba2);color:white;border:none;padding:12px 30px;border-radius:10px;cursor:pointer;font-size:16px;width:100%;margin-top:20px}.no-messages{text-align:center;color:rgba(255,255,255,0.7);padding:50px;font-size:16px}.youtube-cookies-required{background:rgba(255,193,7,0.2);border:1px solid rgba(255,193,7,0.5);border-radius:10px;padding:15px;margin:10px 0;color:#ffc107;font-size:14px;text-align:center}.format-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:none;justify-content:center;align-items:center;z-index:1000}.format-content{background:rgba(255,255,255,0.1);backdrop-filter:blur(20px);border-radius:20px;padding:30px;max-width:600px;width:90%;color:white;max-height:80vh;overflow-y:auto}.format-content h2{margin-bottom:20px;text-align:center}.format-tabs{display:flex;margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.2)}.format-tab{padding:10px 20px;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.3s ease;flex:1;text-align:center}.format-tab.active{border-bottom:3px solid #4CAF50;background:rgba(76,175,80,0.1)}.format-list{max-height:50vh;overflow-y:auto;padding-right:10px}.format-item{padding:15px;margin-bottom:10px;background:rgba(255,255,255,0.1);border-radius:10px;cursor:pointer;transition:all 0.3s ease;display:flex;flex-direction:column}.format-item:hover{background:rgba(255,255,255,0.2)}.format-item.selected{background:rgba(76,175,80,0.2);border:1px solid #4CAF50}.format-info{display:flex;justify-content:space-between;margin-bottom:5px}.format-quality{font-weight:bold}.format-size{opacity:0.8;font-size:12px}.format-details{font-size:12px;opacity:0.8}.format-buttons{display:flex;gap:10px;margin-top:20px}.format-button{flex:1;padding:12px;border:none;border-radius:10px;cursor:pointer;font-size:14px;transition:all 0.3s ease}.format-cancel{background:rgba(255,255,255,0.2);color:white}.format-download{background:linear-gradient(45deg,#4CAF50,#45a049);color:white}.format-download:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(76,175,80,0.4)}.format-cancel:hover{background:rgba(255,255,255,0.3)}.format-loading{text-align:center;padding:30px}.format-error{background:rgba(244,67,54,0.2);border:1px solid rgba(244,67,54,0.5);border-radius:10px;padding:15px;margin:20px 0;color:#f44336;text-align:center}@media (max-width:768px){.main-content{flex-direction:column}.sidebar{width:100%;height:auto}.session-info{max-width:200px;font-size:10px}}</style></head><body><div class="container"><header><div><h1>📱 Personal WhatsApp Interface</h1><div class="session-info" id="session-info">Session: Loading...</div></div><div style="display: flex; align-items: center;"><div id="status" class="status-disconnected">Disconnected</div><button class="settings-btn" onclick="openSettings()">⚙️</button></div></header><div id="waiting-section" class="waiting-container" style="display: none;"><h1>⏳ Queue Full</h1><div class="queue-position" id="queue-position">0</div><p>You are in position <span id="position-text">0</span> in the queue</p><p>Maximum <span id="max-sessions">10</span> sessions allowed simultaneously</p><div class="loading-spinner"></div></div><div id="qr-section" class="qr-container" style="display: none;"><h1>📱 Scan with WhatsApp</h1><div id="qr-image"></div><p>Open WhatsApp → Linked Devices → Link Device</p><button onclick="location.reload()">Refresh QR</button></div><div id="loading-section" class="qr-container"><h1>⏳ Initializing...</h1><div class="loading-spinner"></div><p>Please wait while we set up your WhatsApp interface</p></div><div id="main-content" class="main-content" style="display: none;"><div class="sidebar"><div class="cookies-section"><h3>🍪 YouTube Cookies</h3><div class="cookies-upload-area" id="cookies-upload-area"><div class="upload-text"><div style="font-size: 24px; margin-bottom: 10px;">🍪</div><div>Drop J2Team cookies.json here</div><div style="font-size: 12px; margin-top: 5px;">Required for YouTube downloads</div></div><input type="file" id="cookies-input" class="file-input" accept=".json"></div><div id="cookies-status" class="cookies-status">No cookies loaded - YouTube downloads disabled</div></div><div class="file-upload-section"><h3>📎 Send Files</h3><div class="upload-area" id="upload-area"><div class="upload-text"><div style="font-size: 24px; margin-bottom: 10px;">📁</div><div>Drop files here or click to select</div><div style="font-size: 12px; margin-top: 5px;">Images, videos, audio, documents</div></div><input type="file" id="file-input" class="file-input" multiple accept="*/*"></div><div class="url-section"><input type="text" id="url-input" class="url-input" placeholder="Enter URL to auto-download and send..."><div id="url-type" class="url-type-indicator" style="display: none;"></div><div id="youtube-cookies-warning" class="youtube-cookies-required" style="display: none;">🍪 YouTube cookies required. Upload J2Team cookies.json above.</div><div class="download-progress" id="download-progress" style="display: none;"><div class="download-progress-bar" id="download-progress-bar"></div></div><button id="download-send-btn" class="btn">📥 Download & Send</button><div class="auto-download-info">Auto-download starts in 7 seconds after URL entry</div></div></div><div class="message-section"><h3>💬 Send Message</h3><textarea id="message-input" class="message-input" placeholder="Type your message..."></textarea><button id="send-message-btn" class="btn">📤 Send Message</button></div></div><div class="chat-area"><div class="chat-header"><h2>💬 My Messages</h2><p id="user-info">Personal chat with myself</p></div><div class="messages" id="messages"><div class="no-messages" id="no-messages">📱 Messages disabled by default to save data<br>Enable in settings to view messages</div></div></div></div></div><div id="settings-modal" class="settings-modal"><div class="settings-content"><h2>⚙️ Settings</h2><div class="setting-item"><div class="setting-label"><strong>Show Messages</strong><div class="setting-description">Display sent/received messages in chat area</div></div><div class="toggle-switch" id="show-messages-toggle"><div class="toggle-slider"></div></div></div><div class="setting-item"><div class="setting-label"><strong>Download Media</strong><div class="setting-description">Download and display media files in browser</div></div><div class="toggle-switch" id="download-media-toggle"><div class="toggle-slider"></div></div></div><div class="setting-item"><div class="setting-label"><strong>Auto-Delete Files</strong><div class="setting-description">Automatically delete files after sending (Always enabled)</div></div><div class="toggle-switch active"><div class="toggle-slider"></div></div></div><button class="close-settings" onclick="closeSettings()">Close Settings</button></div></div><div id="format-modal" class="format-modal"><div class="format-content"><h2>Select Format</h2><div class="format-tabs"><div class="format-tab active" data-tab="video">Video</div><div class="format-tab" data-tab="audio">Audio</div></div><div id="format-loading" class="format-loading"><div class="loading-spinner"></div><p>Loading available formats...</p></div><div id="format-error" class="format-error" style="display: none;">Error loading formats. Please try again.</div><div id="video-formats" class="format-list"></div><div id="audio-formats" class="format-list" style="display: none;"></div><div class="format-buttons"><button class="format-button format-cancel" id="format-cancel">Cancel</button><button class="format-button format-download" id="format-download">Download & Send</button></div></div></div><script>function updateUrlWithSession(sessionId){const url=new URL(window.location);url.searchParams.set('session',sessionId);window.history.replaceState({},'',url)}function getSessionFromUrl(){const urlParams=new URLSearchParams(window.location.search);return urlParams.get('session')}function generateSecureSessionId(){const timestamp=Date.now().toString(36),randomBytes=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join(''),combined=timestamp+randomBytes;return \`ws_\${timestamp}_\${btoa(combined).replace(/[+/=]/g,'').substring(0,48)}_\${Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('')}\`}let sessionId=getSessionFromUrl()||generateSecureSessionId();updateUrlWithSession(sessionId);let settings={showMessages:${CONFIG.SHOW_MESSAGES_BY_DEFAULT},downloadMedia:${CONFIG.DOWNLOAD_MEDIA_BY_DEFAULT},autoDelete:${CONFIG.AUTO_DELETE_AFTER_SEND}};let hasCookies=false,currentUrl="",selectedFormat=null,availableFormats={video:[],audio:[]};function loadSettings(){const saved=localStorage.getItem('whatsapp-settings');if(saved)settings={...settings,...JSON.parse(saved)};updateSettingsUI()}function saveSettings(){localStorage.setItem('whatsapp-settings',JSON.stringify(settings))}function updateSettingsUI(){const showMessagesToggle=document.getElementById('show-messages-toggle'),downloadMediaToggle=document.getElementById('download-media-toggle');if(settings.showMessages)showMessagesToggle.classList.add('active');else showMessagesToggle.classList.remove('active');if(settings.downloadMedia)downloadMediaToggle.classList.add('active');else downloadMediaToggle.classList.remove('active');updateMessagesDisplay()}function updateMessagesDisplay(){const messagesContainer=document.getElementById('messages'),noMessagesDiv=document.getElementById('no-messages');if(!settings.showMessages){messagesContainer.innerHTML='';messagesContainer.appendChild(noMessagesDiv);noMessagesDiv.style.display='block'}else{noMessagesDiv.style.display='none';loadMessages()}}function openSettings(){document.getElementById('settings-modal').style.display='flex'}function closeSettings(){document.getElementById('settings-modal').style.display='none'}document.getElementById('show-messages-toggle').addEventListener('click',function(){settings.showMessages=!settings.showMessages;saveSettings();updateSettingsUI()});document.getElementById('download-media-toggle').addEventListener('click',function(){settings.downloadMedia=!settings.downloadMedia;saveSettings();updateSettingsUI()});document.getElementById('format-cancel').addEventListener('click',function(){closeFormatModal()});document.getElementById('format-download').addEventListener('click',function(){downloadAndSendFormat()});function closeFormatModal(){document.getElementById('format-modal').style.display='none'}function downloadAndSendFormat(){// Function implementation here}function loadMessages(){// Function implementation here}</script></body></html>`
+// HTML de la interfaz (versión compacta para el ejemplo)
+const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Personal Interface</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    header {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      color: white;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    }
+    .session-info {
+      font-size: 12px;
+      opacity: 0.8;
+      max-width: 300px;
+      word-break: break-all;
+    }
+    .status-connected {
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    .status-disconnected {
+      background: linear-gradient(45deg, #f44336, #d32f2f);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+    }
+    .status-waiting {
+      background: linear-gradient(45deg, #ff9800, #f57c00);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+    }
+    .qr-container {
+      text-align: center;
+      padding: 50px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      margin: 20px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    }
+    .qr-container h1 {
+      color: white;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    .qr-container img {
+      max-width: 300px;
+      border-radius: 15px;
+      margin: 20px 0;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    .qr-container button {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+    .qr-container button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    .loading-spinner {
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top: 3px solid white;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .main-content {
+      display: flex;
+      height: calc(100vh - 140px);
+      gap: 20px;
+    }
+    .sidebar {
+      width: 350px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+      padding: 20px;
+    }
+    .chat-area {
+      flex: 1;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    }
+    .chat-header {
+      padding: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      color: white;
+    }
+    .messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      max-width: 70%;
+      padding: 15px 20px;
+      margin-bottom: 15px;
+      border-radius: 18px;
+      position: relative;
+      word-wrap: break-word;
+      align-self: flex-end;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    .upload-area {
+      border: 2px dashed rgba(255,255,255,0.3);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 15px;
+      color: white;
+    }
+    .upload-area:hover {
+      border-color: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.1);
+    }
+    .file-input {
+      display: none;
+    }
+    .url-input {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      margin-bottom: 10px;
+    }
+    .url-input::placeholder {
+      color: rgba(255,255,255,0.7);
+    }
+    .btn {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    .message-input {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      resize: none;
+      height: 80px;
+      margin-bottom: 10px;
+    }
+    .message-input::placeholder {
+      color: rgba(255,255,255,0.7);
+    }
+    .cookies-status {
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      text-align: center;
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+    }
+    .cookies-status.loaded {
+      background: rgba(76, 175, 80, 0.2);
+      color: #4CAF50;
+    }
+    h3 {
+      color: white;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>📱 Personal WhatsApp Interface</h1>
+        <div class="session-info" id="session-info">Session: Loading...</div>
+      </div>
+      <div id="status" class="status-disconnected">Disconnected</div>
+    </header>
+    
+    <div id="qr-section" class="qr-container" style="display: none;">
+      <h1>📱 Scan with WhatsApp</h1>
+      <div id="qr-image"></div>
+      <p>Open WhatsApp → Linked Devices → Link Device</p>
+      <button onclick="location.reload()">Refresh QR</button>
+    </div>
+    
+    <div id="loading-section" class="qr-container">
+      <h1>⏳ Initializing...</h1>
+      <div class="loading-spinner"></div>
+      <p>Please wait while we set up your WhatsApp interface</p>
+    </div>
+    
+    <div id="main-content" class="main-content" style="display: none;">
+      <div class="sidebar">
+        <div>
+          <h3>🍪 YouTube Cookies</h3>
+          <div class="upload-area" id="cookies-upload-area">
+            <div>🍪</div>
+            <div>Drop J2Team cookies.json here</div>
+            <input type="file" id="cookies-input" class="file-input" accept=".json">
+          </div>
+          <div id="cookies-status" class="cookies-status">No cookies loaded</div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <h3>📎 Send Files</h3>
+          <div class="upload-area" id="upload-area">
+            <div>📁</div>
+            <div>Drop files here or click to select</div>
+            <input type="file" id="file-input" class="file-input" multiple accept="*/*">
+          </div>
+          <input type="text" id="url-input" class="url-input" placeholder="Enter URL to download and send...">
+          <button id="download-send-btn" class="btn">📥 Download & Send</button>
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <h3>💬 Send Message</h3>
+          <textarea id="message-input" class="message-input" placeholder="Type your message..."></textarea>
+          <button id="send-message-btn" class="btn">📤 Send Message</button>
+        </div>
+      </div>
+      
+      <div class="chat-area">
+        <div class="chat-header">
+          <h2>💬 My Messages</h2>
+          <p id="user-info">Personal chat with myself</p>
+        </div>
+        <div class="messages" id="messages">
+          <div style="text-align: center; color: rgba(255,255,255,0.7); padding: 50px;">
+            📱 Ready to send messages and files!
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Generar ID de sesión único
+    let sessionId = localStorage.getItem('whatsapp-session-id') || generateSecureSessionId();
+    localStorage.setItem('whatsapp-session-id', sessionId);
+    
+    function generateSecureSessionId() {
+      const timestamp = Date.now().toString(36);
+      const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(32)), 
+        b => b.toString(16).padStart(2, '0')).join('');
+      const combined = timestamp + randomBytes;
+      return \`ws_\${timestamp}_\${btoa(combined).replace(/[+/=]/g, '').substring(0, 48)}_\${Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('')}\`;
+    }
 
-app.get("/", (req, res) => {
-  res.send(htmlContent)
+    // Elementos del DOM
+    const statusElement = document.getElementById("status");
+    const sessionInfoElement = document.getElementById("session-info");
+    const messagesList = document.getElementById("messages");
+    const messageInput = document.getElementById("message-input");
+    const sendMessageBtn = document.getElementById("send-message-btn");
+    const qrSection = document.getElementById("qr-section");
+    const loadingSection = document.getElementById("loading-section");
+    const mainContent = document.getElementById("main-content");
+    const qrImage = document.getElementById("qr-image");
+    const uploadArea = document.getElementById("upload-area");
+    const fileInput = document.getElementById("file-input");
+    const urlInput = document.getElementById("url-input");
+    const downloadSendBtn = document.getElementById("download-send-btn");
+    const userInfo = document.getElementById("user-info");
+    const cookiesUploadArea = document.getElementById("cookies-upload-area");
+    const cookiesInput = document.getElementById("cookies-input");
+    const cookiesStatus = document.getElementById("cookies-status");
+
+    let hasCookies = false;
+
+    // Mostrar información de sesión
+    sessionInfoElement.textContent = \`Session: \${sessionId.substring(3, 15)}...\`;
+
+    // Manejo de cookies
+    cookiesUploadArea.addEventListener('click', () => cookiesInput.click());
+    cookiesUploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      cookiesUploadArea.style.borderColor = '#4CAF50';
+    });
+    cookiesUploadArea.addEventListener('dragleave', () => {
+      cookiesUploadArea.style.borderColor = 'rgba(255,255,255,0.3)';
+    });
+    cookiesUploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      cookiesUploadArea.style.borderColor = 'rgba(255,255,255,0.3)';
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].name.endsWith('.json')) {
+        handleCookiesFile(files[0]);
+      }
+    });
+
+    cookiesInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleCookiesFile(e.target.files[0]);
+      }
+    });
+
+    // Función para manejar archivo de cookies
+    async function handleCookiesFile(file) {
+      try {
+        const text = await file.text();
+        const cookiesData = JSON.parse(text);
+        
+        // Verificar formato J2Team
+        if (cookiesData.url && cookiesData.cookies && Array.isArray(cookiesData.cookies)) {
+          const formData = new FormData();
+          formData.append('cookiesFile', file);
+          
+          const response = await fetch(\`/api/cookies?session=\${sessionId}\`, {
+            method: 'POST',
+            body: formData
+          });
+          
+          const result = await response.json();
+          if (result.success) {
+            hasCookies = true;
+            cookiesStatus.textContent = \`✅ Cookies loaded - \${cookiesData.cookies.length} cookies from \${cookiesData.url}\`;
+            cookiesStatus.classList.add('loaded');
+          } else {
+            throw new Error(result.error);
+          }
+        } else {
+          throw new Error('Invalid J2Team cookies format. Expected {url, cookies} structure.');
+        }
+      } catch (error) {
+        cookiesStatus.textContent = '❌ Error: ' + error.message;
+        cookiesStatus.classList.remove('loaded');
+      }
+    }
+
+    // Manejo de archivos
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = '#4CAF50';
+    });
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.style.borderColor = 'rgba(255,255,255,0.3)';
+    });
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = 'rgba(255,255,255,0.3)';
+      const files = e.dataTransfer.files;
+      handleFiles(files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
+    async function handleFiles(files) {
+      for (let file of files) {
+        await uploadFile(file);
+      }
+    }
+
+    async function uploadFile(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch(\`/api/upload?session=\${sessionId}\`, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          console.log('File uploaded and sent:', result.filename);
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+    }
+
+    // Descargar y enviar URL
+    downloadSendBtn.addEventListener('click', async () => {
+      const url = urlInput.value.trim();
+      if (!url) return;
+
+      downloadSendBtn.textContent = '⏳ Downloading...';
+      downloadSendBtn.disabled = true;
+
+      try {
+        const response = await fetch(\`/api/download?session=\${sessionId}\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        const result = await response.json();
+        if (result.success) {
+          urlInput.value = '';
+          console.log('Downloaded and sent successfully');
+        } else {
+          alert('Download failed: ' + result.error);
+        }
+      } catch (error) {
+        alert('Download failed: ' + error.message);
+      } finally {
+        downloadSendBtn.textContent = '📥 Download & Send';
+        downloadSendBtn.disabled = false;
+      }
+    });
+
+    // Enviar mensaje
+    sendMessageBtn.addEventListener('click', async () => {
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      try {
+        const response = await fetch(\`/api/send?session=\${sessionId}\`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        const result = await response.json();
+        if (result.success) {
+          messageInput.value = '';
+          console.log('Message sent successfully');
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    });
+
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessageBtn.click();
+      }
+    });
+
+    // Verificar estado de la sesión
+    async function checkStatus() {
+      try {
+        const response = await fetch(\`/api/status?session=\${sessionId}\`);
+        const result = await response.json();
+
+        if (result.status === 'connected') {
+          statusElement.textContent = 'Connected';
+          statusElement.className = 'status-connected';
+          qrSection.style.display = 'none';
+          loadingSection.style.display = 'none';
+          mainContent.style.display = 'flex';
+          
+          if (result.user) {
+            userInfo.textContent = \`Connected as: \${result.user.name || result.user.id}\`;
+          }
+        } else if (result.status === 'qr') {
+          statusElement.textContent = 'Scan QR Code';
+          statusElement.className = 'status-disconnected';
+          loadingSection.style.display = 'none';
+          mainContent.style.display = 'none';
+          qrSection.style.display = 'block';
+          
+          if (result.qr) {
+            qrImage.innerHTML = \`<img src="\${result.qr}" alt="QR Code" />\`;
+          }
+        } else if (result.status === 'waiting') {
+          statusElement.textContent = \`Waiting (Position \${result.position})\`;
+          statusElement.className = 'status-waiting';
+          // Mostrar interfaz de espera si es necesario
+        } else {
+          statusElement.textContent = 'Initializing...';
+          statusElement.className = 'status-disconnected';
+          qrSection.style.display = 'none';
+          mainContent.style.display = 'none';
+          loadingSection.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error checking status:', error);
+        statusElement.textContent = 'Connection Error';
+        statusElement.className = 'status-disconnected';
+      }
+    }
+
+    // Inicializar y verificar estado cada 3 segundos
+    checkStatus();
+    setInterval(checkStatus, 3000);
+  </script>
+</body>
+</html>`
+
+// Escribir el archivo HTML
+fs.writeFileSync("public/index.html", htmlContent)
+
+// Ruta principal
+app.get("/", (req, res) => res.sendFile(join(__dirname, "public", "index.html")))
+
+/**
+ * Endpoint para subir cookies de J2Team
+ */
+app.post("/api/cookies", upload.single("cookiesFile"), async (req, res) => {
+  try {
+    const sessionId = req.headers["session-id"] || req.query.session
+    if (!sessionId) {
+      return res.json({ success: false, error: "Session ID required" })
+    }
+
+    if (!req.file) {
+      return res.json({ success: false, error: "No cookies file uploaded" })
+    }
+
+    // Leer y parsear el archivo de cookies
+    const cookiesData = JSON.parse(fs.readFileSync(req.file.path, "utf8"))
+
+    // Verificar formato J2Team: debe tener url y cookies array
+    if (!cookiesData.url || !cookiesData.cookies || !Array.isArray(cookiesData.cookies)) {
+      return res.json({
+        success: false,
+        error: "Invalid J2Team cookies format. Expected {url, cookies} structure.",
+      })
+    }
+
+    // Convertir a formato Netscape para yt-dlp
+    const netscapeCookies = convertJsonToNetscape(cookiesData.cookies)
+    const sessionCookiesPath = join(cookiesDir, `${sessionId}.txt`)
+    fs.writeFileSync(sessionCookiesPath, netscapeCookies)
+
+    // Guardar también el JSON original para referencia
+    const sessionJsonPath = join(cookiesDir, `${sessionId}.json`)
+    fs.writeFileSync(sessionJsonPath, JSON.stringify(cookiesData, null, 2))
+
+    // Almacenar en memoria para acceso rápido
+    cookiesStorage.set(sessionId, cookiesData)
+
+    // Limpiar archivo temporal
+    fs.unlinkSync(req.file.path)
+
+    console.log(
+      `✅ Cookies loaded for session ${sessionId}: ${cookiesData.cookies.length} cookies from ${cookiesData.url}`,
+    )
+
+    res.json({
+      success: true,
+      message: `Cookies loaded successfully - ${cookiesData.cookies.length} cookies from ${cookiesData.url}`,
+    })
+  } catch (error) {
+    console.error("Error processing cookies:", error)
+    res.json({ success: false, error: error.message })
+  }
 })
 
-app.listen(CONFIG.PORT, () => {
-  console.log(`Server running on https://${CONFIG.DOMAIN}:${CONFIG.PORT}`)
+/**
+ * Endpoint para subir archivos
+ */
+app.post("/api/upload", upload.single("file"), async (req, res) => {
+  try {
+    const sessionId = req.headers["session-id"] || req.query.session
+
+    if (!sessionId || !activeSessions.has(sessionId)) {
+      return res.json({ success: false, error: "Invalid session" })
+    }
+
+    if (!req.file) {
+      return res.json({ success: false, error: "No file uploaded" })
+    }
+
+    const sock = activeSessions.get(sessionId)
+    const file = req.file
+    const fileBuffer = fs.readFileSync(file.path)
+
+    // Enviar archivo a WhatsApp (a mí mismo)
+    await sock.sendMessage(sock.user.id, {
+      document: fileBuffer,
+      fileName: file.originalname,
+      mimetype: file.mimetype,
+    })
+
+    // Eliminar archivo temporal si está configurado
+    if (CONFIG.AUTO_DELETE_AFTER_SEND) {
+      fs.unlinkSync(file.path)
+    }
+
+    console.log(`📎 File sent successfully: ${file.originalname}`)
+    res.json({ success: true, message: "File sent successfully", filename: file.originalname })
+  } catch (error) {
+    console.error("Error uploading file:", error)
+    res.json({ success: false, error: error.message })
+  }
 })
+
+/**
+ * Endpoint para descargar y enviar URLs
+ */
+app.post("/api/download", async (req, res) => {
+  try {
+    const { url } = req.body
+    const sessionId = req.headers["session-id"] || req.query.session
+
+    if (!sessionId || !activeSessions.has(sessionId)) {
+      return res.json({ success: false, error: "Invalid session" })
+    }
+
+    if (!url) {
+      return res.json({ success: false, error: "URL is required" })
+    }
+
+    const sock = activeSessions.get(sessionId)
+    const userAgent = getRandomUserAgent()
+    const tempFilePath = join(tempDir, `${Date.now()}_${crypto.randomBytes(8).toString("hex")}`)
+
+    // Construir comando yt-dlp
+    let ytDlpCommand = `yt-dlp --no-warnings --user-agent "${userAgent}"`
+
+    // Agregar cookies si existen para esta sesión
+    const sessionCookiesPath = join(cookiesDir, `${sessionId}.txt`)
+    if (fs.existsSync(sessionCookiesPath)) {
+      ytDlpCommand += ` --cookies "${sessionCookiesPath}"`
+      console.log(`🍪 Using cookies for session ${sessionId}`)
+    }
+
+    ytDlpCommand += ` -o "${tempFilePath}.%(ext)s" "${url}"`
+
+    console.log(`⬇️ Downloading: ${url}`)
+    await execAsync(ytDlpCommand)
+
+    // Buscar archivo descargado
+    const files = fs.readdirSync(tempDir).filter((f) => f.startsWith(path.basename(tempFilePath)))
+    if (files.length === 0) {
+      throw new Error("Download failed - no file created")
+    }
+
+    const downloadedFile = join(tempDir, files[0])
+    const fileBuffer = fs.readFileSync(downloadedFile)
+
+    // Enviar archivo a WhatsApp
+    await sock.sendMessage(sock.user.id, {
+      document: fileBuffer,
+      fileName: files[0],
+      mimetype: getMimeType(files[0]),
+    })
+
+    // Limpiar archivo temporal
+    if (CONFIG.AUTO_DELETE_AFTER_SEND) {
+      fs.unlinkSync(downloadedFile)
+    }
+
+    console.log(`✅ Downloaded and sent: ${files[0]}`)
+    res.json({ success: true, message: "Downloaded and sent successfully", filename: files[0] })
+  } catch (error) {
+    console.error("Error downloading:", error)
+    res.json({ success: false, error: error.message })
+  }
+})
+
+/**
+ * Endpoint para enviar mensajes de texto
+ */
+app.post("/api/send", async (req, res) => {
+  try {
+    const { message } = req.body
+    const sessionId = req.headers["session-id"] || req.query.session
+
+    if (!sessionId || !activeSessions.has(sessionId)) {
+      return res.json({ success: false, error: "Invalid session" })
+    }
+
+    if (!message) {
+      return res.json({ success: false, error: "Message is required" })
+    }
+
+    const sock = activeSessions.get(sessionId)
+
+    // Enviar mensaje a mí mismo
+    await sock.sendMessage(sock.user.id, { text: message })
+
+    console.log(`💬 Message sent: ${message.substring(0, 50)}...`)
+    res.json({ success: true, message: "Message sent successfully" })
+  } catch (error) {
+    console.error("Error sending message:", error)
+    res.json({ success: false, error: error.message })
+  }
+})
+
+/**
+ * Endpoint para verificar estado de la sesión
+ */
+app.get("/api/status", async (req, res) => {
+  try {
+    const sessionId = req.query.session
+
+    if (!sessionId) {
+      return res.json({ success: false, error: "Session ID required" })
+    }
+
+    // Verificar si hay espacio para nuevas sesiones
+    if (activeSessions.size >= CONFIG.MAX_SESSIONS && !activeSessions.has(sessionId)) {
+      const position = waitingQueue.indexOf(sessionId)
+      if (position === -1) {
+        waitingQueue.push(sessionId)
+      }
+      return res.json({
+        status: "waiting",
+        position: waitingQueue.indexOf(sessionId) + 1,
+        maxSessions: CONFIG.MAX_SESSIONS,
+      })
+    }
+
+    // Si la sesión está activa y conectada
+    if (activeSessions.has(sessionId)) {
+      const sock = activeSessions.get(sessionId)
+      if (sock.user) {
+        return res.json({
+          status: "connected",
+          user: {
+            id: sock.user.id,
+            name: sock.user.name || sock.user.id,
+          },
+        })
+      }
+    }
+
+    // Verificar si hay QR disponible
+    if (qrCodes.has(sessionId)) {
+      return res.json({
+        status: "qr",
+        qr: qrCodes.get(sessionId),
+      })
+    }
+
+    // Si no existe la sesión, crearla
+    if (!activeSessions.has(sessionId)) {
+      console.log(`🔄 Creating new WhatsApp session: ${sessionId}`)
+      createWhatsAppSession(sessionId)
+    }
+
+    res.json({ status: "initializing" })
+  } catch (error) {
+    console.error("Error checking status:", error)
+    res.json({ success: false, error: error.message })
+  }
+})
+
+// Servir archivos multimedia
+app.use("/media", express.static(mediaDir))
+
+/**
+ * Obtiene el tipo MIME basado en la extensión del archivo
+ * @param {string} filename - Nombre del archivo
+ * @returns {string} Tipo MIME
+ */
+function getMimeType(filename) {
+  const ext = path.extname(filename).toLowerCase()
+  const mimeTypes = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".mp4": "video/mp4",
+    ".avi": "video/x-msvideo",
+    ".mov": "video/quicktime",
+    ".mkv": "video/x-matroska",
+    ".webm": "video/webm",
+    ".mp3": "audio/mpeg",
+    ".wav": "audio/wav",
+    ".ogg": "audio/ogg",
+    ".m4a": "audio/mp4",
+    ".flac": "audio/flac",
+    ".pdf": "application/pdf",
+    ".doc": "application/msword",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".txt": "text/plain",
+    ".zip": "application/zip",
+    ".rar": "application/x-rar-compressed",
+  }
+  return mimeTypes[ext] || "application/octet-stream"
+}
+
+/**
+ * Crea una nueva sesión de WhatsApp
+ * @param {string} sessionId - ID único de la sesión
+ */
+async function createWhatsAppSession(sessionId) {
+  try {
+    const sessionDir = join(__dirname, "sessions", sessionId)
+    fs.mkdirSync(sessionDir, { recursive: true })
+
+    console.log(`📱 Initializing WhatsApp session: ${sessionId}`)
+
+    // Configurar autenticación persistente
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
+
+    // Crear socket de WhatsApp
+    const sock = makeWASocket({
+      auth: state,
+      printQRInTerminal: false,
+      browser: Browsers.macOS("Desktop"),
+      defaultQueryTimeoutMs: 60000,
+    })
+
+    // Manejar actualizaciones de conexión
+    sock.ev.on("connection.update", async (update) => {
+      const { connection, lastDisconnect, qr } = update
+
+      if (qr) {
+        console.log(`📱 QR code generated for session: ${sessionId}`)
+        // Convertir QR a data URL y almacenar
+        const qrDataURL = await qrcode.toDataURL(qr, { scale: 8 })
+        qrCodes.set(sessionId, qrDataURL)
+      }
+
+      if (connection === "close") {
+        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401
+        console.log(`❌ Connection closed for session ${sessionId}:`, lastDisconnect?.error)
+
+        // Limpiar sesión
+        activeSessions.delete(sessionId)
+        qrCodes.delete(sessionId)
+
+        if (shouldReconnect) {
+          console.log(`🔄 Reconnecting session ${sessionId} in 5 seconds...`)
+          setTimeout(() => createWhatsAppSession(sessionId), 5000)
+        } else {
+          console.log(`🚫 Session ${sessionId} permanently closed (logout)`)
+          // Limpiar archivos de sesión si es logout
+          try {
+            fs.rmSync(sessionDir, { recursive: true, force: true })
+          } catch (err) {
+            console.error("Error cleaning session directory:", err)
+          }
+        }
+      } else if (connection === "open") {
+        console.log(`✅ WhatsApp connected successfully for session: ${sessionId}`)
+        console.log(`👤 User: ${sock.user.name} (${sock.user.id})`)
+
+        // Limpiar QR code ya que estamos conectados
+        qrCodes.delete(sessionId)
+
+        // Remover de cola de espera si estaba
+        const queueIndex = waitingQueue.indexOf(sessionId)
+        if (queueIndex !== -1) {
+          waitingQueue.splice(queueIndex, 1)
+        }
+      }
+    })
+
+    // Guardar credenciales cuando cambien
+    sock.ev.on("creds.update", saveCreds)
+
+    // Manejar mensajes (opcional, para logging)
+    sock.ev.on("messages.upsert", async (m) => {
+      if (m.type !== "notify") return
+
+      for (const msg of m.messages) {
+        if (msg.key.fromMe) {
+          console.log(`📤 Message sent from session ${sessionId}: ${msg.message?.conversation || "Media"}`)
+        }
+      }
+    })
+
+    // Almacenar sesión activa
+    activeSessions.set(sessionId, sock)
+
+    // Inicializar estado de sesión
+    sessionStates.set(sessionId, {
+      lastActivity: Date.now(),
+      messagesEnabled: CONFIG.SHOW_MESSAGES_BY_DEFAULT,
+      mediaEnabled: CONFIG.DOWNLOAD_MEDIA_BY_DEFAULT,
+    })
+
+    console.log(`🎯 Session ${sessionId} initialized successfully`)
+  } catch (error) {
+    console.error(`❌ Error creating WhatsApp session ${sessionId}:`, error)
+
+    // Limpiar en caso de error
+    activeSessions.delete(sessionId)
+    qrCodes.delete(sessionId)
+
+    // Reintentar después de un tiempo
+    setTimeout(() => {
+      console.log(`🔄 Retrying session creation for ${sessionId}`)
+      createWhatsAppSession(sessionId)
+    }, 10000)
+  }
+}
+
+// Configurar servidor HTTPS
+try {
+  const options = {
+    key: fs.readFileSync(CONFIG.SSL_KEY),
+    cert: fs.readFileSync(CONFIG.SSL_CERT),
+    ca: fs.readFileSync(CONFIG.SSL_CA),
+  }
+
+  const server = https.createServer(options, app)
+
+  server.listen(CONFIG.PORT, () => {
+    console.log(`🚀 HTTPS Server running on https://${CONFIG.DOMAIN}:${CONFIG.PORT}`)
+    console.log(`📱 WhatsApp Personal Interface available`)
+    console.log(`⚙️  Max sessions: ${CONFIG.MAX_SESSIONS}`)
+    console.log(`🔧 Auto-delete files: ${CONFIG.AUTO_DELETE_AFTER_SEND}`)
+  })
+} catch (error) {
+  console.error("❌ Error starting HTTPS server:", error)
+  console.log("⚠️  Falling back to HTTP server...")
+
+  app.listen(CONFIG.PORT, "0.0.0.0", () => {
+    console.log(`🚀 HTTP Server running on http://0.0.0.0:${CONFIG.PORT}`)
+    console.log("⚠️  WARNING: Running without HTTPS - not recommended for production")
+  })
+}
+
+// Limpieza periódica de sesiones inactivas (cada hora)
+setInterval(
+  () => {
+    const now = Date.now()
+    const maxInactiveTime = 24 * 60 * 60 * 1000 // 24 horas
+
+    for (const [sessionId, sessionState] of sessionStates) {
+      if (now - sessionState.lastActivity > maxInactiveTime) {
+        console.log(`🧹 Cleaning up inactive session: ${sessionId}`)
+
+        // Cerrar conexión si existe
+        if (activeSessions.has(sessionId)) {
+          try {
+            const sock = activeSessions.get(sessionId)
+            sock.end()
+          } catch (err) {
+            console.error("Error closing socket:", err)
+          }
+          activeSessions.delete(sessionId)
+        }
+
+        // Limpiar estados
+        sessionStates.delete(sessionId)
+        qrCodes.delete(sessionId)
+
+        // Limpiar archivos de cookies
+        try {
+          const cookiesPath = join(cookiesDir, `${sessionId}.txt`)
+          const jsonPath = join(cookiesDir, `${sessionId}.json`)
+          if (fs.existsSync(cookiesPath)) fs.unlinkSync(cookiesPath)
+          if (fs.existsSync(jsonPath)) fs.unlinkSync(jsonPath)
+        } catch (err) {
+          console.error("Error cleaning cookies:", err)
+        }
+      }
+    }
+  },
+  60 * 60 * 1000,
+) // Cada hora
+
+// Manejo de errores globales
+process.on("uncaughtException", (err) => {
+  console.error("❌ Uncaught exception:", err)
+})
+
+process.on("unhandledRejection", (err) => {
+  console.error("❌ Unhandled rejection:", err)
+})
+
+// Manejo de cierre graceful
+process.on("SIGINT", () => {
+  console.log("\n🛑 Shutting down gracefully...")
+
+  // Cerrar todas las sesiones activas
+  for (const [sessionId, sock] of activeSessions) {
+    try {
+      console.log(`📱 Closing session: ${sessionId}`)
+      sock.end()
+    } catch (err) {
+      console.error(`Error closing session ${sessionId}:`, err)
+    }
+  }
+
+  process.exit(0)
+})
+
+console.log("🎉 WhatsApp Advanced Session Server initialized!")
+console.log("📋 Features enabled:")
+console.log("   ✅ Multi-session support")
+console.log("   ✅ J2Team cookies support")
+console.log("   ✅ YouTube downloads with yt-dlp")
+console.log("   ✅ File uploads and URL downloads")
+console.log("   ✅ Auto-cleanup and session management")
+console.log("   ✅ HTTPS support")
