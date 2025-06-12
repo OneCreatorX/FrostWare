@@ -17,7 +17,7 @@ const CONFIG = {
   SSL_KEY: `/etc/letsencrypt/live/system.heatherx.site/privkey.pem`,
   SSL_CERT: `/etc/letsencrypt/live/system.heatherx.site/cert.pem`,
   SSL_CA: `/etc/letsencrypt/live/system.heatherx.site/chain.pem`,
-  MAX_SESSIONS: 5,
+  MAX_SESSIONS: 50,
   SESSION_DURATION: 5 * 60 * 1000,
   COOLDOWN_DURATION: 60 * 60 * 1000,
   MAX_FILES_PER_SESSION: 2,
@@ -36,6 +36,8 @@ const sessionTimers = new Map()
 const whatsappCooldowns = new Map()
 const deviceFingerprints = new Map()
 const sessionStats = new Map()
+const sessionQueue = []
+const sessionCreationLocks = new Set()
 
 app.use(express.static("public"))
 app.use(bodyParser.json({ limit: "10mb" }))
@@ -152,28 +154,12 @@ function extractVideoId(url) {
   return url.length >= 10 && url.length <= 15 ? url : null
 }
 
-async function getFileSize(url, sessionId) {
-  try {
-    const sessionCookiesPath = join(cookiesDir, `${sessionId}.txt`)
-    const cookiesFlag = fs.existsSync(sessionCookiesPath) ? `--cookies "${sessionCookiesPath}"` : ""
-
-    const cmd = `yt-dlp --no-warnings ${cookiesFlag} --print "%(filesize)s" --print "%(filesize_approx)s" "${url}"`
-    const result = execSync(cmd, { encoding: "utf8", timeout: 15000 })
-    const lines = result.trim().split("\n")
-
-    const filesize = Number.parseInt(lines[0]) || Number.parseInt(lines[1]) || 0
-    return filesize
-  } catch (error) {
-    return 0
-  }
-}
-
 const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WhatsApp Media Sender - Ultra Lite</title>
+  <title>WhatsApp Media Sender - Optimized</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; overflow-x: hidden; }
@@ -208,7 +194,7 @@ const htmlContent = `<!DOCTYPE html>
     .btn-success { background: linear-gradient(135deg, #4CAF50, #45a049); }
     .progress-bar { width: 100%; height: 8px; background: #e1e5e9; border-radius: 4px; overflow: hidden; margin: 15px 0; }
     .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.3s ease; }
-    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px 0; }
     .stat { text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px; }
     .stat-value { font-size: 1.5em; font-weight: bold; color: #333; }
     .stat-label { font-size: 0.9em; color: #666; margin-top: 5px; }
@@ -219,10 +205,11 @@ const htmlContent = `<!DOCTYPE html>
     .cookies-status { padding: 15px; border-radius: 10px; text-align: center; margin: 15px 0; font-size: 0.9em; }
     .cookies-status.loaded { background: rgba(76, 175, 80, 0.1); color: #4CAF50; border: 1px solid rgba(76, 175, 80, 0.3); }
     .cookies-status.error { background: rgba(244, 67, 54, 0.1); color: #f44336; border: 1px solid rgba(244, 67, 54, 0.3); }
-    .cookies-status.default { background: rgba(158, 158, 158, 0.1); color: #666; border: 1px solid rgba(158, 158, 158, 0.3); }
+    .cookies-status.default { background: rgba(158, 158, 158, 0.1); color: #666; border: 1px solid rgba(158, 158, 158, 0.3); text-align: center; }
     .session-info { font-size: 0.8em; color: #666; text-align: center; margin-bottom: 15px; }
     .warning { background: rgba(255, 152, 0, 0.1); color: #ff9800; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid rgba(255, 152, 0, 0.3); text-align: center; }
     .hidden { display: none !important; }
+    .server-stats { background: rgba(102, 126, 234, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
   </style>
 </head>
 <body>
@@ -230,6 +217,13 @@ const htmlContent = `<!DOCTYPE html>
     <div class="header">
       <h1>📱 WhatsApp Media Sender</h1>
       <p>Send media from YouTube, Instagram, TikTok & more directly to your WhatsApp</p>
+    </div>
+    
+    <div class="server-stats">
+      <div style="font-size: 0.9em; color: #666;">
+        <span id="active-sessions">0</span>/50 Active Sessions | 
+        <span id="queue-length">0</span> in Queue
+      </div>
     </div>
     
     <div class="limits">
@@ -290,6 +284,10 @@ const htmlContent = `<!DOCTYPE html>
           <div id="data-used" class="stat-value">0/500MB</div>
           <div class="stat-label">Data Used</div>
         </div>
+        <div class="stat">
+          <div id="time-left" class="stat-value">5:00</div>
+          <div class="stat-label">Time Left</div>
+        </div>
       </div>
       
       <h3>🍪 Upload Cookies (Optional)</h3>
@@ -335,6 +333,7 @@ const htmlContent = `<!DOCTYPE html>
       qrImage: document.getElementById("qr-image"),
       filesUsed: document.getElementById("files-used"),
       dataUsed: document.getElementById("data-used"),
+      timeLeft: document.getElementById("time-left"),
       cookiesUploadArea: document.getElementById("cookies-upload-area"),
       cookiesInput: document.getElementById("cookies-input"),
       cookiesStatus: document.getElementById("cookies-status"),
@@ -345,7 +344,9 @@ const htmlContent = `<!DOCTYPE html>
       progressFill: document.getElementById("progress-fill"),
       progressText: document.getElementById("progress-text"),
       queuePosition: document.getElementById("queue-position"),
-      cooldownTimer: document.getElementById("cooldown-timer")
+      cooldownTimer: document.getElementById("cooldown-timer"),
+      activeSessions: document.getElementById("active-sessions"),
+      queueLength: document.getElementById("queue-length")
     };
 
     function generateSecureSessionId() {
@@ -379,6 +380,7 @@ const htmlContent = `<!DOCTYPE html>
         const remaining = Math.max(0, 300 - elapsed);
         
         elements.sessionTimer.textContent = formatTime(remaining);
+        elements.timeLeft.textContent = formatTime(remaining);
         
         if (remaining === 0) {
           clearInterval(sessionTimer);
@@ -587,6 +589,11 @@ const htmlContent = `<!DOCTYPE html>
         const response = await fetch(\`/api/status?session=\${sessionId}\`);
         const result = await response.json();
 
+        if (result.serverStats) {
+          elements.activeSessions.textContent = result.serverStats.activeSessions;
+          elements.queueLength.textContent = result.serverStats.queueLength;
+        }
+
         if (result.status === 'connected') {
           elements.status.textContent = '✅ Connected';
           elements.status.className = 'status-connected';
@@ -644,7 +651,7 @@ const htmlContent = `<!DOCTYPE html>
 
     localStorage.setItem('whatsapp-session-id', sessionId);
     checkStatus();
-    setInterval(checkStatus, 3000);
+    setInterval(checkStatus, 2000);
   </script>
 </body>
 </html>`
@@ -840,10 +847,15 @@ app.get("/api/status", async (req, res) => {
       return res.json({ success: false, error: "Session ID required" })
     }
 
+    const serverStats = {
+      activeSessions: activeSessions.size,
+      queueLength: sessionQueue.length,
+    }
+
     if (deviceFingerprints.has(deviceFingerprint)) {
       const existingSessionId = deviceFingerprints.get(deviceFingerprint)
       if (existingSessionId !== sessionId && activeSessions.has(existingSessionId)) {
-        return res.json({ status: "device_limit" })
+        return res.json({ status: "device_limit", serverStats })
       }
     }
 
@@ -853,6 +865,7 @@ app.get("/api/status", async (req, res) => {
         return res.json({
           status: "cooldown",
           remainingTime: cooldownEnd - Date.now(),
+          serverStats,
         })
       } else {
         whatsappCooldowns.delete(sessionId)
@@ -860,9 +873,14 @@ app.get("/api/status", async (req, res) => {
     }
 
     if (activeSessions.size >= CONFIG.MAX_SESSIONS && !activeSessions.has(sessionId)) {
+      if (!sessionQueue.includes(sessionId)) {
+        sessionQueue.push(sessionId)
+      }
+      const position = sessionQueue.indexOf(sessionId) + 1
       return res.json({
         status: "waiting",
-        position: Math.floor(Math.random() * 3) + 1,
+        position: position,
+        serverStats,
       })
     }
 
@@ -878,6 +896,7 @@ app.get("/api/status", async (req, res) => {
           },
           filesUsed: stats.filesUsed,
           dataUsed: stats.dataUsed,
+          serverStats,
         })
       }
     }
@@ -886,67 +905,107 @@ app.get("/api/status", async (req, res) => {
       return res.json({
         status: "qr",
         qr: qrCodes.get(sessionId),
+        serverStats,
       })
     }
 
-    if (!activeSessions.has(sessionId)) {
+    if (!activeSessions.has(sessionId) && !sessionCreationLocks.has(sessionId)) {
       createWhatsAppSession(sessionId, deviceFingerprint)
     }
 
-    res.json({ status: "initializing" })
+    res.json({ status: "initializing", serverStats })
   } catch (error) {
     console.error("Error checking status:", error)
     res.json({ success: false, error: error.message })
   }
 })
 
-function createWhatsAppSession(sessionId, deviceFingerprint) {
-  const sessionDir = join(__dirname, "sessions", sessionId)
-  fs.mkdirSync(sessionDir, { recursive: true })
+async function createWhatsAppSession(sessionId, deviceFingerprint) {
+  if (sessionCreationLocks.has(sessionId)) {
+    return
+  }
 
-  console.log(`📱 Creating session: ${sessionId}`)
+  sessionCreationLocks.add(sessionId)
 
-  const { state, saveCreds } = useMultiFileAuthState(sessionDir)
-  const sock = makeWASocket({
-    auth: state,
-    printQRInTerminal: false,
-    browser: Browsers.macOS("Desktop"),
-  })
+  try {
+    const sessionDir = join(__dirname, "sessions", sessionId)
+    fs.mkdirSync(sessionDir, { recursive: true })
 
-  sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect, qr } = update
+    console.log(`📱 Creating session: ${sessionId}`)
 
-    if (qr) {
-      const qrDataURL = await qrcode.toDataURL(qr, { scale: 8 })
-      qrCodes.set(sessionId, qrDataURL)
-    }
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
 
-    if (connection === "close") {
-      console.log(`❌ Connection closed: ${sessionId}`)
-      cleanupSession(sessionId, deviceFingerprint)
-    } else if (connection === "open") {
-      console.log(`✅ Connected: ${sessionId} - ${sock.user.name}`)
-      qrCodes.delete(sessionId)
-      deviceFingerprints.set(deviceFingerprint, sessionId)
+    const sock = makeWASocket({
+      auth: state,
+      browser: Browsers.macOS("Desktop"),
+      connectTimeoutMs: 60000,
+      defaultQueryTimeoutMs: 0,
+      keepAliveIntervalMs: 10000,
+      logger: {
+        level: "silent",
+        child: () => ({ level: "silent" }),
+      },
+    })
 
-      whatsappCooldowns.set(sock.user.id, Date.now() + CONFIG.COOLDOWN_DURATION)
+    sock.ev.on("connection.update", async (update) => {
+      const { connection, lastDisconnect, qr } = update
 
-      sessionTimers.set(
-        sessionId,
-        setTimeout(() => {
-          console.log(`⏰ Session expired: ${sessionId}`)
-          cleanupSession(sessionId, deviceFingerprint)
-        }, CONFIG.SESSION_DURATION),
-      )
-    }
-  })
+      if (qr) {
+        try {
+          const qrDataURL = await qrcode.toDataURL(qr, { scale: 8 })
+          qrCodes.set(sessionId, qrDataURL)
+        } catch (qrError) {
+          console.error(`QR generation error for ${sessionId}:`, qrError)
+        }
+      }
 
-  sock.ev.on("creds.update", saveCreds)
-  activeSessions.set(sessionId, sock)
+      if (connection === "close") {
+        console.log(`❌ Connection closed: ${sessionId}`)
+        cleanupSession(sessionId, deviceFingerprint)
+      } else if (connection === "open") {
+        console.log(`✅ Connected: ${sessionId} - ${sock.user?.name || "Unknown"}`)
+        qrCodes.delete(sessionId)
+        deviceFingerprints.set(deviceFingerprint, sessionId)
+
+        if (sock.user?.id) {
+          whatsappCooldowns.set(sock.user.id, Date.now() + CONFIG.COOLDOWN_DURATION)
+        }
+
+        sessionTimers.set(
+          sessionId,
+          setTimeout(() => {
+            console.log(`⏰ Session expired: ${sessionId}`)
+            cleanupSession(sessionId, deviceFingerprint)
+          }, CONFIG.SESSION_DURATION),
+        )
+
+        const queueIndex = sessionQueue.indexOf(sessionId)
+        if (queueIndex > -1) {
+          sessionQueue.splice(queueIndex, 1)
+        }
+      }
+    })
+
+    sock.ev.on("creds.update", saveCreds)
+    activeSessions.set(sessionId, sock)
+  } catch (error) {
+    console.error(`Error creating session ${sessionId}:`, error)
+    cleanupSession(sessionId, deviceFingerprint)
+  } finally {
+    sessionCreationLocks.delete(sessionId)
+  }
 }
 
 function cleanupSession(sessionId, deviceFingerprint) {
   if (activeSessions.has(sessionId)) {
+    try {
+      const sock = activeSessions.get(sessionId)
+      if (sock && typeof sock.end === "function") {
+        sock.end()
+      }
+    } catch (error) {
+      console.error(`Error ending socket for ${sessionId}:`, error)
+    }
     activeSessions.delete(sessionId)
   }
 
@@ -958,24 +1017,32 @@ function cleanupSession(sessionId, deviceFingerprint) {
   qrCodes.delete(sessionId)
   cookiesStorage.delete(sessionId)
   sessionStats.delete(sessionId)
+  sessionCreationLocks.delete(sessionId)
+
+  const queueIndex = sessionQueue.indexOf(sessionId)
+  if (queueIndex > -1) {
+    sessionQueue.splice(queueIndex, 1)
+  }
 
   if (deviceFingerprint) {
     deviceFingerprints.delete(deviceFingerprint)
   }
 
-  try {
-    const sessionDir = join(__dirname, "sessions", sessionId)
-    const cookiesPath = join(cookiesDir, `${sessionId}.txt`)
+  setTimeout(() => {
+    try {
+      const sessionDir = join(__dirname, "sessions", sessionId)
+      const cookiesPath = join(cookiesDir, `${sessionId}.txt`)
 
-    if (fs.existsSync(sessionDir)) {
-      fs.rmSync(sessionDir, { recursive: true, force: true })
+      if (fs.existsSync(sessionDir)) {
+        fs.rmSync(sessionDir, { recursive: true, force: true })
+      }
+      if (fs.existsSync(cookiesPath)) {
+        fs.unlinkSync(cookiesPath)
+      }
+    } catch (err) {
+      console.error("Error cleaning files:", err)
     }
-    if (fs.existsSync(cookiesPath)) {
-      fs.unlinkSync(cookiesPath)
-    }
-  } catch (err) {
-    console.error("Error cleaning files:", err)
-  }
+  }, 5000)
 }
 
 function formatBytes(bytes) {
@@ -995,7 +1062,7 @@ try {
 
   const server = https.createServer(options, app)
   server.listen(CONFIG.PORT, () => {
-    console.log(`🚀 WhatsApp Ultra Lite: https://${CONFIG.DOMAIN}`)
+    console.log(`🚀 WhatsApp Optimized: https://${CONFIG.DOMAIN}`)
     console.log(
       `⚙️ Limits: ${CONFIG.MAX_SESSIONS} sessions, ${CONFIG.SESSION_DURATION / 1000 / 60}min each, ${CONFIG.MAX_FILES_PER_SESSION} files, ${formatBytes(CONFIG.MAX_SIZE_PER_SESSION)}`,
     )
@@ -1014,9 +1081,19 @@ setInterval(() => {
       whatsappCooldowns.delete(key)
     }
   }
-}, 60000)
 
-process.on("uncaughtException", (err) => console.error("❌ Uncaught:", err))
-process.on("unhandledRejection", (err) => console.error("❌ Unhandled:", err))
+  while (sessionQueue.length > 0 && activeSessions.size < CONFIG.MAX_SESSIONS) {
+    const nextSessionId = sessionQueue.shift()
+    console.log(`🔄 Processing queued session: ${nextSessionId}`)
+  }
+}, 30000)
 
-console.log("🎉 WhatsApp Ultra Lite initialized!")
+process.on("uncaughtException", (err) => {
+  console.error("❌ Uncaught:", err)
+})
+
+process.on("unhandledRejection", (err) => {
+  console.error("❌ Unhandled:", err)
+})
+
+console.log("🎉 WhatsApp Optimized initialized!")
