@@ -1,230 +1,264 @@
-import makeWASocket, { Browsers, useMultiFileAuthState, downloadMediaMessage } from "@whiskeysockets/baileys"
 import express from "express"
-import qrcode from "qrcode"
+import multer from "multer"
+import { exec } from "child_process"
+import fs from "fs"
+import path from "path"
+import https from "https"
 import { fileURLToPath } from "url"
-import { dirname, join } from "path"
-import fs from "fs/promises"
-import { createWriteStream } from "fs"
-import bodyParser from "body-parser"
 
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const __dirname = path.dirname(__filename)
+
+const CONFIG = {
+  PORT: 8433,
+  DOMAIN: "system.heatherx.site",
+  SSL_KEY: `/etc/letsencrypt/live/system.heatherx.site/privkey.pem`,
+  SSL_CERT: `/etc/letsencrypt/live/system.heatherx.site/cert.pem`,
+  SSL_CA: `/etc/letsencrypt/live/system.heatherx.site/chain.pem`,
+}
 
 const app = express()
-const port = 3000
-let qrCodeDataURL = null
-let isConnected = false
-let whatsappClient = null
-const messageHistory = []
-let state, saveCreds // Declare state and saveCreds outside the function
+const upload = multer({ dest: "uploads/" })
 
-// Configuración de Express
-app.use(express.static("public"))
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: true }))
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
-// Aseguramos que exista el directorio de medios
-const mediaDir = join(__dirname, "media")
-try {
-  await fs.mkdir(mediaDir, { recursive: true })
-} catch (err) {
-  console.error("Error al crear directorio de medios:", err)
-}
+const tempDir = path.join(__dirname, "temp")
+const cookiesDir = path.join(__dirname, "cookies")
 
-// Iniciar WhatsApp
-async function startWhatsApp() {
-  // Usar persistencia de sesión
-  const auth = await useMultiFileAuthState("auth_info")
-  state = auth.state
-  saveCreds = auth.saveCreds
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true })
+if (!fs.existsSync(cookiesDir)) fs.mkdirSync(cookiesDir, { recursive: true })
 
-  const sock = makeWASocket({
-    auth: state,
-    browser: Browsers.ubuntu("WhatsApp-Web-Interface"),
-    printQRInTerminal: true,
-  })
+const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>YouTube Cookie Tester</title>
+    <style>
+        body { font-family: Arial; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        input, textarea, button { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #007cba; color: white; cursor: pointer; width: auto; padding: 10px 20px; }
+        button:hover { background: #005a87; }
+        .log { background: #f8f8f8; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+        .error { color: red; }
+        .success { color: green; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 YouTube Cookie Tester</h1>
+        
+        <div class="section">
+            <h3>📁 Upload Cookies (JSON)</h3>
+            <input type="file" id="cookieFile" accept=".json">
+            <button onclick="uploadCookies()">Upload & Analyze Cookies</button>
+        </div>
 
-  // Guardar credenciales cuando cambien
-  sock.ev.on("creds.update", saveCreds)
+        <div class="section">
+            <h3>🔗 Test YouTube URL</h3>
+            <input type="text" id="youtubeUrl" placeholder="https://youtu.be/..." value="https://youtu.be/eypt-w22cto">
+            <button onclick="testInfo()">Test Info Only</button>
+            <button onclick="testDownload()">Test Download</button>
+        </div>
 
-  // Manejar actualizaciones de conexión
-  sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect, qr } = update
+        <div class="section">
+            <h3>📊 Cookie Analysis</h3>
+            <div id="cookieAnalysis" class="log">No cookies uploaded yet</div>
+        </div>
 
-    if (qr) {
-      console.log("Nuevo código QR generado")
-      qrCodeDataURL = await qrcode.toDataURL(qr)
-    }
+        <div class="section">
+            <h3>📝 Test Results</h3>
+            <div id="testResults" class="log">No tests run yet</div>
+        </div>
+    </div>
 
-    if (connection === "close") {
-      const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401
-      console.log("Conexión cerrada:", lastDisconnect?.error)
+    <script>
+        async function uploadCookies() {
+            const fileInput = document.getElementById('cookieFile');
+            if (!fileInput.files[0]) {
+                alert('Please select a cookie file');
+                return;
+            }
 
-      if (shouldReconnect) {
-        console.log("Reconectando...")
-        whatsappClient = await startWhatsApp()
-      }
-      isConnected = false
-    } else if (connection === "open") {
-      console.log("¡WhatsApp conectado exitosamente!")
-      isConnected = true
-      qrCodeDataURL = null // Limpiar QR una vez conectado
-    }
-  })
+            const formData = new FormData();
+            formData.append('cookies', fileInput.files[0]);
 
-  // Escuchar mensajes nuevos
-  sock.ev.on("messages.upsert", async ({ messages }) => {
-    for (const message of messages) {
-      // Procesar solo mensajes nuevos
-      if (!message.key.fromMe && message.message) {
-        console.log("Mensaje recibido:", message)
-
-        // Guardar mensaje en historial
-        const formattedMessage = {
-          id: message.key.id,
-          from: message.key.remoteJid,
-          timestamp: message.messageTimestamp,
-          text:
-            message.message.conversation ||
-            (message.message.extendedTextMessage && message.message.extendedTextMessage.text) ||
-            "Contenido multimedia",
-          hasMedia:
-            !!message.message.imageMessage ||
-            !!message.message.documentMessage ||
-            !!message.message.audioMessage ||
-            !!message.message.videoMessage,
-          mediaType: message.message.imageMessage
-            ? "image"
-            : message.message.documentMessage
-              ? "document"
-              : message.message.audioMessage
-                ? "audio"
-                : message.message.videoMessage
-                  ? "video"
-                  : null,
+            try {
+                const response = await fetch('/upload-cookies', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                document.getElementById('cookieAnalysis').innerHTML = result.analysis;
+            } catch (error) {
+                document.getElementById('cookieAnalysis').innerHTML = 'Error: ' + error.message;
+            }
         }
 
-        // Descargar medios si existen
-        if (formattedMessage.hasMedia) {
-          try {
-            const buffer = await downloadMediaMessage(
-              message,
-              "buffer",
-              {},
-              {
-                logger: console,
-                reuploadRequest: sock.updateMediaMessage,
-              },
-            )
-
-            const fileName = `${message.key.id}.${formattedMessage.mediaType}`
-            const filePath = join(mediaDir, fileName)
-
-            const writeStream = createWriteStream(filePath)
-            writeStream.write(buffer)
-            writeStream.end()
-
-            formattedMessage.mediaPath = `/media/${fileName}`
-          } catch (error) {
-            console.error("Error al descargar medio:", error)
-          }
+        async function testInfo() {
+            await runTest('info');
         }
 
-        messageHistory.unshift(formattedMessage)
-        // Limitar historial a 100 mensajes
-        if (messageHistory.length > 100) messageHistory.pop()
-      }
-    }
-  })
+        async function testDownload() {
+            await runTest('download');
+        }
 
-  whatsappClient = sock
-  return sock
-}
+        async function runTest(type) {
+            const url = document.getElementById('youtubeUrl').value;
+            if (!url) {
+                alert('Please enter a YouTube URL');
+                return;
+            }
 
-// Iniciar WhatsApp
-await startWhatsApp()
+            document.getElementById('testResults').innerHTML = 'Running test...';
 
-// Ruta principal - Interfaz de usuario
+            try {
+                const response = await fetch('/test-download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, type })
+                });
+                const result = await response.json();
+                document.getElementById('testResults').innerHTML = result.log;
+            } catch (error) {
+                document.getElementById('testResults').innerHTML = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>`
+
 app.get("/", (req, res) => {
-  if (isConnected) {
-    res.sendFile(join(__dirname, "public", "index.html"))
-  } else if (qrCodeDataURL) {
-    res.send(`
-      <div style="text-align: center; font-family: Arial;">
-        <h1>📱 Escanea con WhatsApp</h1>
-        <img src="${qrCodeDataURL}" style="max-width: 300px;" />
-        <p>Abre WhatsApp → Dispositivos vinculados → Vincular dispositivo</p>
-        <button onclick="location.reload()">Actualizar QR</button>
-      </div>
-    `)
-  } else {
-    res.send(`
-      <div style="text-align: center; font-family: Arial;">
-        <h1>⏳ Generando código QR...</h1>
-        <p>Espera un momento...</p>
-        <script>setTimeout(() => location.reload(), 3000)</script>
-      </div>
-    `)
+  res.send(htmlContent)
+})
+
+app.post("/upload-cookies", upload.single("cookies"), (req, res) => {
+  try {
+    const cookieData = JSON.parse(fs.readFileSync(req.file.path, "utf8"))
+    const cookies = cookieData.cookies || cookieData
+
+    const requiredCookies = ["SAPISID", "APISID", "SID", "HSID", "SSID", "LOGIN_INFO"]
+    const foundCookies = cookies.map((c) => c.name)
+    const missingCookies = requiredCookies.filter((name) => !foundCookies.includes(name))
+
+    let netscapeContent = ""
+    let validCount = 0
+
+    cookies.forEach((cookie) => {
+      if (cookie.domain && cookie.name && cookie.value) {
+        const domain = cookie.domain.startsWith(".") ? cookie.domain : "." + cookie.domain
+        const secure = cookie.secure ? "TRUE" : "FALSE"
+        const httpOnly = cookie.httpOnly ? "TRUE" : "FALSE"
+        const expiry = cookie.expirationDate ? Math.floor(cookie.expirationDate) : "0"
+
+        netscapeContent += `${domain}\tTRUE\t${cookie.path || "/"}\t${secure}\t${expiry}\t${cookie.name}\t${cookie.value}\n`
+        validCount++
+      }
+    })
+
+    const cookieFilePath = path.join(cookiesDir, "youtube_cookies.txt")
+    fs.writeFileSync(cookieFilePath, netscapeContent)
+
+    let analysis = `✅ Cookies processed: ${validCount} valid cookies\n`
+    analysis += `📁 Saved to: ${cookieFilePath}\n\n`
+    analysis += `🔍 Found cookies:\n${foundCookies.join(", ")}\n\n`
+
+    if (missingCookies.length > 0) {
+      analysis += `⚠️ Missing important cookies:\n${missingCookies.join(", ")}\n\n`
+      analysis += `💡 These cookies are usually needed for YouTube authentication.\n`
+      analysis += `Try using EditThisCookie extension or export from DevTools.\n`
+    } else {
+      analysis += `✅ All important cookies found!\n`
+    }
+
+    fs.unlinkSync(req.file.path)
+
+    res.json({ success: true, analysis })
+  } catch (error) {
+    res.json({ success: false, analysis: `❌ Error: ${error.message}` })
   }
 })
 
-// Servir archivos multimedia
-app.use("/media", express.static(mediaDir))
+app.post("/test-download", (req, res) => {
+  const { url, type } = req.body
+  const cookieFile = path.join(cookiesDir, "youtube_cookies.txt")
 
-// API para obtener estado
-app.get("/api/status", (req, res) => {
-  res.json({
-    connected: isConnected,
-    hasQR: !!qrCodeDataURL,
+  if (!fs.existsSync(cookieFile)) {
+    return res.json({ success: false, log: "❌ No cookies file found. Please upload cookies first." })
+  }
+
+  const timestamp = Date.now()
+  const outputTemplate = path.join(tempDir, `test_${timestamp}.%(ext)s`)
+
+  let command = "yt-dlp"
+  command += " --no-warnings"
+  command += " --ignore-errors"
+  command += ` --cookies "${cookieFile}"`
+  command +=
+    ' --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"'
+
+  if (type === "info") {
+    command += " --dump-json"
+    command += " --no-download"
+  } else {
+    command += ' --format "best[height<=720]/best"'
+    command += ` -o "${outputTemplate}"`
+  }
+
+  command += ` "${url}"`
+
+  let log = `🔧 Command: ${command}\n\n`
+  log += `📊 Cookie file size: ${fs.statSync(cookieFile).size} bytes\n`
+  log += `📄 Cookie lines: ${
+    fs
+      .readFileSync(cookieFile, "utf8")
+      .split("\n")
+      .filter((line) => line.trim() && !line.startsWith("#")).length
+  }\n\n`
+  log += `⏳ Executing...\n\n`
+
+  exec(command, { timeout: 60000 }, (error, stdout, stderr) => {
+    if (error) {
+      log += `❌ Error: ${error.message}\n\n`
+    }
+
+    if (stdout) {
+      log += `📤 Output:\n${stdout}\n\n`
+    }
+
+    if (stderr) {
+      log += `⚠️ Stderr:\n${stderr}\n\n`
+    }
+
+    if (type === "download" && !error) {
+      const files = fs.readdirSync(tempDir).filter((f) => f.startsWith(`test_${timestamp}`))
+      if (files.length > 0) {
+        log += `✅ Downloaded files:\n${files.join("\n")}\n`
+      }
+    }
+
+    res.json({ success: !error, log })
   })
 })
 
-// API para obtener mensajes
-app.get("/api/messages", (req, res) => {
-  res.json(messageHistory)
-})
-
-// API para enviar mensaje
-app.post("/api/send", async (req, res) => {
-  if (!isConnected || !whatsappClient) {
-    return res.status(400).json({ success: false, error: "WhatsApp no conectado" })
+try {
+  const httpsOptions = {
+    key: fs.readFileSync(CONFIG.SSL_KEY),
+    cert: fs.readFileSync(CONFIG.SSL_CERT),
+    ca: fs.readFileSync(CONFIG.SSL_CA),
   }
 
-  try {
-    const { to, message } = req.body
+  const server = https.createServer(httpsOptions, app)
 
-    if (!to || !message) {
-      return res.status(400).json({ success: false, error: "Faltan parámetros (to, message)" })
-    }
-
-    // Formatear número si es necesario
-    let recipient = to
-    if (!to.includes("@")) {
-      // Asumimos que es un número de teléfono sin formato
-      recipient = to.replace(/[^\d]/g, "") + "@s.whatsapp.net"
-    }
-
-    // Enviar mensaje
-    await whatsappClient.sendMessage(recipient, { text: message })
-
-    res.json({ success: true, message: "Mensaje enviado" })
-  } catch (error) {
-    console.error("Error al enviar mensaje:", error)
-    res.status(500).json({ success: false, error: error.message })
-  }
-})
-
-// Iniciar servidor
-app.listen(port, "0.0.0.0", () => {
-  console.log(`🚀 Servidor iniciado en http://0.0.0.0:${port}`)
-  console.log(`📱 Accede desde: http://TU_IP_VPS:${port}`)
-})
-
-// Manejo de errores
-process.on("uncaughtException", (err) => {
-  console.error("Error no capturado:", err)
-})
-
-process.on("unhandledRejection", (err) => {
-  console.error("Promesa rechazada:", err)
-})
+  server.listen(CONFIG.PORT, "0.0.0.0", () => {
+    console.log(`🔒 HTTPS Server running at https://${CONFIG.DOMAIN}:${CONFIG.PORT}`)
+  })
+} catch (error) {
+  console.error("Error starting HTTPS server:", error)
+  app.listen(CONFIG.PORT, "0.0.0.0", () => {
+    console.log(`🌐 HTTP Server running at http://0.0.0.0:${CONFIG.PORT}`)
+  })
+}
