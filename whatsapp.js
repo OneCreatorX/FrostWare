@@ -10,11 +10,10 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const CONFIG = {
-  PORT: 433,
+  PORT: 8433,
   DOMAIN: "system.heatherx.site",
   SSL_KEY: `/etc/letsencrypt/live/system.heatherx.site/privkey.pem`,
-  SSL_CERT: `/etc/letsencrypt/live/system.heatherx.site/cert.pem`,
-  SSL_CA: `/etc/letsencrypt/live/system.heatherx.site/chain.pem`,
+  SSL_CERT: `/etc/letsencrypt/live/system.heatherx.site/fullchain.pem`,
 }
 
 const app = express()
@@ -248,7 +247,6 @@ try {
   const httpsOptions = {
     key: fs.readFileSync(CONFIG.SSL_KEY),
     cert: fs.readFileSync(CONFIG.SSL_CERT),
-    ca: fs.readFileSync(CONFIG.SSL_CA),
   }
 
   const server = https.createServer(httpsOptions, app)
