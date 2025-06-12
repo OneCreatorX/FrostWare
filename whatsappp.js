@@ -1,5 +1,4 @@
-// Importación dinámica de Baileys para compatibilidad
-const { makeWASocket, useMultiFileAuthState, Browsers, downloadMediaMessage } = await import("@whiskeysockets/baileys")
+const { makeWASocket, useMultiFileAuthState, Browsers } = await import("@whiskeysockets/baileys")
 import express from "express"
 import qrcode from "qrcode"
 import { fileURLToPath } from "url"
@@ -15,105 +14,32 @@ import { promisify } from "util"
 
 const execAsync = promisify(exec)
 
-// Configuración del servidor
 const CONFIG = {
   PORT: 443,
   DOMAIN: "system.heatherx.site",
   SSL_KEY: `/etc/letsencrypt/live/system.heatherx.site/privkey.pem`,
   SSL_CERT: `/etc/letsencrypt/live/system.heatherx.site/cert.pem`,
   SSL_CA: `/etc/letsencrypt/live/system.heatherx.site/chain.pem`,
-  MAX_SESSIONS: 10,
-  AUTO_DOWNLOAD_DELAY: 7000,
-  AUTO_DELETE_AFTER_SEND: true,
-  SHOW_MESSAGES_BY_DEFAULT: false,
-  DOWNLOAD_MEDIA_BY_DEFAULT: false,
+  MAX_SESSIONS: 100,
+  SESSION_DURATION: 10 * 60 * 1000,
+  COOLDOWN_DURATION: 30 * 60 * 1000,
+  MAX_DATA_PER_SESSION: 1024 * 1024 * 1024,
 }
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const app = express()
 
-// Almacenamiento de sesiones y estados
-const activeSessions = new Map() // Sesiones activas de WhatsApp
-const sessionStates = new Map() // Estados de configuración por sesión
-const waitingQueue = [] // Cola de espera cuando se alcanza el máximo
-const mediaCache = new Map() // Cache de archivos multimedia
-const cookiesStorage = new Map() // Almacenamiento de cookies por sesión
-const formatCache = new Map() // Cache de formatos de video/audio
-const qrCodes = new Map() // Almacenamiento de códigos QR por sesión
+const activeSessions = new Map()
+const sessionData = new Map()
+const userRegistry = new Map()
+const qrCodes = new Map()
+const cookiesStorage = new Map()
 
-// User agents para rotación y evitar detección
-const userAgents = [
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0",
-]
-
-/**
- * Genera un ID de sesión seguro y único
- * @returns {string} ID de sesión único
- */
-function generateSecureSessionId() {
-  const timestamp = Date.now().toString(36)
-  const randomBytes = crypto.randomBytes(32).toString("hex")
-  const hash = crypto
-    .createHash("sha256")
-    .update(timestamp + randomBytes)
-    .digest("hex")
-  return `ws_${timestamp}_${hash.substring(0, 48)}_${crypto.randomBytes(16).toString("hex")}`
-}
-
-/**
- * Obtiene un user agent aleatorio para evitar detección
- * @returns {string} User agent aleatorio
- */
-function getRandomUserAgent() {
-  return userAgents[Math.floor(Math.random() * userAgents.length)]
-}
-
-/**
- * Convierte cookies de formato J2Team a formato Netscape para yt-dlp
- * @param {Array} cookies - Array de cookies en formato J2Team
- * @returns {string} Cookies en formato Netscape
- */
-function convertJsonToNetscape(cookies) {
-  let netscapeFormat = "# Netscape HTTP Cookie File\n"
-  netscapeFormat += "# This is a generated file! Do not edit.\n\n"
-
-  cookies.forEach((cookie) => {
-    // Extraer datos de la cookie con valores por defecto
-    const domain = cookie.domain || ""
-    const flag = domain.startsWith(".") ? "TRUE" : "FALSE"
-    const path = cookie.path || "/"
-    const secure = cookie.secure === true || cookie.secure === "true" ? "TRUE" : "FALSE"
-
-    // Manejar fecha de expiración - convertir a entero Unix timestamp
-    let expiration = cookie.expirationDate || cookie.expires || Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60
-
-    // Si la fecha viene como decimal, convertir a entero
-    if (typeof expiration === "number") {
-      expiration = Math.floor(expiration)
-    } else if (typeof expiration === "string") {
-      expiration = Math.floor(Number.parseFloat(expiration))
-    }
-
-    const name = cookie.name || ""
-    const value = cookie.value || ""
-
-    // Agregar línea en formato Netscape
-    netscapeFormat += `${domain}\t${flag}\t${path}\t${secure}\t${expiration}\t${name}\t${value}\n`
-  })
-
-  return netscapeFormat
-}
-
-// Configuración de multer para subida de archivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const sessionId = req.headers["session-id"] || req.query.session
-    const sessionDir = join(__dirname, "uploads", sessionId || "temp")
+    const sessionDir = join(__dirname, "temp", sessionId || "default")
     fs.mkdirSync(sessionDir, { recursive: true })
     cb(null, sessionDir)
   },
@@ -124,35 +50,50 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage })
 
-// Middleware de Express
 app.use(express.static("public"))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
-// Crear directorios necesarios
-const mediaDir = join(__dirname, "media")
-const uploadsDir = join(__dirname, "uploads")
 const tempDir = join(__dirname, "temp")
 const cookiesDir = join(__dirname, "cookies")
 
 try {
-  fs.mkdirSync(mediaDir, { recursive: true })
-  fs.mkdirSync(uploadsDir, { recursive: true })
   fs.mkdirSync("public", { recursive: true })
   fs.mkdirSync("sessions", { recursive: true })
   fs.mkdirSync(tempDir, { recursive: true })
   fs.mkdirSync(cookiesDir, { recursive: true })
-} catch (err) {
-  console.error("Error creating directories:", err)
+} catch (err) {}
+
+function generateSessionId() {
+  return crypto.randomBytes(32).toString("hex")
 }
 
-// HTML de la interfaz (versión compacta para el ejemplo)
+function convertJsonToNetscape(cookies) {
+  let netscapeFormat = "# Netscape HTTP Cookie File\n# This is a generated file! Do not edit.\n\n"
+  cookies.forEach((cookie) => {
+    const domain = cookie.domain || ""
+    const flag = domain.startsWith(".") ? "TRUE" : "FALSE"
+    const path = cookie.path || "/"
+    const secure = cookie.secure === true || cookie.secure === "true" ? "TRUE" : "FALSE"
+    let expiration = cookie.expirationDate || cookie.expires || Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60
+    if (typeof expiration === "number") {
+      expiration = Math.floor(expiration)
+    } else if (typeof expiration === "string") {
+      expiration = Math.floor(Number.parseFloat(expiration))
+    }
+    const name = cookie.name || ""
+    const value = cookie.value || ""
+    netscapeFormat += `${domain}\t${flag}\t${path}\t${secure}\t${expiration}\t${name}\t${value}\n`
+  })
+  return netscapeFormat
+}
+
 const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WhatsApp Personal Interface</title>
+  <title>WhatsApp Download Service</title>
   <style>
     * {
       margin: 0;
@@ -165,12 +106,12 @@ const htmlContent = `<!DOCTYPE html>
       min-height: 100vh;
     }
     .container {
-      max-width: 1400px;
+      max-width: 800px;
       margin: 0 auto;
+      padding: 20px;
       height: 100vh;
       display: flex;
       flex-direction: column;
-      padding: 20px;
     }
     header {
       background: rgba(255,255,255,0.1);
@@ -179,51 +120,27 @@ const htmlContent = `<!DOCTYPE html>
       padding: 20px;
       border-radius: 15px;
       margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      text-align: center;
       box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     }
-    .session-info {
-      font-size: 12px;
-      opacity: 0.8;
-      max-width: 300px;
-      word-break: break-all;
-    }
-    .status-connected {
-      background: linear-gradient(45deg, #4CAF50, #45a049);
+    .status {
       padding: 8px 16px;
       border-radius: 20px;
       font-size: 14px;
-      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+      margin-top: 10px;
+      display: inline-block;
     }
-    .status-disconnected {
-      background: linear-gradient(45deg, #f44336, #d32f2f);
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
-    }
-    .status-waiting {
-      background: linear-gradient(45deg, #ff9800, #f57c00);
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
-    }
+    .status-connected { background: linear-gradient(45deg, #4CAF50, #45a049); }
+    .status-disconnected { background: linear-gradient(45deg, #f44336, #d32f2f); }
+    .status-waiting { background: linear-gradient(45deg, #ff9800, #f57c00); }
     .qr-container {
       text-align: center;
       padding: 50px;
       background: rgba(255,255,255,0.1);
       backdrop-filter: blur(10px);
-      margin: 20px;
       border-radius: 15px;
       box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-    }
-    .qr-container h1 {
       color: white;
-      margin-bottom: 20px;
-      font-size: 24px;
     }
     .qr-container img {
       max-width: 300px;
@@ -241,108 +158,56 @@ const htmlContent = `<!DOCTYPE html>
       font-size: 16px;
       transition: all 0.3s ease;
     }
-    .qr-container button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-    }
-    .loading-spinner {
-      border: 3px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      border-top: 3px solid white;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
     .main-content {
-      display: flex;
-      height: calc(100vh - 140px);
-      gap: 20px;
-    }
-    .sidebar {
-      width: 350px;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 15px;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-      padding: 20px;
-    }
-    .chat-area {
       flex: 1;
       background: rgba(255,255,255,0.1);
       backdrop-filter: blur(10px);
       border-radius: 15px;
-      display: flex;
-      flex-direction: column;
+      padding: 30px;
       box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     }
-    .chat-header {
-      padding: 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
+    .section {
+      margin-bottom: 30px;
+    }
+    .section h3 {
       color: white;
-    }
-    .messages {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-    .message {
-      max-width: 70%;
-      padding: 15px 20px;
       margin-bottom: 15px;
-      border-radius: 18px;
-      position: relative;
-      word-wrap: break-word;
-      align-self: flex-end;
-      background: linear-gradient(45deg, #667eea, #764ba2);
-      color: white;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      font-size: 18px;
     }
     .upload-area {
       border: 2px dashed rgba(255,255,255,0.3);
       border-radius: 10px;
-      padding: 20px;
+      padding: 30px;
       text-align: center;
       cursor: pointer;
       transition: all 0.3s ease;
-      margin-bottom: 15px;
       color: white;
+      margin-bottom: 15px;
     }
     .upload-area:hover {
       border-color: rgba(255,255,255,0.6);
       background: rgba(255,255,255,0.1);
     }
-    .file-input {
-      display: none;
-    }
+    .file-input { display: none; }
     .url-input {
       width: 100%;
-      padding: 12px;
+      padding: 15px;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       background: rgba(255,255,255,0.2);
       color: white;
-      margin-bottom: 10px;
+      font-size: 16px;
+      margin-bottom: 15px;
     }
-    .url-input::placeholder {
-      color: rgba(255,255,255,0.7);
-    }
+    .url-input::placeholder { color: rgba(255,255,255,0.7); }
     .btn {
       background: linear-gradient(45deg, #667eea, #764ba2);
       color: white;
       border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
+      padding: 15px 25px;
+      border-radius: 10px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 16px;
       transition: all 0.3s ease;
       width: 100%;
       margin-bottom: 10px;
@@ -351,52 +216,105 @@ const htmlContent = `<!DOCTYPE html>
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
     }
-    .message-input {
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .progress-container {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+    }
+    .progress-bar {
       width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
+      height: 8px;
       background: rgba(255,255,255,0.2);
-      color: white;
-      resize: none;
-      height: 80px;
+      border-radius: 4px;
+      overflow: hidden;
       margin-bottom: 10px;
     }
-    .message-input::placeholder {
-      color: rgba(255,255,255,0.7);
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      width: 0%;
+      transition: width 0.3s ease;
     }
-    .cookies-status {
-      font-size: 12px;
-      color: rgba(255,255,255,0.8);
-      text-align: center;
-      margin-top: 10px;
-      padding: 8px;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.1);
-    }
-    .cookies-status.loaded {
-      background: rgba(76, 175, 80, 0.2);
-      color: #4CAF50;
-    }
-    h3 {
+    .progress-text {
       color: white;
+      font-size: 14px;
+      text-align: center;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      color: rgba(255,255,255,0.8);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .quality-options {
+      display: flex;
+      gap: 10px;
       margin-bottom: 15px;
-      font-size: 18px;
+    }
+    .quality-btn {
+      flex: 1;
+      padding: 10px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .quality-btn.active {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+    }
+    .loading-spinner {
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top: 3px solid white;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .cooldown-notice {
+      background: rgba(255, 152, 0, 0.2);
+      border: 1px solid rgba(255, 152, 0, 0.5);
+      border-radius: 10px;
+      padding: 20px;
+      color: white;
+      text-align: center;
+      margin: 20px 0;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <div>
-        <h1>📱 Personal WhatsApp Interface</h1>
-        <div class="session-info" id="session-info">Session: Loading...</div>
+      <h1>📱 WhatsApp Download Service</h1>
+      <div id="session-info">Session: Loading...</div>
+      <div id="status" class="status status-disconnected">Disconnected</div>
+      <div id="session-stats" class="stats" style="display: none;">
+        <span>Time: <span id="time-left">10:00</span></span>
+        <span>Data: <span id="data-used">0 MB</span> / 1 GB</span>
       </div>
-      <div id="status" class="status-disconnected">Disconnected</div>
     </header>
     
+    <div id="cooldown-section" class="cooldown-notice" style="display: none;">
+      <h2>⏰ Service Cooldown</h2>
+      <p>You must wait <span id="cooldown-time">30:00</span> before using the service again.</p>
+    </div>
+    
     <div id="qr-section" class="qr-container" style="display: none;">
-      <h1>📱 Scan with WhatsApp</h1>
+      <h1>📱 Scan QR Code</h1>
       <div id="qr-image"></div>
       <p>Open WhatsApp → Linked Devices → Link Device</p>
       <button onclick="location.reload()">Refresh QR</button>
@@ -405,121 +323,113 @@ const htmlContent = `<!DOCTYPE html>
     <div id="loading-section" class="qr-container">
       <h1>⏳ Initializing...</h1>
       <div class="loading-spinner"></div>
-      <p>Please wait while we set up your WhatsApp interface</p>
+      <p>Setting up your session...</p>
     </div>
     
     <div id="main-content" class="main-content" style="display: none;">
-      <div class="sidebar">
-        <div>
-          <h3>🍪 YouTube Cookies</h3>
-          <div class="upload-area" id="cookies-upload-area">
-            <div>🍪</div>
-            <div>Drop J2Team cookies.json here</div>
-            <input type="file" id="cookies-input" class="file-input" accept=".json">
-          </div>
-          <div id="cookies-status" class="cookies-status">No cookies loaded</div>
+      <div class="section">
+        <h3>🍪 YouTube Cookies (Optional)</h3>
+        <div class="upload-area" id="cookies-upload-area">
+          <div style="font-size: 24px; margin-bottom: 10px;">🍪</div>
+          <div>Drop J2Team cookies.json here for YouTube downloads</div>
+          <input type="file" id="cookies-input" class="file-input" accept=".json">
         </div>
-        
-        <div style="margin-top: 20px;">
-          <h3>📎 Send Files</h3>
-          <div class="upload-area" id="upload-area">
-            <div>📁</div>
-            <div>Drop files here or click to select</div>
-            <input type="file" id="file-input" class="file-input" multiple accept="*/*">
-          </div>
-          <input type="text" id="url-input" class="url-input" placeholder="Enter URL to download and send...">
-          <button id="download-send-btn" class="btn">📥 Download & Send</button>
-        </div>
-        
-        <div style="margin-top: 20px;">
-          <h3>💬 Send Message</h3>
-          <textarea id="message-input" class="message-input" placeholder="Type your message..."></textarea>
-          <button id="send-message-btn" class="btn">📤 Send Message</button>
-        </div>
+        <div id="cookies-status" style="color: rgba(255,255,255,0.7); text-align: center; font-size: 12px;">No cookies loaded</div>
       </div>
       
-      <div class="chat-area">
-        <div class="chat-header">
-          <h2>💬 My Messages</h2>
-          <p id="user-info">Personal chat with myself</p>
+      <div class="section">
+        <h3>📥 Download & Send</h3>
+        <div class="quality-options">
+          <button class="quality-btn active" data-quality="480">480p</button>
+          <button class="quality-btn" data-quality="720">720p</button>
+          <button class="quality-btn" data-quality="audio">Audio</button>
         </div>
-        <div class="messages" id="messages">
-          <div style="text-align: center; color: rgba(255,255,255,0.7); padding: 50px;">
-            📱 Ready to send messages and files!
+        <input type="text" id="url-input" class="url-input" placeholder="Paste URL here (YouTube, Instagram, TikTok, etc.)">
+        <button id="download-btn" class="btn">📥 Download & Send</button>
+        
+        <div id="progress-container" class="progress-container">
+          <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill"></div>
           </div>
+          <div id="progress-text" class="progress-text">Preparing download...</div>
         </div>
       </div>
     </div>
   </div>
   
   <script>
-    // Generar ID de sesión único
-    let sessionId = localStorage.getItem('whatsapp-session-id') || generateSecureSessionId();
-    localStorage.setItem('whatsapp-session-id', sessionId);
+    let sessionId = localStorage.getItem('ws-session-id') || generateSessionId();
+    localStorage.setItem('ws-session-id', sessionId);
     
-    function generateSecureSessionId() {
-      const timestamp = Date.now().toString(36);
-      const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(32)), 
+    function generateSessionId() {
+      return Array.from(crypto.getRandomValues(new Uint8Array(32)), 
         b => b.toString(16).padStart(2, '0')).join('');
-      const combined = timestamp + randomBytes;
-      return \`ws_\${timestamp}_\${btoa(combined).replace(/[+/=]/g, '').substring(0, 48)}_\${Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('')}\`;
     }
 
-    // Elementos del DOM
-    const statusElement = document.getElementById("status");
-    const sessionInfoElement = document.getElementById("session-info");
-    const messagesList = document.getElementById("messages");
-    const messageInput = document.getElementById("message-input");
-    const sendMessageBtn = document.getElementById("send-message-btn");
-    const qrSection = document.getElementById("qr-section");
-    const loadingSection = document.getElementById("loading-section");
-    const mainContent = document.getElementById("main-content");
-    const qrImage = document.getElementById("qr-image");
-    const uploadArea = document.getElementById("upload-area");
-    const fileInput = document.getElementById("file-input");
-    const urlInput = document.getElementById("url-input");
-    const downloadSendBtn = document.getElementById("download-send-btn");
-    const userInfo = document.getElementById("user-info");
-    const cookiesUploadArea = document.getElementById("cookies-upload-area");
-    const cookiesInput = document.getElementById("cookies-input");
-    const cookiesStatus = document.getElementById("cookies-status");
+    const elements = {
+      status: document.getElementById("status"),
+      sessionInfo: document.getElementById("session-info"),
+      sessionStats: document.getElementById("session-stats"),
+      timeLeft: document.getElementById("time-left"),
+      dataUsed: document.getElementById("data-used"),
+      cooldownSection: document.getElementById("cooldown-section"),
+      cooldownTime: document.getElementById("cooldown-time"),
+      qrSection: document.getElementById("qr-section"),
+      loadingSection: document.getElementById("loading-section"),
+      mainContent: document.getElementById("main-content"),
+      qrImage: document.getElementById("qr-image"),
+      cookiesUploadArea: document.getElementById("cookies-upload-area"),
+      cookiesInput: document.getElementById("cookies-input"),
+      cookiesStatus: document.getElementById("cookies-status"),
+      urlInput: document.getElementById("url-input"),
+      downloadBtn: document.getElementById("download-btn"),
+      progressContainer: document.getElementById("progress-container"),
+      progressFill: document.getElementById("progress-fill"),
+      progressText: document.getElementById("progress-text")
+    };
 
-    let hasCookies = false;
+    let selectedQuality = '480';
+    let sessionTimer = null;
+    let cooldownTimer = null;
 
-    // Mostrar información de sesión
-    sessionInfoElement.textContent = \`Session: \${sessionId.substring(3, 15)}...\`;
+    elements.sessionInfo.textContent = \`Session: \${sessionId.substring(0, 8)}...\`;
 
-    // Manejo de cookies
-    cookiesUploadArea.addEventListener('click', () => cookiesInput.click());
-    cookiesUploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      cookiesUploadArea.style.borderColor = '#4CAF50';
+    document.querySelectorAll('.quality-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedQuality = btn.dataset.quality;
+      });
     });
-    cookiesUploadArea.addEventListener('dragleave', () => {
-      cookiesUploadArea.style.borderColor = 'rgba(255,255,255,0.3)';
-    });
-    cookiesUploadArea.addEventListener('drop', (e) => {
+
+    elements.cookiesUploadArea.addEventListener('click', () => elements.cookiesInput.click());
+    elements.cookiesUploadArea.addEventListener('dragover', (e) => {
       e.preventDefault();
-      cookiesUploadArea.style.borderColor = 'rgba(255,255,255,0.3)';
+      elements.cookiesUploadArea.style.borderColor = '#4CAF50';
+    });
+    elements.cookiesUploadArea.addEventListener('dragleave', () => {
+      elements.cookiesUploadArea.style.borderColor = 'rgba(255,255,255,0.3)';
+    });
+    elements.cookiesUploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      elements.cookiesUploadArea.style.borderColor = 'rgba(255,255,255,0.3)';
       const files = e.dataTransfer.files;
       if (files.length > 0 && files[0].name.endsWith('.json')) {
         handleCookiesFile(files[0]);
       }
     });
 
-    cookiesInput.addEventListener('change', (e) => {
+    elements.cookiesInput.addEventListener('change', (e) => {
       if (e.target.files.length > 0) {
         handleCookiesFile(e.target.files[0]);
       }
     });
 
-    // Función para manejar archivo de cookies
     async function handleCookiesFile(file) {
       try {
         const text = await file.text();
         const cookiesData = JSON.parse(text);
         
-        // Verificar formato J2Team
         if (cookiesData.url && cookiesData.cookies && Array.isArray(cookiesData.cookies)) {
           const formData = new FormData();
           formData.append('cookiesFile', file);
@@ -531,182 +441,189 @@ const htmlContent = `<!DOCTYPE html>
           
           const result = await response.json();
           if (result.success) {
-            hasCookies = true;
-            cookiesStatus.textContent = \`✅ Cookies loaded - \${cookiesData.cookies.length} cookies from \${cookiesData.url}\`;
-            cookiesStatus.classList.add('loaded');
+            elements.cookiesStatus.textContent = \`✅ \${cookiesData.cookies.length} cookies loaded\`;
+            elements.cookiesStatus.style.color = '#4CAF50';
           } else {
             throw new Error(result.error);
           }
         } else {
-          throw new Error('Invalid J2Team cookies format. Expected {url, cookies} structure.');
+          throw new Error('Invalid J2Team cookies format');
         }
       } catch (error) {
-        cookiesStatus.textContent = '❌ Error: ' + error.message;
-        cookiesStatus.classList.remove('loaded');
+        elements.cookiesStatus.textContent = '❌ ' + error.message;
+        elements.cookiesStatus.style.color = '#f44336';
       }
     }
 
-    // Manejo de archivos
-    uploadArea.addEventListener('click', () => fileInput.click());
-    uploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploadArea.style.borderColor = '#4CAF50';
-    });
-    uploadArea.addEventListener('dragleave', () => {
-      uploadArea.style.borderColor = 'rgba(255,255,255,0.3)';
-    });
-    uploadArea.addEventListener('drop', (e) => {
-      e.preventDefault();
-      uploadArea.style.borderColor = 'rgba(255,255,255,0.3)';
-      const files = e.dataTransfer.files;
-      handleFiles(files);
-    });
-
-    fileInput.addEventListener('change', (e) => {
-      handleFiles(e.target.files);
-    });
-
-    async function handleFiles(files) {
-      for (let file of files) {
-        await uploadFile(file);
-      }
-    }
-
-    async function uploadFile(file) {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      try {
-        const response = await fetch(\`/api/upload?session=\${sessionId}\`, {
-          method: 'POST',
-          body: formData
-        });
-        const result = await response.json();
-        if (result.success) {
-          console.log('File uploaded and sent:', result.filename);
-        }
-      } catch (error) {
-        console.error('Error uploading file:', error);
-      }
-    }
-
-    // Descargar y enviar URL
-    downloadSendBtn.addEventListener('click', async () => {
-      const url = urlInput.value.trim();
+    elements.downloadBtn.addEventListener('click', async () => {
+      const url = elements.urlInput.value.trim();
       if (!url) return;
 
-      downloadSendBtn.textContent = '⏳ Downloading...';
-      downloadSendBtn.disabled = true;
+      elements.downloadBtn.disabled = true;
+      elements.downloadBtn.textContent = '⏳ Processing...';
+      elements.progressContainer.style.display = 'block';
+      elements.progressFill.style.width = '0%';
+      elements.progressText.textContent = 'Starting download...';
 
       try {
         const response = await fetch(\`/api/download?session=\${sessionId}\`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
+          body: JSON.stringify({ url, quality: selectedQuality })
         });
-        const result = await response.json();
-        if (result.success) {
-          urlInput.value = '';
-          console.log('Downloaded and sent successfully');
-        } else {
-          alert('Download failed: ' + result.error);
+
+        if (!response.ok) throw new Error('Download failed');
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (line.trim()) {
+              try {
+                const data = JSON.parse(line);
+                if (data.progress) {
+                  elements.progressFill.style.width = data.progress + '%';
+                  elements.progressText.textContent = data.status || 'Processing...';
+                }
+                if (data.success) {
+                  elements.progressText.textContent = '✅ Sent successfully!';
+                  elements.urlInput.value = '';
+                  setTimeout(() => {
+                    elements.progressContainer.style.display = 'none';
+                  }, 2000);
+                }
+                if (data.error) {
+                  throw new Error(data.error);
+                }
+              } catch (e) {}
+            }
+          }
         }
       } catch (error) {
-        alert('Download failed: ' + error.message);
+        elements.progressText.textContent = '❌ ' + error.message;
+        elements.progressFill.style.width = '0%';
       } finally {
-        downloadSendBtn.textContent = '📥 Download & Send';
-        downloadSendBtn.disabled = false;
+        elements.downloadBtn.disabled = false;
+        elements.downloadBtn.textContent = '📥 Download & Send';
       }
     });
 
-    // Enviar mensaje
-    sendMessageBtn.addEventListener('click', async () => {
-      const message = messageInput.value.trim();
-      if (!message) return;
+    elements.urlInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        elements.downloadBtn.click();
+      }
+    });
 
-      try {
-        const response = await fetch(\`/api/send?session=\${sessionId}\`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message })
-        });
-        const result = await response.json();
-        if (result.success) {
-          messageInput.value = '';
-          console.log('Message sent successfully');
+    function startSessionTimer(duration) {
+      if (sessionTimer) clearInterval(sessionTimer);
+      
+      let timeLeft = duration;
+      sessionTimer = setInterval(() => {
+        timeLeft -= 1000;
+        if (timeLeft <= 0) {
+          clearInterval(sessionTimer);
+          location.reload();
+          return;
         }
-      } catch (error) {
-        console.error('Error sending message:', error);
-      }
-    });
+        
+        const minutes = Math.floor(timeLeft / 60000);
+        const seconds = Math.floor((timeLeft % 60000) / 1000);
+        elements.timeLeft.textContent = \`\${minutes}:\${seconds.toString().padStart(2, '0')}\`;
+      }, 1000);
+    }
 
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessageBtn.click();
-      }
-    });
+    function startCooldownTimer(duration) {
+      if (cooldownTimer) clearInterval(cooldownTimer);
+      
+      let timeLeft = duration;
+      cooldownTimer = setInterval(() => {
+        timeLeft -= 1000;
+        if (timeLeft <= 0) {
+          clearInterval(cooldownTimer);
+          location.reload();
+          return;
+        }
+        
+        const minutes = Math.floor(timeLeft / 60000);
+        const seconds = Math.floor((timeLeft % 60000) / 1000);
+        elements.cooldownTime.textContent = \`\${minutes}:\${seconds.toString().padStart(2, '0')}\`;
+      }, 1000);
+    }
 
-    // Verificar estado de la sesión
     async function checkStatus() {
       try {
         const response = await fetch(\`/api/status?session=\${sessionId}\`);
         const result = await response.json();
 
-        if (result.status === 'connected') {
-          statusElement.textContent = 'Connected';
-          statusElement.className = 'status-connected';
-          qrSection.style.display = 'none';
-          loadingSection.style.display = 'none';
-          mainContent.style.display = 'flex';
+        if (result.status === 'cooldown') {
+          elements.status.textContent = 'Cooldown Active';
+          elements.status.className = 'status status-waiting';
+          elements.cooldownSection.style.display = 'block';
+          elements.qrSection.style.display = 'none';
+          elements.loadingSection.style.display = 'none';
+          elements.mainContent.style.display = 'none';
+          startCooldownTimer(result.cooldownTime);
+        } else if (result.status === 'connected') {
+          elements.status.textContent = 'Connected';
+          elements.status.className = 'status status-connected';
+          elements.cooldownSection.style.display = 'none';
+          elements.qrSection.style.display = 'none';
+          elements.loadingSection.style.display = 'none';
+          elements.mainContent.style.display = 'block';
+          elements.sessionStats.style.display = 'flex';
           
-          if (result.user) {
-            userInfo.textContent = \`Connected as: \${result.user.name || result.user.id}\`;
+          if (result.sessionTime) {
+            startSessionTimer(result.sessionTime);
+          }
+          
+          if (result.dataUsed !== undefined) {
+            const dataUsedMB = Math.round(result.dataUsed / (1024 * 1024));
+            elements.dataUsed.textContent = \`\${dataUsedMB} MB\`;
           }
         } else if (result.status === 'qr') {
-          statusElement.textContent = 'Scan QR Code';
-          statusElement.className = 'status-disconnected';
-          loadingSection.style.display = 'none';
-          mainContent.style.display = 'none';
-          qrSection.style.display = 'block';
+          elements.status.textContent = 'Scan QR Code';
+          elements.status.className = 'status status-disconnected';
+          elements.cooldownSection.style.display = 'none';
+          elements.loadingSection.style.display = 'none';
+          elements.mainContent.style.display = 'none';
+          elements.qrSection.style.display = 'block';
           
           if (result.qr) {
-            qrImage.innerHTML = \`<img src="\${result.qr}" alt="QR Code" />\`;
+            elements.qrImage.innerHTML = \`<img src="\${result.qr}" alt="QR Code" />\`;
           }
-        } else if (result.status === 'waiting') {
-          statusElement.textContent = \`Waiting (Position \${result.position})\`;
-          statusElement.className = 'status-waiting';
-          // Mostrar interfaz de espera si es necesario
         } else {
-          statusElement.textContent = 'Initializing...';
-          statusElement.className = 'status-disconnected';
-          qrSection.style.display = 'none';
-          mainContent.style.display = 'none';
-          loadingSection.style.display = 'block';
+          elements.status.textContent = 'Initializing...';
+          elements.status.className = 'status status-disconnected';
+          elements.cooldownSection.style.display = 'none';
+          elements.qrSection.style.display = 'none';
+          elements.mainContent.style.display = 'none';
+          elements.loadingSection.style.display = 'block';
         }
       } catch (error) {
-        console.error('Error checking status:', error);
-        statusElement.textContent = 'Connection Error';
-        statusElement.className = 'status-disconnected';
+        elements.status.textContent = 'Connection Error';
+        elements.status.className = 'status status-disconnected';
       }
     }
 
-    // Inicializar y verificar estado cada 3 segundos
     checkStatus();
     setInterval(checkStatus, 3000);
   </script>
 </body>
 </html>`
 
-// Escribir el archivo HTML
 fs.writeFileSync("public/index.html", htmlContent)
 
-// Ruta principal
 app.get("/", (req, res) => res.sendFile(join(__dirname, "public", "index.html")))
 
-/**
- * Endpoint para subir cookies de J2Team
- */
 app.post("/api/cookies", upload.single("cookiesFile"), async (req, res) => {
   try {
     const sessionId = req.headers["session-id"] || req.query.session
@@ -718,181 +635,155 @@ app.post("/api/cookies", upload.single("cookiesFile"), async (req, res) => {
       return res.json({ success: false, error: "No cookies file uploaded" })
     }
 
-    // Leer y parsear el archivo de cookies
     const cookiesData = JSON.parse(fs.readFileSync(req.file.path, "utf8"))
 
-    // Verificar formato J2Team: debe tener url y cookies array
     if (!cookiesData.url || !cookiesData.cookies || !Array.isArray(cookiesData.cookies)) {
-      return res.json({
-        success: false,
-        error: "Invalid J2Team cookies format. Expected {url, cookies} structure.",
-      })
+      return res.json({ success: false, error: "Invalid J2Team cookies format" })
     }
 
-    // Convertir a formato Netscape para yt-dlp
     const netscapeCookies = convertJsonToNetscape(cookiesData.cookies)
     const sessionCookiesPath = join(cookiesDir, `${sessionId}.txt`)
     fs.writeFileSync(sessionCookiesPath, netscapeCookies)
 
-    // Guardar también el JSON original para referencia
-    const sessionJsonPath = join(cookiesDir, `${sessionId}.json`)
-    fs.writeFileSync(sessionJsonPath, JSON.stringify(cookiesData, null, 2))
-
-    // Almacenar en memoria para acceso rápido
     cookiesStorage.set(sessionId, cookiesData)
-
-    // Limpiar archivo temporal
     fs.unlinkSync(req.file.path)
 
-    console.log(
-      `✅ Cookies loaded for session ${sessionId}: ${cookiesData.cookies.length} cookies from ${cookiesData.url}`,
-    )
-
-    res.json({
-      success: true,
-      message: `Cookies loaded successfully - ${cookiesData.cookies.length} cookies from ${cookiesData.url}`,
-    })
+    res.json({ success: true, message: "Cookies loaded successfully" })
   } catch (error) {
-    console.error("Error processing cookies:", error)
     res.json({ success: false, error: error.message })
   }
 })
 
-/**
- * Endpoint para subir archivos
- */
-app.post("/api/upload", upload.single("file"), async (req, res) => {
-  try {
-    const sessionId = req.headers["session-id"] || req.query.session
-
-    if (!sessionId || !activeSessions.has(sessionId)) {
-      return res.json({ success: false, error: "Invalid session" })
-    }
-
-    if (!req.file) {
-      return res.json({ success: false, error: "No file uploaded" })
-    }
-
-    const sock = activeSessions.get(sessionId)
-    const file = req.file
-    const fileBuffer = fs.readFileSync(file.path)
-
-    // Enviar archivo a WhatsApp (a mí mismo)
-    await sock.sendMessage(sock.user.id, {
-      document: fileBuffer,
-      fileName: file.originalname,
-      mimetype: file.mimetype,
-    })
-
-    // Eliminar archivo temporal si está configurado
-    if (CONFIG.AUTO_DELETE_AFTER_SEND) {
-      fs.unlinkSync(file.path)
-    }
-
-    console.log(`📎 File sent successfully: ${file.originalname}`)
-    res.json({ success: true, message: "File sent successfully", filename: file.originalname })
-  } catch (error) {
-    console.error("Error uploading file:", error)
-    res.json({ success: false, error: error.message })
-  }
-})
-
-/**
- * Endpoint para descargar y enviar URLs
- */
 app.post("/api/download", async (req, res) => {
+  const { url, quality } = req.body
+  const sessionId = req.headers["session-id"] || req.query.session
+
+  if (!sessionId || !activeSessions.has(sessionId)) {
+    return res.json({ success: false, error: "Invalid session" })
+  }
+
+  const session = sessionData.get(sessionId)
+  if (!session) {
+    return res.json({ success: false, error: "Session not found" })
+  }
+
+  if (session.dataUsed >= CONFIG.MAX_DATA_PER_SESSION) {
+    return res.json({ success: false, error: "Data limit exceeded" })
+  }
+
+  if (!url) {
+    return res.json({ success: false, error: "URL is required" })
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/plain",
+    "Transfer-Encoding": "chunked",
+  })
+
   try {
-    const { url } = req.body
-    const sessionId = req.headers["session-id"] || req.query.session
-
-    if (!sessionId || !activeSessions.has(sessionId)) {
-      return res.json({ success: false, error: "Invalid session" })
-    }
-
-    if (!url) {
-      return res.json({ success: false, error: "URL is required" })
-    }
-
     const sock = activeSessions.get(sessionId)
-    const userAgent = getRandomUserAgent()
-    const tempFilePath = join(tempDir, `${Date.now()}_${crypto.randomBytes(8).toString("hex")}`)
+    const tempFilePath = join(tempDir, sessionId, `${Date.now()}_${crypto.randomBytes(8).toString("hex")}`)
 
-    // Construir comando yt-dlp
-    let ytDlpCommand = `yt-dlp --no-warnings --user-agent "${userAgent}"`
+    res.write(JSON.stringify({ progress: 10, status: "Preparing download..." }) + "\n")
 
-    // Agregar cookies si existen para esta sesión
+    let ytDlpCommand = `yt-dlp --no-warnings --newline`
+
+    if (quality === "audio") {
+      ytDlpCommand += ` -f "bestaudio[ext=m4a]/bestaudio"`
+    } else if (quality === "480") {
+      ytDlpCommand += ` -f "best[height<=480]/best"`
+    } else if (quality === "720") {
+      ytDlpCommand += ` -f "best[height<=720]/best"`
+    }
+
     const sessionCookiesPath = join(cookiesDir, `${sessionId}.txt`)
     if (fs.existsSync(sessionCookiesPath)) {
       ytDlpCommand += ` --cookies "${sessionCookiesPath}"`
-      console.log(`🍪 Using cookies for session ${sessionId}`)
     }
 
     ytDlpCommand += ` -o "${tempFilePath}.%(ext)s" "${url}"`
 
-    console.log(`⬇️ Downloading: ${url}`)
-    await execAsync(ytDlpCommand)
+    res.write(JSON.stringify({ progress: 30, status: "Starting download..." }) + "\n")
 
-    // Buscar archivo descargado
-    const files = fs.readdirSync(tempDir).filter((f) => f.startsWith(path.basename(tempFilePath)))
-    if (files.length === 0) {
-      throw new Error("Download failed - no file created")
-    }
+    const downloadProcess = exec(ytDlpCommand)
+    let progressValue = 30
 
-    const downloadedFile = join(tempDir, files[0])
-    const fileBuffer = fs.readFileSync(downloadedFile)
-
-    // Enviar archivo a WhatsApp
-    await sock.sendMessage(sock.user.id, {
-      document: fileBuffer,
-      fileName: files[0],
-      mimetype: getMimeType(files[0]),
+    downloadProcess.stdout.on("data", (data) => {
+      const lines = data.toString().split("\n")
+      for (const line of lines) {
+        if (line.includes("[download]") && line.includes("%")) {
+          const match = line.match(/(\d+\.?\d*)%/)
+          if (match) {
+            progressValue = Math.min(80, 30 + Number.parseFloat(match[1]) * 0.5)
+            res.write(JSON.stringify({ progress: progressValue, status: "Downloading..." }) + "\n")
+          }
+        }
+      }
     })
 
-    // Limpiar archivo temporal
-    if (CONFIG.AUTO_DELETE_AFTER_SEND) {
-      fs.unlinkSync(downloadedFile)
-    }
+    downloadProcess.on("close", async (code) => {
+      try {
+        if (code !== 0) {
+          throw new Error("Download failed")
+        }
 
-    console.log(`✅ Downloaded and sent: ${files[0]}`)
-    res.json({ success: true, message: "Downloaded and sent successfully", filename: files[0] })
+        res.write(JSON.stringify({ progress: 85, status: "Processing file..." }) + "\n")
+
+        const files = fs.readdirSync(join(tempDir, sessionId)).filter((f) => f.startsWith(path.basename(tempFilePath)))
+        if (files.length === 0) {
+          throw new Error("No file downloaded")
+        }
+
+        const downloadedFile = join(tempDir, sessionId, files[0])
+        const fileStats = fs.statSync(downloadedFile)
+        const fileSize = fileStats.size
+
+        if (session.dataUsed + fileSize > CONFIG.MAX_DATA_PER_SESSION) {
+          fs.unlinkSync(downloadedFile)
+          throw new Error("File too large - would exceed data limit")
+        }
+
+        res.write(JSON.stringify({ progress: 90, status: "Sending to WhatsApp..." }) + "\n")
+
+        const fileBuffer = fs.readFileSync(downloadedFile)
+        const fileExtension = path.extname(files[0]).toLowerCase()
+
+        let messageOptions = {}
+        if ([".jpg", ".jpeg", ".png", ".gif", ".webp"].includes(fileExtension)) {
+          messageOptions = { image: fileBuffer, caption: files[0] }
+        } else if ([".mp4", ".avi", ".mov", ".mkv", ".webm"].includes(fileExtension)) {
+          messageOptions = { video: fileBuffer, caption: files[0] }
+        } else if ([".mp3", ".wav", ".ogg", ".m4a", ".flac"].includes(fileExtension)) {
+          messageOptions = { audio: fileBuffer, mimetype: "audio/mp4" }
+        } else {
+          messageOptions = { document: fileBuffer, mimetype: "application/octet-stream", fileName: files[0] }
+        }
+
+        await sock.sendMessage(sock.user.id, messageOptions)
+
+        session.dataUsed += fileSize
+        sessionData.set(sessionId, session)
+
+        fs.unlinkSync(downloadedFile)
+
+        res.write(JSON.stringify({ progress: 100, status: "Sent successfully!", success: true }) + "\n")
+        res.end()
+      } catch (error) {
+        res.write(JSON.stringify({ error: error.message }) + "\n")
+        res.end()
+      }
+    })
+
+    downloadProcess.on("error", (error) => {
+      res.write(JSON.stringify({ error: error.message }) + "\n")
+      res.end()
+    })
   } catch (error) {
-    console.error("Error downloading:", error)
-    res.json({ success: false, error: error.message })
+    res.write(JSON.stringify({ error: error.message }) + "\n")
+    res.end()
   }
 })
 
-/**
- * Endpoint para enviar mensajes de texto
- */
-app.post("/api/send", async (req, res) => {
-  try {
-    const { message } = req.body
-    const sessionId = req.headers["session-id"] || req.query.session
-
-    if (!sessionId || !activeSessions.has(sessionId)) {
-      return res.json({ success: false, error: "Invalid session" })
-    }
-
-    if (!message) {
-      return res.json({ success: false, error: "Message is required" })
-    }
-
-    const sock = activeSessions.get(sessionId)
-
-    // Enviar mensaje a mí mismo
-    await sock.sendMessage(sock.user.id, { text: message })
-
-    console.log(`💬 Message sent: ${message.substring(0, 50)}...`)
-    res.json({ success: true, message: "Message sent successfully" })
-  } catch (error) {
-    console.error("Error sending message:", error)
-    res.json({ success: false, error: error.message })
-  }
-})
-
-/**
- * Endpoint para verificar estado de la sesión
- */
 app.get("/api/status", async (req, res) => {
   try {
     const sessionId = req.query.session
@@ -901,105 +792,113 @@ app.get("/api/status", async (req, res) => {
       return res.json({ success: false, error: "Session ID required" })
     }
 
-    // Verificar si hay espacio para nuevas sesiones
-    if (activeSessions.size >= CONFIG.MAX_SESSIONS && !activeSessions.has(sessionId)) {
-      const position = waitingQueue.indexOf(sessionId)
-      if (position === -1) {
-        waitingQueue.push(sessionId)
-      }
-      return res.json({
-        status: "waiting",
-        position: waitingQueue.indexOf(sessionId) + 1,
-        maxSessions: CONFIG.MAX_SESSIONS,
-      })
-    }
+    const userPhone = getUserPhoneFromSession(sessionId)
+    if (userPhone && userRegistry.has(userPhone)) {
+      const userRecord = userRegistry.get(userPhone)
+      const now = Date.now()
 
-    // Si la sesión está activa y conectada
-    if (activeSessions.has(sessionId)) {
-      const sock = activeSessions.get(sessionId)
-      if (sock.user) {
+      if (now - userRecord.lastUsed < CONFIG.COOLDOWN_DURATION) {
+        const cooldownTime = CONFIG.COOLDOWN_DURATION - (now - userRecord.lastUsed)
         return res.json({
-          status: "connected",
-          user: {
-            id: sock.user.id,
-            name: sock.user.name || sock.user.id,
-          },
+          status: "cooldown",
+          cooldownTime: cooldownTime,
         })
       }
     }
 
-    // Verificar si hay QR disponible
-    if (qrCodes.has(sessionId)) {
-      return res.json({
-        status: "qr",
-        qr: qrCodes.get(sessionId),
-      })
+    if (activeSessions.size >= CONFIG.MAX_SESSIONS && !activeSessions.has(sessionId)) {
+      return res.json({ status: "waiting", message: "Server at capacity" })
     }
 
-    // Si no existe la sesión, crearla
+    if (activeSessions.has(sessionId)) {
+      const sock = activeSessions.get(sessionId)
+      const session = sessionData.get(sessionId)
+
+      if (sock.user && session) {
+        const timeLeft = CONFIG.SESSION_DURATION - (Date.now() - session.startTime)
+        if (timeLeft <= 0) {
+          cleanupSession(sessionId)
+          return res.json({ status: "expired" })
+        }
+
+        return res.json({
+          status: "connected",
+          user: { id: sock.user.id, name: sock.user.name || sock.user.id },
+          sessionTime: timeLeft,
+          dataUsed: session.dataUsed,
+        })
+      }
+    }
+
+    if (qrCodes.has(sessionId)) {
+      return res.json({ status: "qr", qr: qrCodes.get(sessionId) })
+    }
+
     if (!activeSessions.has(sessionId)) {
-      console.log(`🔄 Creating new WhatsApp session: ${sessionId}`)
       createWhatsAppSession(sessionId)
     }
 
     res.json({ status: "initializing" })
   } catch (error) {
-    console.error("Error checking status:", error)
     res.json({ success: false, error: error.message })
   }
 })
 
-// Servir archivos multimedia
-app.use("/media", express.static(mediaDir))
-
-/**
- * Obtiene el tipo MIME basado en la extensión del archivo
- * @param {string} filename - Nombre del archivo
- * @returns {string} Tipo MIME
- */
-function getMimeType(filename) {
-  const ext = path.extname(filename).toLowerCase()
-  const mimeTypes = {
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".png": "image/png",
-    ".gif": "image/gif",
-    ".webp": "image/webp",
-    ".mp4": "video/mp4",
-    ".avi": "video/x-msvideo",
-    ".mov": "video/quicktime",
-    ".mkv": "video/x-matroska",
-    ".webm": "video/webm",
-    ".mp3": "audio/mpeg",
-    ".wav": "audio/wav",
-    ".ogg": "audio/ogg",
-    ".m4a": "audio/mp4",
-    ".flac": "audio/flac",
-    ".pdf": "application/pdf",
-    ".doc": "application/msword",
-    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ".txt": "text/plain",
-    ".zip": "application/zip",
-    ".rar": "application/x-rar-compressed",
-  }
-  return mimeTypes[ext] || "application/octet-stream"
+function getUserPhoneFromSession(sessionId) {
+  const session = sessionData.get(sessionId)
+  return session ? session.userPhone : null
 }
 
-/**
- * Crea una nueva sesión de WhatsApp
- * @param {string} sessionId - ID único de la sesión
- */
+function cleanupSession(sessionId) {
+  try {
+    if (activeSessions.has(sessionId)) {
+      const sock = activeSessions.get(sessionId)
+      const session = sessionData.get(sessionId)
+
+      if (session && session.userPhone) {
+        userRegistry.set(session.userPhone, {
+          lastUsed: Date.now(),
+          sessionId: sessionId,
+        })
+      }
+
+      try {
+        sock.end()
+      } catch (err) {}
+      activeSessions.delete(sessionId)
+    }
+
+    sessionData.delete(sessionId)
+    qrCodes.delete(sessionId)
+    cookiesStorage.delete(sessionId)
+
+    const sessionDir = join(tempDir, sessionId)
+    if (fs.existsSync(sessionDir)) {
+      fs.rmSync(sessionDir, { recursive: true, force: true })
+    }
+
+    const sessionAuthDir = join(__dirname, "sessions", sessionId)
+    if (fs.existsSync(sessionAuthDir)) {
+      fs.rmSync(sessionAuthDir, { recursive: true, force: true })
+    }
+
+    const sessionCookiesPath = join(cookiesDir, `${sessionId}.txt`)
+    if (fs.existsSync(sessionCookiesPath)) {
+      fs.unlinkSync(sessionCookiesPath)
+    }
+  } catch (error) {}
+}
+
 async function createWhatsAppSession(sessionId) {
   try {
     const sessionDir = join(__dirname, "sessions", sessionId)
     fs.mkdirSync(sessionDir, { recursive: true })
 
-    console.log(`📱 Initializing WhatsApp session: ${sessionId}`)
+    const tempSessionDir = join(tempDir, sessionId)
+    fs.mkdirSync(tempSessionDir, { recursive: true })
 
-    // Configurar autenticación persistente
     const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
 
-    // Crear socket de WhatsApp
     const sock = makeWASocket({
       auth: state,
       printQRInTerminal: false,
@@ -1007,93 +906,45 @@ async function createWhatsAppSession(sessionId) {
       defaultQueryTimeoutMs: 60000,
     })
 
-    // Manejar actualizaciones de conexión
     sock.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect, qr } = update
 
       if (qr) {
-        console.log(`📱 QR code generated for session: ${sessionId}`)
-        // Convertir QR a data URL y almacenar
         const qrDataURL = await qrcode.toDataURL(qr, { scale: 8 })
         qrCodes.set(sessionId, qrDataURL)
       }
 
       if (connection === "close") {
         const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401
-        console.log(`❌ Connection closed for session ${sessionId}:`, lastDisconnect?.error)
-
-        // Limpiar sesión
-        activeSessions.delete(sessionId)
-        qrCodes.delete(sessionId)
-
+        cleanupSession(sessionId)
         if (shouldReconnect) {
-          console.log(`🔄 Reconnecting session ${sessionId} in 5 seconds...`)
           setTimeout(() => createWhatsAppSession(sessionId), 5000)
-        } else {
-          console.log(`🚫 Session ${sessionId} permanently closed (logout)`)
-          // Limpiar archivos de sesión si es logout
-          try {
-            fs.rmSync(sessionDir, { recursive: true, force: true })
-          } catch (err) {
-            console.error("Error cleaning session directory:", err)
-          }
         }
       } else if (connection === "open") {
-        console.log(`✅ WhatsApp connected successfully for session: ${sessionId}`)
-        console.log(`👤 User: ${sock.user.name} (${sock.user.id})`)
-
-        // Limpiar QR code ya que estamos conectados
         qrCodes.delete(sessionId)
 
-        // Remover de cola de espera si estaba
-        const queueIndex = waitingQueue.indexOf(sessionId)
-        if (queueIndex !== -1) {
-          waitingQueue.splice(queueIndex, 1)
-        }
+        const userPhone = sock.user.id.split(":")[0]
+
+        sessionData.set(sessionId, {
+          startTime: Date.now(),
+          dataUsed: 0,
+          userPhone: userPhone,
+        })
+
+        setTimeout(() => {
+          cleanupSession(sessionId)
+        }, CONFIG.SESSION_DURATION)
       }
     })
 
-    // Guardar credenciales cuando cambien
     sock.ev.on("creds.update", saveCreds)
-
-    // Manejar mensajes (opcional, para logging)
-    sock.ev.on("messages.upsert", async (m) => {
-      if (m.type !== "notify") return
-
-      for (const msg of m.messages) {
-        if (msg.key.fromMe) {
-          console.log(`📤 Message sent from session ${sessionId}: ${msg.message?.conversation || "Media"}`)
-        }
-      }
-    })
-
-    // Almacenar sesión activa
     activeSessions.set(sessionId, sock)
-
-    // Inicializar estado de sesión
-    sessionStates.set(sessionId, {
-      lastActivity: Date.now(),
-      messagesEnabled: CONFIG.SHOW_MESSAGES_BY_DEFAULT,
-      mediaEnabled: CONFIG.DOWNLOAD_MEDIA_BY_DEFAULT,
-    })
-
-    console.log(`🎯 Session ${sessionId} initialized successfully`)
   } catch (error) {
-    console.error(`❌ Error creating WhatsApp session ${sessionId}:`, error)
-
-    // Limpiar en caso de error
-    activeSessions.delete(sessionId)
-    qrCodes.delete(sessionId)
-
-    // Reintentar después de un tiempo
-    setTimeout(() => {
-      console.log(`🔄 Retrying session creation for ${sessionId}`)
-      createWhatsAppSession(sessionId)
-    }, 10000)
+    cleanupSession(sessionId)
+    setTimeout(() => createWhatsAppSession(sessionId), 10000)
   }
 }
 
-// Configurar servidor HTTPS
 try {
   const options = {
     key: fs.readFileSync(CONFIG.SSL_KEY),
@@ -1102,94 +953,38 @@ try {
   }
 
   const server = https.createServer(options, app)
-
   server.listen(CONFIG.PORT, () => {
-    console.log(`🚀 HTTPS Server running on https://${CONFIG.DOMAIN}:${CONFIG.PORT}`)
-    console.log(`📱 WhatsApp Personal Interface available`)
-    console.log(`⚙️  Max sessions: ${CONFIG.MAX_SESSIONS}`)
-    console.log(`🔧 Auto-delete files: ${CONFIG.AUTO_DELETE_AFTER_SEND}`)
+    console.log(`Server running on https://${CONFIG.DOMAIN}`)
   })
 } catch (error) {
-  console.error("❌ Error starting HTTPS server:", error)
-  console.log("⚠️  Falling back to HTTP server...")
-
   app.listen(CONFIG.PORT, "0.0.0.0", () => {
-    console.log(`🚀 HTTP Server running on http://0.0.0.0:${CONFIG.PORT}`)
-    console.log("⚠️  WARNING: Running without HTTPS - not recommended for production")
+    console.log(`HTTP Server running on port ${CONFIG.PORT}`)
   })
 }
 
-// Limpieza periódica de sesiones inactivas (cada hora)
-setInterval(
-  () => {
-    const now = Date.now()
-    const maxInactiveTime = 24 * 60 * 60 * 1000 // 24 horas
-
-    for (const [sessionId, sessionState] of sessionStates) {
-      if (now - sessionState.lastActivity > maxInactiveTime) {
-        console.log(`🧹 Cleaning up inactive session: ${sessionId}`)
-
-        // Cerrar conexión si existe
-        if (activeSessions.has(sessionId)) {
-          try {
-            const sock = activeSessions.get(sessionId)
-            sock.end()
-          } catch (err) {
-            console.error("Error closing socket:", err)
-          }
-          activeSessions.delete(sessionId)
-        }
-
-        // Limpiar estados
-        sessionStates.delete(sessionId)
-        qrCodes.delete(sessionId)
-
-        // Limpiar archivos de cookies
-        try {
-          const cookiesPath = join(cookiesDir, `${sessionId}.txt`)
-          const jsonPath = join(cookiesDir, `${sessionId}.json`)
-          if (fs.existsSync(cookiesPath)) fs.unlinkSync(cookiesPath)
-          if (fs.existsSync(jsonPath)) fs.unlinkSync(jsonPath)
-        } catch (err) {
-          console.error("Error cleaning cookies:", err)
-        }
-      }
-    }
-  },
-  60 * 60 * 1000,
-) // Cada hora
-
-// Manejo de errores globales
-process.on("uncaughtException", (err) => {
-  console.error("❌ Uncaught exception:", err)
-})
-
-process.on("unhandledRejection", (err) => {
-  console.error("❌ Unhandled rejection:", err)
-})
-
-// Manejo de cierre graceful
-process.on("SIGINT", () => {
-  console.log("\n🛑 Shutting down gracefully...")
-
-  // Cerrar todas las sesiones activas
-  for (const [sessionId, sock] of activeSessions) {
-    try {
-      console.log(`📱 Closing session: ${sessionId}`)
-      sock.end()
-    } catch (err) {
-      console.error(`Error closing session ${sessionId}:`, err)
+setInterval(() => {
+  const now = Date.now()
+  for (const [sessionId, session] of sessionData) {
+    if (now - session.startTime > CONFIG.SESSION_DURATION) {
+      cleanupSession(sessionId)
     }
   }
+}, 60000)
 
+setInterval(() => {
+  const now = Date.now()
+  for (const [userPhone, record] of userRegistry) {
+    if (now - record.lastUsed > CONFIG.COOLDOWN_DURATION * 2) {
+      userRegistry.delete(userPhone)
+    }
+  }
+}, 300000)
+
+process.on("uncaughtException", (err) => {})
+process.on("unhandledRejection", (err) => {})
+process.on("SIGINT", () => {
+  for (const [sessionId] of activeSessions) {
+    cleanupSession(sessionId)
+  }
   process.exit(0)
 })
-
-console.log("🎉 WhatsApp Advanced Session Server initialized!")
-console.log("📋 Features enabled:")
-console.log("   ✅ Multi-session support")
-console.log("   ✅ J2Team cookies support")
-console.log("   ✅ YouTube downloads with yt-dlp")
-console.log("   ✅ File uploads and URL downloads")
-console.log("   ✅ Auto-cleanup and session management")
-console.log("   ✅ HTTPS support")
