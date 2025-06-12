@@ -1,184 +1,163 @@
 import express from "express"
-import { exec } from "child_process"
-import fs from "fs"
-import path from "path"
 import https from "https"
-import { fileURLToPath } from "url"
+import fs from "fs"
 import multer from "multer"
+import { exec } from "child_process"
+import { promisify } from "util"
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-const CONFIG = {
-  PORT: 8433,
-  DOMAIN: "system.heatherx.site",
-  SSL_KEY: `/etc/letsencrypt/live/system.heatherx.site/privkey.pem`,
-  SSL_CERT: `/etc/letsencrypt/live/system.heatherx.site/cert.pem`,
-  SSL_CA: `/etc/letsencrypt/live/system.heatherx.site/chain.pem`,
-}
-
+const execAsync = promisify(exec)
 const app = express()
-const upload = multer({ dest: "uploads/" })
+const upload = multer({ dest: 'uploads/' })
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-if (!fs.existsSync("temp")) fs.mkdirSync("temp")
-if (!fs.existsSync("cookies")) fs.mkdirSync("cookies")
-
-app.get("/", (req, res) => {
-  res.send(`<!DOCTYPE html>
+const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
     <title>YouTube Tester</title>
     <style>
-        body { font-family: Arial; margin: 20px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        input, button, textarea { width: 100%; padding: 10px; margin: 10px 0; }
+        body { font-family: Arial; margin: 40px; }
+        .section { margin: 30px 0; padding: 20px; border: 1px solid #ddd; }
+        input, button, textarea { padding: 10px; margin: 5px; }
         button { background: #007cba; color: white; border: none; cursor: pointer; }
-        .log { background: #f5f5f5; padding: 10px; font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+        .result { background: #f5f5f5; padding: 15px; margin: 10px 0; white-space: pre-wrap; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>YouTube Cookie Tester</h1>
-        
-        <h3>Upload Cookies</h3>
+    <h1>YouTube Download Tester</h1>
+    
+    <div class="section">
+        <h3>1. Upload Cookies JSON</h3>
         <input type="file" id="cookieFile" accept=".json">
-        <button onclick="uploadCookies()">Upload</button>
-        
-        <h3>Test URL</h3>
-        <input type="text" id="url" placeholder="YouTube URL" value="https://youtu.be/eypt-w22cto">
-        <button onclick="testInfo()">Test Info</button>
+        <button onclick="uploadCookies()">Upload Cookies</button>
+        <div id="cookieStatus"></div>
+    </div>
+    
+    <div class="section">
+        <h3>2. Test Download</h3>
+        <input type="url" id="videoUrl" placeholder="YouTube URL" value="https://youtu.be/eypt-w22cto" style="width: 400px;">
+        <br>
         <button onclick="testDownload()">Test Download</button>
-        
-        <h3>Results</h3>
-        <div id="results" class="log">No tests run</div>
+        <div id="downloadResult" class="result"></div>
     </div>
 
     <script>
         async function uploadCookies() {
             const file = document.getElementById('cookieFile').files[0];
-            if (!file) return alert('Select file');
+            if (!file) return;
             
             const formData = new FormData();
             formData.append('cookies', file);
             
-            const response = await fetch('/upload', { method: 'POST', body: formData });
-            const result = await response.json();
-            document.getElementById('results').textContent = result.message;
-        }
-        
-        async function testInfo() {
-            await runTest('info');
+            try {
+                const response = await fetch('/upload-cookies', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                document.getElementById('cookieStatus').innerHTML = result.success ? 
+                    '<span style="color: green;">✓ Cookies uploaded</span>' : 
+                    '<span style="color: red;">✗ ' + result.error + '</span>';
+            } catch (error) {
+                document.getElementById('cookieStatus').innerHTML = '<span style="color: red;">✗ Upload failed</span>';
+            }
         }
         
         async function testDownload() {
-            await runTest('download');
-        }
-        
-        async function runTest(type) {
-            const url = document.getElementById('url').value;
-            if (!url) return alert('Enter URL');
+            const url = document.getElementById('videoUrl').value;
+            if (!url) return;
             
-            document.getElementById('results').textContent = 'Testing...';
+            document.getElementById('downloadResult').textContent = 'Testing...';
             
-            const response = await fetch('/test', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url, type })
-            });
-            
-            const result = await response.json();
-            document.getElementById('results').textContent = result.log;
+            try {
+                const response = await fetch('/test-download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const result = await response.json();
+                document.getElementById('downloadResult').textContent = result.output || result.error;
+            } catch (error) {
+                document.getElementById('downloadResult').textContent = 'Request failed: ' + error.message;
+            }
         }
     </script>
 </body>
-</html>`)
+</html>`
+
+app.get('/', (req, res) => {
+    res.send(htmlContent)
 })
 
-app.post("/upload", upload.single("cookies"), (req, res) => {
-  try {
-    const data = JSON.parse(fs.readFileSync(req.file.path, "utf8"))
-    const cookies = data.cookies || data
-    
-    let netscape = ""
-    cookies.forEach(c => {
-      if (c.domain && c.name && c.value) {
-        const domain = c.domain.startsWith(".") ? c.domain : "." + c.domain
-        const secure = c.secure ? "TRUE" : "FALSE"
-        const expiry = c.expirationDate ? Math.floor(c.expirationDate) : "0"
-        netscape += `${domain}\tTRUE\t${c.path || "/"}\t${secure}\t${expiry}\t${c.name}\t${c.value}\n`
-      }
-    })
-    
-    fs.writeFileSync("cookies/youtube.txt", netscape)
-    fs.unlinkSync(req.file.path)
-    
-    const required = ["SAPISID", "APISID", "SID", "HSID", "SSID"]
-    const found = cookies.map(c => c.name)
-    const missing = required.filter(r => !found.includes(r))
-    
-    let message = `Processed ${cookies.length} cookies\n`
-    message += `Found: ${found.join(", ")}\n`
-    if (missing.length > 0) {
-      message += `Missing: ${missing.join(", ")}\n`
+app.post('/upload-cookies', upload.single('cookies'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.json({ success: false, error: 'No file uploaded' })
+        }
+        
+        const cookiesData = JSON.parse(fs.readFileSync(req.file.path, 'utf8'))
+        
+        let netscapeFormat = "# Netscape HTTP Cookie File\n\n"
+        
+        cookiesData.cookies.forEach(cookie => {
+            const domain = cookie.domain || ""
+            const flag = domain.startsWith(".") ? "TRUE" : "FALSE"
+            const path = cookie.path || "/"
+            const secure = cookie.secure ? "TRUE" : "FALSE"
+            const expiration = cookie.expirationDate || Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60
+            const name = cookie.name || ""
+            const value = cookie.value || ""
+            
+            if (domain && name) {
+                netscapeFormat += `${domain}\t${flag}\t${path}\t${secure}\t${expiration}\t${name}\t${value}\n`
+            }
+        })
+        
+        fs.writeFileSync('cookies.txt', netscapeFormat)
+        fs.unlinkSync(req.file.path)
+        
+        res.json({ success: true, message: `Processed ${cookiesData.cookies.length} cookies` })
+    } catch (error) {
+        res.json({ success: false, error: error.message })
     }
-    
-    res.json({ success: true, message })
-  } catch (error) {
-    res.json({ success: false, message: error.message })
-  }
 })
 
-app.post("/test", (req, res) => {
-  const { url, type } = req.body
-  
-  if (!fs.existsSync("cookies/youtube.txt")) {
-    return res.json({ success: false, log: "No cookies file found" })
-  }
-  
-  const timestamp = Date.now()
-  let command = `yt-dlp --cookies "cookies/youtube.txt" --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"`
-  
-  if (type === "info") {
-    command += ` --dump-json --no-download "${url}"`
-  } else {
-    command += ` --format "best[height<=720]/best" -o "temp/${timestamp}.%(ext)s" "${url}"`
-  }
-  
-  exec(command, { timeout: 60000 }, (error, stdout, stderr) => {
-    let log = `Command: ${command}\n\n`
-    
-    if (error) {
-      log += `Error: ${error.message}\n\n`
+app.post('/test-download', async (req, res) => {
+    try {
+        const { url } = req.body
+        
+        const command = [
+            'yt-dlp',
+            '--no-warnings',
+            '--cookies cookies.txt',
+            '--format "best[height<=720]/best"',
+            '--get-title',
+            '--get-duration',
+            '--get-filename',
+            `"${url}"`
+        ].join(' ')
+        
+        const { stdout, stderr } = await execAsync(command, { timeout: 30000 })
+        
+        res.json({ 
+            success: true, 
+            output: `Command: ${command}\n\nOutput:\n${stdout}\n\nErrors:\n${stderr}` 
+        })
+    } catch (error) {
+        res.json({ 
+            success: false, 
+            error: `Command failed:\n${error.message}\n\nStdout: ${error.stdout}\nStderr: ${error.stderr}` 
+        })
     }
-    
-    if (stdout) {
-      log += `Output:\n${stdout}\n\n`
-    }
-    
-    if (stderr) {
-      log += `Stderr:\n${stderr}\n\n`
-    }
-    
-    if (type === "download" && !error) {
-      const files = fs.readdirSync("temp").filter(f => f.startsWith(timestamp.toString()))
-      if (files.length > 0) {
-        log += `Downloaded: ${files.join(", ")}\n`
-      }
-    }
-    
-    res.json({ success: !error, log })
-  })
 })
 
-const httpsOptions = {
-  key: fs.readFileSync(CONFIG.SSL_KEY),
-  cert: fs.readFileSync(CONFIG.SSL_CERT),
-  ca: fs.readFileSync(CONFIG.SSL_CA)
+const options = {
+    key: fs.readFileSync('/etc/letsencrypt/live/system.heatherx.site/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/system.heatherx.site/cert.pem'),
+    ca: fs.readFileSync('/etc/letsencrypt/live/system.heatherx.site/chain.pem')
 }
 
-https.createServer(httpsOptions, app).listen(CONFIG.PORT, () => {
-  console.log(`Server: https://${CONFIG.DOMAIN}:${CONFIG.PORT}`)
+https.createServer(options, app).listen(443, () => {
+    console.log('YouTube Tester running on https://system.heatherx.site')
 })
