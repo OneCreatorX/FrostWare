@@ -1616,72 +1616,63 @@ const htmlContent =
     }
 
     async function checkStatus() {
-      try {
-        const response = await fetch(\`/api/status?session=\${sessionId}\`)
-        const result = await response.json()
-        
-        if (result.status === 'waiting') {
-          qrSection.style.display = 'none'
-          loadingSection.style.display = 'none'
-          mainContent.style.display = 'none'
-          waitingSection.style.display = 'block'
-          
-          queuePosition.textContent = result.position
-          positionText.textContent = result.position
-          maxSessions.textContent = result.maxSessions
-          
-          statusElement.textContent = \`Waiting (Position \${result.position})\`
-          statusElement.className = 'status-waiting'
-        } else if (result.status === 'qr') {
-          waitingSection.style.display = 'none'
-          loadingSection.style.display = 'none'
-          mainContent.style.display = 'none'
-          qrSection.style.display = 'block'
-          
-          if (result.qr) {
-            qrImage.innerHTML = \`<img src="\${result.qr}" alt="QR
-          
-           {
-            qrImage.innerHTML = ` < img
-src = "${result.qr}"
-alt =
-  "QR Code" >
-  `
-          }
-          \
-          statusElement.textContent = 'Scan QR Code'
-          statusElement.className = 'status-disconnected'
-        } else if (result.status === 'connected') {
-          waitingSection.style.display = 'none'
-          qrSection.style.display = 'none'
-          loadingSection.style.display = 'none'
-          mainContent.style.display = 'flex'
-          
-          statusElement.textContent = 'Connected'
-          statusElement.className = 'status-connected'
-          
-          if (result.user) {
-            userInfo.textContent = `
-Connected as
-: $
-{
-  result.user.name || result.user.id
-}
-;`
-          }
-          
-          if (settings.showMessages) {
-            loadMessages()
-          }
-        } else {
-          statusElement.textContent = 'Disconnected'
-          statusElement.className = 'status-disconnected'
-        }
-      } catch (error) {
-        statusElement.textContent = 'Connection Error'
-        statusElement.className = 'status-disconnected'
+  try {
+    const response = await fetch(`/api/status?session=${sessionId}`);
+    const result = await response.json();
+
+    if (result.status === 'waiting') {
+      qrSection.style.display = 'none';
+      loadingSection.style.display = 'none';
+      mainContent.style.display = 'none';
+      waitingSection.style.display = 'block';
+
+      queuePosition.textContent = result.position;
+      positionText.textContent = result.position;
+      maxSessions.textContent = result.maxSessions;
+
+      statusElement.textContent = `Waiting (Position ${result.position})`;
+      statusElement.className = 'status-waiting';
+
+    } else if (result.status === 'qr') {
+      waitingSection.style.display = 'none';
+      loadingSection.style.display = 'none';
+      mainContent.style.display = 'none';
+      qrSection.style.display = 'block';
+
+      if (result.qr) {
+        qrImage.innerHTML = `<img src="${result.qr}" alt="QR Code">`;
       }
+
+      statusElement.textContent = 'Scan QR Code';
+      statusElement.className = 'status-disconnected';
+
+    } else if (result.status === 'connected') {
+      waitingSection.style.display = 'none';
+      qrSection.style.display = 'none';
+      loadingSection.style.display = 'none';
+      mainContent.style.display = 'flex';
+
+      statusElement.textContent = 'Connected';
+      statusElement.className = 'status-connected';
+
+      if (result.user) {
+        userInfo.textContent = `Connected as: ${result.user.name || result.user.id};`;
+      }
+
+      if (settings.showMessages) {
+        loadMessages();
+      }
+
+    } else {
+      statusElement.textContent = 'Disconnected';
+      statusElement.className = 'status-disconnected';
     }
+
+  } catch (error) {
+    statusElement.textContent = 'Connection Error';
+    statusElement.className = 'status-disconnected';
+  }
+}
 
     loadSettings()
     checkStatus()
