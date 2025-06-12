@@ -16,20 +16,11 @@ const sslOptions = {
 app.use(express.static('public'))
 app.use(express.json())
 
-function convertEditThisCookieFormat(jsonData) {
-  let cookies
-  
-  if (Array.isArray(jsonData)) {
-    cookies = jsonData
-  } else if (jsonData.cookies && Array.isArray(jsonData.cookies)) {
-    cookies = jsonData.cookies
-  } else {
-    throw new Error('Formato de cookies no reconocido')
-  }
-  
+function convertCookies(jsonCookies) {
+  const cookies = JSON.parse(jsonCookies)
   let netscapeFormat = '# Netscape HTTP Cookie File\n'
   
-  cookies.forEach(cookie => {
+  cookies.cookies.forEach(cookie => {
     const domain = cookie.domain
     const flag = cookie.hostOnly ? 'FALSE' : 'TRUE'
     const path = cookie.path
@@ -49,47 +40,34 @@ app.get('/', (req, res) => {
     <!DOCTYPE html>
     <html>
     <head>
-        <title>YouTube Cookie Tester - EditThisCookie</title>
+        <title>YouTube Cookie Tester</title>
         <style>
-            body { font-family: Arial; margin: 40px; background: #f0f0f0; }
-            .container { max-width: 900px; background: white; padding: 30px; border-radius: 10px; }
-            input, textarea, button { margin: 10px 0; padding: 12px; width: 100%; box-sizing: border-box; }
-            button { background: #007cba; color: white; border: none; cursor: pointer; font-size: 16px; }
-            button:hover { background: #005a87; }
-            .result { padding: 20px; margin: 20px 0; border-radius: 5px; }
-            .error { background: #ffe6e6; border: 1px solid #ff9999; }
-            .success { background: #e6ffe6; border: 1px solid #99ff99; }
-            .warning { background: #fff3cd; border: 1px solid #ffeaa7; }
-            .info { background: #e3f2fd; border: 1px solid #90caf9; }
-            pre { white-space: pre-wrap; word-wrap: break-word; }
-            .step { background: #f8f9fa; padding: 15px; margin: 10px 0; border-left: 4px solid #007cba; }
-            .cookie-count { font-weight: bold; color: #007cba; }
+            body { font-family: Arial; margin: 40px; }
+            .container { max-width: 800px; }
+            input, textarea, button { margin: 10px 0; padding: 10px; width: 100%; }
+            .result { background: #f5f5f5; padding: 20px; margin: 20px 0; }
+            .error { background: #ffe6e6; }
+            .success { background: #e6ffe6; }
         </style>
     </head>
     <body>
         <div class="container">
-            <h1>🍪 YouTube Cookie Tester</h1>
-            <p><strong>Extensión recomendada:</strong> EditThisCookie v3</p>
+            <h1>YouTube Cookie Tester</h1>
             
-            <div class="step">
-                <h3>📋 Instrucciones:</h3>
-                <ol>
-                    <li><strong>Instala EditThisCookie:</strong> <a href="https://chromewebstore.google.com/detail/editthiscookie-v3/ojfebgpkimhlhcblbalbfjblapadhbol" target="_blank">Chrome Web Store</a></li>
-                    <li><strong>Ve a YouTube</strong> y asegúrate de estar <strong>completamente logueado</strong></li>
-                    <li><strong>Abre EditThisCookie</strong> (ícono en la barra de herramientas)</li>
-                    <li><strong>Haz clic en la flecha →</strong> para copiar al portapapeles</li>
-                    <li><strong>Pega aquí abajo</strong> y prueba la descarga</li>
-                </ol>
-            </div>
+            <h3>Instrucciones:</h3>
+            <p>1. Instala la extensión "EditThisCookie" (no J2Team)</p>
+            <p>2. Ve a YouTube y asegúrate de estar logueado</p>
+            <p>3. Abre EditThisCookie y exporta como JSON</p>
+            <p>4. Pega el JSON aquí y prueba</p>
             
             <form id="testForm">
-                <h3>🍪 Cookies JSON (EditThisCookie):</h3>
-                <textarea id="cookies" rows="8" placeholder="Pega aquí el JSON copiado de EditThisCookie..."></textarea>
+                <h3>Cookies JSON:</h3>
+                <textarea id="cookies" rows="10" placeholder="Pega aquí el JSON de cookies de EditThisCookie"></textarea>
                 
-                <h3>🎬 URL de YouTube:</h3>
+                <h3>URL de YouTube:</h3>
                 <input type="text" id="url" value="https://youtu.be/eypt-w22cto" />
                 
-                <button type="submit">🚀 Probar Descarga</button>
+                <button type="submit">Probar Descarga</button>
             </form>
             
             <div id="result"></div>
@@ -99,21 +77,11 @@ app.get('/', (req, res) => {
             document.getElementById('testForm').onsubmit = async (e) => {
                 e.preventDefault()
                 
-                const cookies = document.getElementById('cookies').value.trim()
-                const url = document.getElementById('url').value.trim()
+                const cookies = document.getElementById('cookies').value
+                const url = document.getElementById('url').value
                 const resultDiv = document.getElementById('result')
                 
-                if (!cookies) {
-                    resultDiv.innerHTML = '<div class="result error">❌ Por favor pega las cookies de EditThisCookie</div>'
-                    return
-                }
-                
-                if (!url) {
-                    resultDiv.innerHTML = '<div class="result error">❌ Por favor ingresa una URL de YouTube</div>'
-                    return
-                }
-                
-                resultDiv.innerHTML = '<div class="result info">🔄 Analizando cookies y probando descarga...</div>'
+                resultDiv.innerHTML = '<div class="result">Probando...</div>'
                 
                 try {
                     const response = await fetch('/test', {
@@ -125,34 +93,12 @@ app.get('/', (req, res) => {
                     const result = await response.json()
                     
                     if (result.success) {
-                        resultDiv.innerHTML = \`
-                            <div class="result success">
-                                <h3>✅ ¡Descarga exitosa!</h3>
-                                <p class="cookie-count">Cookies procesadas: \${result.cookieCount}</p>
-                                <h4>📊 Información del video:</h4>
-                                <pre>\${result.output}</pre>
-                            </div>
-                        \`
+                        resultDiv.innerHTML = '<div class="result success"><h3>✅ Éxito!</h3><pre>' + result.output + '</pre></div>'
                     } else {
-                        let errorClass = 'error'
-                        if (result.error.includes('Faltan cookies')) {
-                            errorClass = 'warning'
-                        }
-                        
-                        resultDiv.innerHTML = \`
-                            <div class="result \${errorClass}">
-                                <h3>❌ Error en la descarga</h3>
-                                <pre>\${result.error}</pre>
-                            </div>
-                        \`
+                        resultDiv.innerHTML = '<div class="result error"><h3>❌ Error:</h3><pre>' + result.error + '</pre></div>'
                     }
                 } catch (error) {
-                    resultDiv.innerHTML = \`
-                        <div class="result error">
-                            <h3>❌ Error de conexión</h3>
-                            <pre>\${error.message}</pre>
-                        </div>
-                    \`
+                    resultDiv.innerHTML = '<div class="result error"><h3>❌ Error de conexión:</h3><pre>' + error.message + '</pre></div>'
                 }
             }
         </script>
@@ -171,46 +117,27 @@ app.post('/test', (req, res) => {
   try {
     const cookieData = JSON.parse(cookies)
     
-    let cookieArray
-    if (Array.isArray(cookieData)) {
-      cookieArray = cookieData
-    } else if (cookieData.cookies && Array.isArray(cookieData.cookies)) {
-      cookieArray = cookieData.cookies
-    } else {
-      return res.json({ success: false, error: 'Formato de cookies no válido. Usa EditThisCookie para exportar.' })
-    }
-    
     const requiredCookies = ['SAPISID', 'APISID', 'SID', 'HSID', 'SSID']
-    const availableCookies = cookieArray.map(c => c.name)
+    const availableCookies = cookieData.cookies.map(c => c.name)
     const missingCookies = requiredCookies.filter(c => !availableCookies.includes(c))
     
     if (missingCookies.length > 0) {
       return res.json({ 
         success: false, 
-        error: `🚫 Faltan cookies críticas para YouTube: ${missingCookies.join(', ')}\n\n📋 Cookies disponibles (${availableCookies.length}): ${availableCookies.join(', ')}\n\n💡 Solución:\n1. Asegúrate de estar LOGUEADO en YouTube\n2. Usa EditThisCookie (no J2Team)\n3. Exporta desde youtube.com (no desde google.com)` 
+        error: `Faltan cookies críticas: ${missingCookies.join(', ')}\n\nCookies disponibles: ${availableCookies.join(', ')}\n\nNecesitas usar EditThisCookie y estar completamente logueado en YouTube.` 
       })
     }
     
-    const netscapeCookies = convertEditThisCookieFormat(cookieData)
+    const netscapeCookies = convertCookies(cookies)
     fs.writeFileSync('cookies.txt', netscapeCookies)
     
-    const command = `yt-dlp --no-warnings --cookies cookies.txt --get-title --get-duration --get-filename "${url}"`
+    const command = `yt-dlp --cookies cookies.txt --get-title --get-duration "${url}"`
     
     exec(command, (error, stdout, stderr) => {
-      fs.unlinkSync('cookies.txt')
-      
       if (error) {
-        res.json({ 
-          success: false, 
-          error: `Comando: ${command}\n\nError: ${stderr || error.message}\n\nStdout: ${stdout}`,
-          cookieCount: cookieArray.length
-        })
+        res.json({ success: false, error: stderr || error.message })
       } else {
-        res.json({ 
-          success: true, 
-          output: stdout,
-          cookieCount: cookieArray.length
-        })
+        res.json({ success: true, output: stdout })
       }
     })
     
@@ -220,6 +147,5 @@ app.post('/test', (req, res) => {
 })
 
 https.createServer(sslOptions, app).listen(443, () => {
-  console.log('🚀 YouTube Cookie Tester running on https://system.heatherx.site')
-  console.log('📋 Usa EditThisCookie para exportar cookies de YouTube')
+  console.log('Server running on https://system.heatherx.site')
 })
