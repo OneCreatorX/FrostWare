@@ -1,4 +1,5 @@
-const { makeWASocket, useMultiFileAuthState } = await import("@whiskeysockets/baileys");
+// Importación correcta de Baileys
+const { makeWASocket, useMultiFileAuthState, Browsers } = await import("@whiskeysockets/baileys")
 import express from "express"
 import qrcode from "qrcode"
 import { fileURLToPath } from "url"
@@ -190,621 +191,6 @@ try {
   console.error("Error creating directories:", err)
 }
 
-const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WhatsApp YouTube Interface</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-    }
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-    }
-    header {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      color: white;
-      padding: 20px;
-      border-radius: 15px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-    }
-    .session-info {
-      font-size: 12px;
-      opacity: 0.8;
-      max-width: 300px;
-      word-break: break-all;
-    }
-    .status-connected {
-      background: linear-gradient(45deg, #4CAF50, #45a049);
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-    }
-    .status-disconnected {
-      background: linear-gradient(45deg, #f44336, #d32f2f);
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
-    }
-    .qr-container {
-      text-align: center;
-      padding: 50px;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      margin: 20px;
-      border-radius: 15px;
-      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-    }
-    .qr-container h1 {
-      color: white;
-      margin-bottom: 20px;
-      font-size: 24px;
-    }
-    .qr-container img {
-      max-width: 300px;
-      border-radius: 15px;
-      margin: 20px 0;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-    }
-    .qr-container button {
-      background: linear-gradient(45deg, #667eea, #764ba2);
-      color: white;
-      border: none;
-      padding: 15px 30px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: all 0.3s ease;
-    }
-    .qr-container button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-    }
-    .loading-spinner {
-      border: 3px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      border-top: 3px solid white;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .main-content {
-      display: flex;
-      height: calc(100vh - 140px);
-      gap: 20px;
-    }
-    .sidebar {
-      width: 400px;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 15px;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-      padding: 20px;
-      overflow-y: auto;
-    }
-    .chat-area {
-      flex: 1;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 15px;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-    }
-    .chat-header {
-      padding: 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-      color: white;
-    }
-    .messages {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-    .message {
-      max-width: 70%;
-      padding: 15px 20px;
-      margin-bottom: 15px;
-      border-radius: 18px;
-      position: relative;
-      word-wrap: break-word;
-      align-self: flex-end;
-      background: linear-gradient(45deg, #667eea, #764ba2);
-      color: white;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    }
-    .upload-area {
-      border: 2px dashed rgba(255,255,255,0.3);
-      border-radius: 10px;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-bottom: 15px;
-      color: white;
-    }
-    .upload-area:hover {
-      border-color: rgba(255,255,255,0.6);
-      background: rgba(255,255,255,0.1);
-    }
-    .upload-area.dragover {
-      border-color: #4CAF50;
-      background: rgba(76, 175, 80, 0.1);
-    }
-    .file-input {
-      display: none;
-    }
-    .url-input {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.2);
-      color: white;
-      margin-bottom: 10px;
-    }
-    .url-input::placeholder {
-      color: rgba(255,255,255,0.7);
-    }
-    .btn {
-      background: linear-gradient(45deg, #667eea, #764ba2);
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.3s ease;
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-    }
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-    .message-input {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.2);
-      color: white;
-      resize: none;
-      height: 80px;
-      margin-bottom: 10px;
-    }
-    .message-input::placeholder {
-      color: rgba(255,255,255,0.7);
-    }
-    .cookies-status {
-      font-size: 12px;
-      color: rgba(255,255,255,0.8);
-      text-align: center;
-      margin-top: 10px;
-      padding: 12px;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    .cookies-status.loaded {
-      background: rgba(76, 175, 80, 0.2);
-      color: #4CAF50;
-      border-color: #4CAF50;
-    }
-    .cookies-status.error {
-      background: rgba(244, 67, 54, 0.2);
-      color: #f44336;
-      border-color: #f44336;
-    }
-    h3 {
-      color: white;
-      margin-bottom: 15px;
-      font-size: 18px;
-    }
-    .section {
-      margin-bottom: 25px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .section:last-child {
-      border-bottom: none;
-    }
-    .cookies-info {
-      font-size: 11px;
-      color: rgba(255,255,255,0.6);
-      margin-top: 8px;
-      line-height: 1.4;
-    }
-    .test-section {
-      margin-top: 15px;
-    }
-    .test-url {
-      font-size: 11px;
-      color: rgba(255,255,255,0.6);
-      margin-bottom: 8px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>📱 WhatsApp YouTube Interface</h1>
-        <div class="session-info" id="session-info">Session: Loading...</div>
-      </div>
-      <div id="status" class="status-disconnected">Disconnected</div>
-    </header>
-    
-    <div id="qr-section" class="qr-container" style="display: none;">
-      <h1>📱 Scan with WhatsApp</h1>
-      <div id="qr-image"></div>
-      <p>Open WhatsApp → Linked Devices → Link Device</p>
-      <button onclick="location.reload()">Refresh QR</button>
-    </div>
-    
-    <div id="loading-section" class="qr-container">
-      <h1>⏳ Initializing...</h1>
-      <div class="loading-spinner"></div>
-      <p>Please wait while we set up your WhatsApp interface</p>
-    </div>
-    
-    <div id="main-content" class="main-content" style="display: none;">
-      <div class="sidebar">
-        <div class="section">
-          <h3>🍪 YouTube Cookies (Required)</h3>
-          <div class="upload-area" id="cookies-upload-area">
-            <div style="font-size: 24px; margin-bottom: 10px;">🍪</div>
-            <div>Drop J2Team cookies.json here</div>
-            <div style="font-size: 12px; margin-top: 5px;">Required for YouTube downloads</div>
-            <input type="file" id="cookies-input" class="file-input" accept=".json">
-          </div>
-          <div id="cookies-status" class="cookies-status">
-            ❌ No cookies loaded - YouTube downloads will fail
-          </div>
-          <div class="cookies-info">
-            📋 Instructions:<br>
-            1. Install J2Team Cookies extension<br>
-            2. Login to YouTube<br>
-            3. Click extension → Export as JSON<br>
-            4. Upload the cookies.json file here
-          </div>
-        </div>
-        
-        <div class="section">
-          <h3>📎 Send Files</h3>
-          <div class="upload-area" id="upload-area">
-            <div style="font-size: 24px; margin-bottom: 10px;">📁</div>
-            <div>Drop files here or click to select</div>
-            <div style="font-size: 12px; margin-top: 5px;">Images, videos, audio, documents</div>
-            <input type="file" id="file-input" class="file-input" multiple accept="*/*">
-          </div>
-        </div>
-        
-        <div class="section">
-          <h3>🎬 Download & Send URLs</h3>
-          <input type="text" id="url-input" class="url-input" placeholder="Paste YouTube, TikTok, Instagram, etc. URL...">
-          <button id="download-send-btn" class="btn">📥 Download & Send</button>
-          <div class="test-section">
-            <div class="test-url">Test with: https://youtu.be/dQw4w9WgXcQ</div>
-            <button id="test-download-btn" class="btn" style="font-size: 12px; padding: 8px;">🧪 Test Download</button>
-          </div>
-        </div>
-        
-        <div class="section">
-          <h3>💬 Send Message</h3>
-          <textarea id="message-input" class="message-input" placeholder="Type your message..."></textarea>
-          <button id="send-message-btn" class="btn">📤 Send Message</button>
-        </div>
-      </div>
-      
-      <div class="chat-area">
-        <div class="chat-header">
-          <h2>💬 My Messages</h2>
-          <p id="user-info">Personal chat with myself</p>
-        </div>
-        <div class="messages" id="messages">
-          <div style="text-align: center; color: rgba(255,255,255,0.7); padding: 50px;">
-            📱 Ready to send messages and files!<br>
-            🍪 Upload YouTube cookies first for video downloads
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <script>
-    let sessionId = localStorage.getItem('whatsapp-session-id') || generateSecureSessionId();
-    localStorage.setItem('whatsapp-session-id', sessionId);
-    
-    function generateSecureSessionId() {
-      const timestamp = Date.now().toString(36);
-      const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(32)), 
-        b => b.toString(16).padStart(2, '0')).join('');
-      const combined = timestamp + randomBytes;
-      return \`ws_\${timestamp}_\${btoa(combined).replace(/[+/=]/g, '').substring(0, 48)}_\${Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('')}\`;
-    }
-
-    const statusElement = document.getElementById("status");
-    const sessionInfoElement = document.getElementById("session-info");
-    const messagesList = document.getElementById("messages");
-    const messageInput = document.getElementById("message-input");
-    const sendMessageBtn = document.getElementById("send-message-btn");
-    const qrSection = document.getElementById("qr-section");
-    const loadingSection = document.getElementById("loading-section");
-    const mainContent = document.getElementById("main-content");
-    const qrImage = document.getElementById("qr-image");
-    const uploadArea = document.getElementById("upload-area");
-    const fileInput = document.getElementById("file-input");
-    const urlInput = document.getElementById("url-input");
-    const downloadSendBtn = document.getElementById("download-send-btn");
-    const testDownloadBtn = document.getElementById("test-download-btn");
-    const userInfo = document.getElementById("user-info");
-    const cookiesUploadArea = document.getElementById("cookies-upload-area");
-    const cookiesInput = document.getElementById("cookies-input");
-    const cookiesStatus = document.getElementById("cookies-status");
-
-    let hasCookies = false;
-
-    sessionInfoElement.textContent = \`Session: \${sessionId.substring(3, 15)}...\`;
-
-    // Manejo de cookies
-    cookiesUploadArea.addEventListener('click', () => cookiesInput.click());
-    cookiesUploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      cookiesUploadArea.classList.add('dragover');
-    });
-    cookiesUploadArea.addEventListener('dragleave', () => {
-      cookiesUploadArea.classList.remove('dragover');
-    });
-    cookiesUploadArea.addEventListener('drop', (e) => {
-      e.preventDefault();
-      cookiesUploadArea.classList.remove('dragover');
-      const files = e.dataTransfer.files;
-      if (files.length > 0 && files[0].name.endsWith('.json')) {
-        handleCookiesFile(files[0]);
-      }
-    });
-
-    cookiesInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        handleCookiesFile(e.target.files[0]);
-      }
-    });
-
-    async function handleCookiesFile(file) {
-      try {
-        cookiesStatus.textContent = '⏳ Processing cookies...';
-        cookiesStatus.className = 'cookies-status';
-        
-        const text = await file.text();
-        const cookiesData = JSON.parse(text);
-        
-        if (cookiesData.url && cookiesData.cookies && Array.isArray(cookiesData.cookies)) {
-          const formData = new FormData();
-          formData.append('cookiesFile', file);
-          
-          const response = await fetch(\`/api/cookies?session=\${sessionId}\`, {
-            method: 'POST',
-            body: formData
-          });
-          
-          const result = await response.json();
-          if (result.success) {
-            hasCookies = true;
-            cookiesStatus.textContent = \`✅ \${result.message}\`;
-            cookiesStatus.classList.add('loaded');
-          } else {
-            throw new Error(result.error);
-          }
-        } else {
-          throw new Error('Invalid J2Team cookies format. Expected {url, cookies} structure.');
-        }
-      } catch (error) {
-        cookiesStatus.textContent = '❌ Error: ' + error.message;
-        cookiesStatus.classList.add('error');
-        hasCookies = false;
-      }
-    }
-
-    // Manejo de archivos
-    uploadArea.addEventListener('click', () => fileInput.click());
-    uploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploadArea.classList.add('dragover');
-    });
-    uploadArea.addEventListener('dragleave', () => {
-      uploadArea.classList.remove('dragover');
-    });
-    uploadArea.addEventListener('drop', (e) => {
-      e.preventDefault();
-      uploadArea.classList.remove('dragover');
-      const files = e.dataTransfer.files;
-      handleFiles(files);
-    });
-
-    fileInput.addEventListener('change', (e) => {
-      handleFiles(e.target.files);
-    });
-
-    async function handleFiles(files) {
-      for (let file of files) {
-        await uploadFile(file);
-      }
-    }
-
-    async function uploadFile(file) {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      try {
-        const response = await fetch(\`/api/upload?session=\${sessionId}\`, {
-          method: 'POST',
-          body: formData
-        });
-        const result = await response.json();
-        if (result.success) {
-          console.log('File uploaded and sent:', result.filename);
-        } else {
-          alert('Upload failed: ' + result.error);
-        }
-      } catch (error) {
-        console.error('Error uploading file:', error);
-        alert('Upload failed: ' + error.message);
-      }
-    }
-
-    // Descargar y enviar URL
-    downloadSendBtn.addEventListener('click', () => downloadUrl(urlInput.value.trim()));
-    testDownloadBtn.addEventListener('click', () => downloadUrl('https://youtu.be/dQw4w9WgXcQ'));
-
-    async function downloadUrl(url) {
-      if (!url) return;
-
-      if (url.includes('youtube.com') || url.includes('youtu.be')) {
-        if (!hasCookies) {
-          alert('⚠️ YouTube cookies required! Please upload J2Team cookies first.');
-          return;
-        }
-      }
-
-      const originalText = downloadSendBtn.textContent;
-      downloadSendBtn.textContent = '⏳ Downloading...';
-      downloadSendBtn.disabled = true;
-
-      try {
-        const response = await fetch(\`/api/download?session=\${sessionId}\`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
-        });
-        const result = await response.json();
-        if (result.success) {
-          urlInput.value = '';
-          alert('✅ Downloaded and sent successfully!');
-        } else {
-          alert('❌ Download failed: ' + result.error);
-        }
-      } catch (error) {
-        alert('❌ Download failed: ' + error.message);
-      } finally {
-        downloadSendBtn.textContent = originalText;
-        downloadSendBtn.disabled = false;
-      }
-    }
-
-    // Enviar mensaje
-    sendMessageBtn.addEventListener('click', async () => {
-      const message = messageInput.value.trim();
-      if (!message) return;
-
-      try {
-        const response = await fetch(\`/api/send?session=\${sessionId}\`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message })
-        });
-        const result = await response.json();
-        if (result.success) {
-          messageInput.value = '';
-        } else {
-          alert('Send failed: ' + result.error);
-        }
-      } catch (error) {
-        console.error('Error sending message:', error);
-        alert('Send failed: ' + error.message);
-      }
-    });
-
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessageBtn.click();
-      }
-    });
-
-    // Verificar estado de la sesión
-    async function checkStatus() {
-      try {
-        const response = await fetch(\`/api/status?session=\${sessionId}\`);
-        const result = await response.json();
-
-        if (result.status === 'connected') {
-          statusElement.textContent = 'Connected';
-          statusElement.className = 'status-connected';
-          qrSection.style.display = 'none';
-          loadingSection.style.display = 'none';
-          mainContent.style.display = 'flex';
-          
-          if (result.user) {
-            userInfo.textContent = \`Connected as: \${result.user.name || result.user.id}\`;
-          }
-        } else if (result.status === 'qr') {
-          statusElement.textContent = 'Scan QR Code';
-          statusElement.className = 'status-disconnected';
-          loadingSection.style.display = 'none';
-          mainContent.style.display = 'none';
-          qrSection.style.display = 'block';
-          
-          if (result.qr) {
-            qrImage.innerHTML = \`<img src="\${result.qr}" alt="QR Code" />\`;
-          }
-        } else {
-          statusElement.textContent = 'Initializing...';
-          statusElement.className = 'status-disconnected';
-          qrSection.style.display = 'none';
-          mainContent.style.display = 'none';
-          loadingSection.style.display = 'block';
-        }
-      } catch (error) {
-        console.error('Error checking status:', error);
-        statusElement.textContent = 'Connection Error';
-        statusElement.className = 'status-disconnected';
-      }
-    }
-
-    checkStatus();
-    setInterval(checkStatus, 3000);
-  </script>
-</body>
-</html>`
-
-fs.writeFileSync("public/index.html", htmlContent)
-
 app.get("/", (req, res) => res.sendFile(join(__dirname, "public", "index.html")))
 
 app.post("/api/cookies", upload.single("cookiesFile"), async (req, res) => {
@@ -901,29 +287,13 @@ app.post("/api/download", async (req, res) => {
     const userAgent = getRandomUserAgent()
     const tempFilePath = join(tempDir, `${Date.now()}_${crypto.randomBytes(8).toString("hex")}`)
 
+    // Comando simplificado de yt-dlp compatible con versiones antiguas
     const ytDlpCommand = [
       "yt-dlp",
       "--no-warnings",
-      "--no-check-certificates",
-      "--prefer-insecure",
       "--ignore-errors",
-      "--no-abort-on-error",
-      "--extract-flat",
-      "--write-info-json",
-      "--write-description",
-      "--write-thumbnail",
       `--user-agent "${userAgent}"`,
-      '--add-header "Accept-Language:en-US,en;q=0.9"',
-      '--add-header "Accept-Encoding:gzip, deflate, br"',
-      '--add-header "Accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"',
-      '--add-header "Cache-Control:no-cache"',
-      '--add-header "Pragma:no-cache"',
       '--format "best[height<=720]/best"',
-      "--merge-output-format mp4",
-      "--embed-subs",
-      "--write-auto-sub",
-      "--sub-lang en,es",
-      "--convert-subs srt",
     ]
 
     const sessionCookiesPath = join(cookiesDir, `${sessionId}.txt`)
@@ -1147,91 +517,92 @@ function getMimeType(filename) {
   return mimeTypes[ext] || "application/octet-stream"
 }
 
-async function createWhatsAppSession(sessionId) {
-  try {
-    const sessionDir = join(__dirname, "sessions", sessionId)
-    fs.mkdirSync(sessionDir, { recursive: true })
+function createWhatsAppSession(sessionId) {
+  const sessionDir = join(__dirname, "sessions", sessionId)
+  fs.mkdirSync(sessionDir, { recursive: true })
 
-    console.log(`📱 Initializing WhatsApp session: ${sessionId}`)
+  console.log(`📱 Initializing WhatsApp session: ${sessionId}`)
 
-    const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
+  useMultiFileAuthState(sessionDir)
+    .then(({ state, saveCreds }) => {
+      const sock = makeWASocket({
+        auth: state,
+        printQRInTerminal: false,
+        browser: Browsers.macOS("Desktop"),
+        defaultQueryTimeoutMs: 60000,
+      })
 
-    const sock = makeWASocket({
-      auth: state,
-      printQRInTerminal: false,
-      defaultQueryTimeoutMs: 60000,
-    })
+      sock.ev.on("connection.update", async (update) => {
+        const { connection, lastDisconnect, qr } = update
 
-    sock.ev.on("connection.update", async (update) => {
-      const { connection, lastDisconnect, qr } = update
+        if (qr) {
+          console.log(`📱 QR code generated for session: ${sessionId}`)
+          const qrDataURL = await qrcode.toDataURL(qr, { scale: 8 })
+          qrCodes.set(sessionId, qrDataURL)
+        }
 
-      if (qr) {
-        console.log(`📱 QR code generated for session: ${sessionId}`)
-        const qrDataURL = await qrcode.toDataURL(qr, { scale: 8 })
-        qrCodes.set(sessionId, qrDataURL)
-      }
+        if (connection === "close") {
+          const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401
+          console.log(`❌ Connection closed for session ${sessionId}:`, lastDisconnect?.error)
 
-      if (connection === "close") {
-        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401
-        console.log(`❌ Connection closed for session ${sessionId}:`, lastDisconnect?.error)
+          activeSessions.delete(sessionId)
+          qrCodes.delete(sessionId)
 
-        activeSessions.delete(sessionId)
-        qrCodes.delete(sessionId)
+          if (shouldReconnect) {
+            console.log(`🔄 Reconnecting session ${sessionId} in 5 seconds...`)
+            setTimeout(() => createWhatsAppSession(sessionId), 5000)
+          } else {
+            console.log(`🚫 Session ${sessionId} permanently closed (logout)`)
+            try {
+              fs.rmSync(sessionDir, { recursive: true, force: true })
+            } catch (err) {
+              console.error("Error cleaning session directory:", err)
+            }
+          }
+        } else if (connection === "open") {
+          console.log(`✅ WhatsApp connected successfully for session: ${sessionId}`)
+          console.log(`👤 User: ${sock.user.name} (${sock.user.id})`)
 
-        if (shouldReconnect) {
-          console.log(`🔄 Reconnecting session ${sessionId} in 5 seconds...`)
-          setTimeout(() => createWhatsAppSession(sessionId), 5000)
-        } else {
-          console.log(`🚫 Session ${sessionId} permanently closed (logout)`)
-          try {
-            fs.rmSync(sessionDir, { recursive: true, force: true })
-          } catch (err) {
-            console.error("Error cleaning session directory:", err)
+          qrCodes.delete(sessionId)
+
+          const queueIndex = waitingQueue.indexOf(sessionId)
+          if (queueIndex !== -1) {
+            waitingQueue.splice(queueIndex, 1)
           }
         }
-      } else if (connection === "open") {
-        console.log(`✅ WhatsApp connected successfully for session: ${sessionId}`)
-        console.log(`👤 User: ${sock.user.name} (${sock.user.id})`)
+      })
 
-        qrCodes.delete(sessionId)
+      sock.ev.on("creds.update", saveCreds)
 
-        const queueIndex = waitingQueue.indexOf(sessionId)
-        if (queueIndex !== -1) {
-          waitingQueue.splice(queueIndex, 1)
+      sock.ev.on("messages.upsert", async (m) => {
+        if (m.type !== "notify") return
+
+        for (const msg of m.messages) {
+          if (msg.key.fromMe) {
+            console.log(`📤 Message sent from session ${sessionId}: ${msg.message?.conversation || "Media"}`)
+          }
         }
-      }
+      })
+
+      activeSessions.set(sessionId, sock)
+
+      sessionStates.set(sessionId, {
+        lastActivity: Date.now(),
+      })
+
+      console.log(`🎯 Session ${sessionId} initialized successfully`)
     })
+    .catch((error) => {
+      console.error(`❌ Error creating WhatsApp session ${sessionId}:`, error)
 
-    sock.ev.on("creds.update", saveCreds)
+      activeSessions.delete(sessionId)
+      qrCodes.delete(sessionId)
 
-    sock.ev.on("messages.upsert", async (m) => {
-      if (m.type !== "notify") return
-
-      for (const msg of m.messages) {
-        if (msg.key.fromMe) {
-          console.log(`📤 Message sent from session ${sessionId}: ${msg.message?.conversation || "Media"}`)
-        }
-      }
+      setTimeout(() => {
+        console.log(`🔄 Retrying session creation for ${sessionId}`)
+        createWhatsAppSession(sessionId)
+      }, 10000)
     })
-
-    activeSessions.set(sessionId, sock)
-
-    sessionStates.set(sessionId, {
-      lastActivity: Date.now(),
-    })
-
-    console.log(`🎯 Session ${sessionId} initialized successfully`)
-  } catch (error) {
-    console.error(`❌ Error creating WhatsApp session ${sessionId}:`, error)
-
-    activeSessions.delete(sessionId)
-    qrCodes.delete(sessionId)
-
-    setTimeout(() => {
-      console.log(`🔄 Retrying session creation for ${sessionId}`)
-      createWhatsAppSession(sessionId)
-    }, 10000)
-  }
 }
 
 try {
@@ -1321,8 +692,7 @@ process.on("SIGINT", () => {
 
 console.log("🎉 WhatsApp YouTube Interface initialized!")
 console.log("📋 Features:")
-console.log("   ✅ Enhanced cookie validation")
-console.log("   ✅ Improved yt-dlp parameters")
-console.log("   ✅ Better error handling")
+console.log("   ✅ Simplified yt-dlp command for compatibility")
+console.log("   ✅ Fixed Baileys import")
+console.log("   ✅ Enhanced cookie handling")
 console.log("   ✅ YouTube authentication support")
-console.log("   ✅ Multi-format downloads")
