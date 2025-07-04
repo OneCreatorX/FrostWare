@@ -167,7 +167,7 @@ local it = Instance.new("TextLabel")
 it.Size = UDim2.new(1, -30, 0, 35)
 it.Position = UDim2.new(0, 15, 0, 195)
 it.BackgroundTransparency = 1
-it.Text = "1. Copy URL → 2. Enter HWID → 3. Complete steps → 4. Refresh"
+it.Text = "1. Copy URL → 2. Complete steps → 3. Refresh"
 it.TextColor3 = Color3.fromRGB(100, 116, 139)
 it.TextSize = 11
 it.Font = Enum.Font.Gotham
@@ -175,7 +175,7 @@ it.TextWrapped = true
 it.Parent = fr
 
 cb.MouseButton1Click:Connect(function()
-    setclipboard(getgenv()._frostw .. "/")
+    setclipboard(getgenv()._frostw .. "/key/" .. hwid)
     st.Text = "🔗 URL copied! Paste it in your browser to start."
     st.TextColor3 = Color3.fromRGB(34, 197, 94)
 end)
