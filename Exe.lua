@@ -173,17 +173,6 @@ local function cm()
     sg.Parent = gethui()
     sg.ResetOnSpawn = false
     
-    local bl = Instance.new("BlurEffect")
-    bl.Size = 10
-    bl.Parent = workspace.CurrentCamera
-    
-    local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(1, 0, 1, 0)
-    bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    bg.BackgroundTransparency = 0.3
-    bg.BorderSizePixel = 0
-    bg.Parent = sg
-    
     local m = Instance.new("Frame")
     m.Size = UDim2.new(0, 520, 0, 380)
     m.Position = UDim2.new(0.5, -260, 0.5, -190)
@@ -462,7 +451,12 @@ local function cm()
     end
     
     cb.MouseButton1Click:Connect(function()
-        setclipboard(getgenv()._frostw .. "/key/" .. h)
+        local url = getgenv()._frostw .. "/key/" .. h
+        if setclipboard then
+            setclipboard(url)
+        elseif toclipboard then
+            toclipboard(url)
+        end
         us("✅ Verification URL copied! Open it in your browser.", Color3.fromRGB(34, 197, 94), "🔗")
         
         local bt = ts:Create(cb, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 210, 0, 43)})
@@ -473,12 +467,20 @@ local function cm()
     end)
     
     hb.MouseButton1Click:Connect(function()
-        setclipboard(h)
+        if setclipboard then
+            setclipboard(h)
+        elseif toclipboard then
+            toclipboard(h)
+        end
         us("📋 HWID copied to clipboard!", Color3.fromRGB(59, 130, 246), "📋")
     end)
     
     db.MouseButton1Click:Connect(function()
-        setclipboard(getgenv()._dc)
+        if setclipboard then
+            setclipboard(getgenv()._dc)
+        elseif toclipboard then
+            toclipboard(getgenv()._dc)
+        end
         us("💬 Discord URL copied to clipboard!", Color3.fromRGB(88, 101, 242), "💬")
     end)
     
@@ -496,7 +498,6 @@ local function cm()
             })
             ct:Play()
             ct.Completed:Connect(function()
-                bl:Destroy()
                 sg:Destroy()
                 
                 local function sn(hr)
@@ -628,7 +629,6 @@ local function cm()
         })
         ct:Play()
         ct.Completed:Connect(function()
-            bl:Destroy()
             sg:Destroy()
         end)
     end)
