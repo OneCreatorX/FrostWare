@@ -38,6 +38,7 @@ local tabCnt = 1
 local tabsDir = "FrostWare/Tabs/"
 local srcRef = nil
 local lnRef = nil
+local tabScrollRef = nil
 
 local cStdBtn=_e.fn(function(p,nm,txt,ico,pos,sz)
     local btn=cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})
@@ -206,6 +207,7 @@ local pstBtn=cStdBtn(btns,"Pst","Paste Clipboard","rbxassetid://133018045821797"
 local execClpBtn=cStdBtn(btns,"ExecClp","Execute Clipboard","rbxassetid://89434276213036",UDim2.new(0.52,0,0.37,0),UDim2.new(0.15,0,0.325,0))
 srcRef = src
 lnRef = ln
+tabScrollRef = ts
 return ep,src,ln,ts,addTab,execBtn,clrBtn,pstBtn,execClpBtn
 end
 
@@ -220,13 +222,28 @@ end
 
 function FW.cTab(ts,nm,cont)
 local td={name=nm or "Tab "..tabCnt,content=cont or "-- New Tab\nprint('Hello from "..(nm or "Tab "..tabCnt).."!')",id=tabCnt}
-local tb=cB(ts,{BackgroundColor3=Color3.fromRGB(30,36,51),Size=UDim2.new(0,120,0.8,0),Position=UDim2.new(0,0,0.1,0),Text=td.name,TextColor3=Color3.fromRGB(255,255,255),TextSize=18,Name="Tab"..td.id,TextScaled=true})
-cC(tb,0.2)
-local cb=cB(tb,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,20,0,20),Position=UDim2.new(1,-25,0,5),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="CloseBtn"})
+
+local tabFrame=cF(ts,{BackgroundColor3=Color3.fromRGB(30,36,51),Size=UDim2.new(0,120,0.8,0),Position=UDim2.new(0,0,0.1,0),Name="TabFrame"..td.id})
+cC(tabFrame,0.2)
+
+local tb=cB(tabFrame,{BackgroundTransparency=1,Size=UDim2.new(0.8,0,1,0),Position=UDim2.new(0,0,0,0),Text=td.name,TextColor3=Color3.fromRGB(255,255,255),TextSize=18,Name="TabBtn"..td.id,TextScaled=true,ZIndex=2})
+
+local cb=cB(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,20,0,20),Position=UDim2.new(1,-25,0,5),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="CloseBtn",ZIndex=3})
 cC(cb,0.5)
+
 td.button=tb
 td.closeButton=cb
+td.frame=tabFrame
 tabs[td.id]=td
+
+tb.MouseButton1Click:Connect(function()
+FW.switchTab(td.id)
+end)
+
+cb.MouseButton1Click:Connect(function()
+FW.closeTab(td.id,ts)
+end)
+
 ts.CanvasSize=UDim2.new(0,ts.UIListLayout.AbsoluteContentSize.X,0,0)
 tabCnt=tabCnt+1
 FW.saveTabs()
@@ -239,13 +256,13 @@ if tabs[curTab] and srcRef then
 tabs[curTab].content=srcRef.Text 
 end
 for _,tab in pairs(tabs)do 
-if tab.button then 
-tab.button.BackgroundColor3=Color3.fromRGB(30,36,51)
+if tab.frame then 
+tab.frame.BackgroundColor3=Color3.fromRGB(30,36,51)
 end 
 end
 curTab=tid
-if tabs[tid].button then 
-tabs[tid].button.BackgroundColor3=Color3.fromRGB(50,56,71)
+if tabs[tid].frame then 
+tabs[tid].frame.BackgroundColor3=Color3.fromRGB(50,56,71)
 end
 if srcRef then 
 srcRef.Text=tabs[tid].content
@@ -260,9 +277,12 @@ end
 function FW.closeTab(tid,ts)
 local cnt=0
 for _ in pairs(tabs)do cnt=cnt+1 end
-if cnt<=1 then return false end
+if cnt<=1 then 
+FW.showAlert("Info", "Cannot close last tab!", 2)
+return false 
+end
 if tabs[tid] then
-if tabs[tid].button then tabs[tid].button:Destroy()end
+if tabs[tid].frame then tabs[tid].frame:Destroy()end
 tabs[tid]=nil
 if curTab==tid then 
 for id,_ in pairs(tabs)do 
@@ -273,6 +293,7 @@ end
 end
 ts.CanvasSize=UDim2.new(0,ts.UIListLayout.AbsoluteContentSize.X,0,0)
 FW.saveTabs()
+FW.showAlert("Success", "Tab closed!", 2)
 return true
 end
 return false
@@ -333,18 +354,35 @@ function FW.restoreTabs(ts)
 if FW.loadTabs() then
 for id, tab in pairs(tabs) do
 if tab.name and tab.content then
-local tb=cB(ts,{BackgroundColor3=Color3.fromRGB(30,36,51),Size=UDim2.new(0,120,0.8,0),Position=UDim2.new(0,0,0.1,0),Text=tab.name,TextColor3=Color3.fromRGB(255,255,255),TextSize=18,Name="Tab"..id,TextScaled=true})
-cC(tb,0.2)
-local cb=cB(tb,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,20,0,20),Position=UDim2.new(1,-25,0,5),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="CloseBtn"})
+local tabFrame=cF(ts,{BackgroundColor3=Color3.fromRGB(30,36,51),Size=UDim2.new(0,120,0.8,0),Position=UDim2.new(0,0,0.1,0),Name="TabFrame"..id})
+cC(tabFrame,0.2)
+local tb=cB(tabFrame,{BackgroundTransparency=1,Size=UDim2.new(0.8,0,1,0),Position=UDim2.new(0,0,0,0),Text=tab.name,TextColor3=Color3.fromRGB(255,255,255),TextSize=18,Name="TabBtn"..id,TextScaled=true,ZIndex=2})
+local cb=cB(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,20,0,20),Position=UDim2.new(1,-25,0,5),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="CloseBtn",ZIndex=3})
 cC(cb,0.5)
 tabs[id].button=tb
 tabs[id].closeButton=cb
+tabs[id].frame=tabFrame
+tb.MouseButton1Click:Connect(function()
+FW.switchTab(id)
+end)
+cb.MouseButton1Click:Connect(function()
+FW.closeTab(id,ts)
+end)
 end
 end
 ts.CanvasSize=UDim2.new(0,ts.UIListLayout.AbsoluteContentSize.X,0,0)
 return true
 end
 return false
+end
+
+function FW.cDialog(title,w,h)
+local dlg=cF(g["3"],{Visible=true,BackgroundColor3=Color3.fromRGB(16,19,27),Size=UDim2.new(w or 0.6,0,h or 0.7,0),Position=UDim2.new((1-(w or 0.6))/2,0,(1-(h or 0.7))/2,0),Name="Dialog",ZIndex=10})
+cC(dlg,0.1)
+cS(dlg,3,Color3.fromRGB(35,39,54))
+local tl=cT(dlg,{Text=title,TextSize=32,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+cTC(tl,32)
+return dlg
 end
 
 function FW.getUI()return g end
