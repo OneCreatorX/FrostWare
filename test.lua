@@ -35,6 +35,9 @@ local cAR=_e.fn(function(p,ratio)return c(n("UIAspectRatioConstraint",p),{Aspect
 local tabs = {}
 local curTab = 1
 local tabCnt = 1
+local tabsDir = "FrostWare/Tabs/"
+local srcRef = nil
+local lnRef = nil
 
 local cStdBtn=_e.fn(function(p,nm,txt,ico,pos,sz)
     local btn=cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})
@@ -76,6 +79,46 @@ local cSBtn=_e.fn(function(p,nm,txt,ico,pos,sel)
     cTC(clk,14)
     return btn,clk
 end)
+
+function FW.saveTabs()
+    if not isfolder(tabsDir) then makefolder(tabsDir) end
+    local tabData = {}
+    for id, tab in pairs(tabs) do
+        tabData[tostring(id)] = {
+            name = tab.name,
+            content = tab.content,
+            id = tab.id
+        }
+    end
+    tabData.currentTab = curTab
+    tabData.tabCounter = tabCnt
+    writefile(tabsDir .. "tabs.json", game:GetService("HttpService"):JSONEncode(tabData))
+end
+
+function FW.loadTabs()
+    if isfile(tabsDir .. "tabs.json") then
+        local success, data = pcall(function()
+            return game:GetService("HttpService"):JSONDecode(readfile(tabsDir .. "tabs.json"))
+        end)
+        if success and data then
+            curTab = data.currentTab or 1
+            tabCnt = data.tabCounter or 1
+            for id, tabInfo in pairs(data) do
+                if type(tabInfo) == "table" and tabInfo.name then
+                    tabs[tonumber(id)] = {
+                        name = tabInfo.name,
+                        content = tabInfo.content,
+                        id = tabInfo.id,
+                        button = nil,
+                        closeButton = nil
+                    }
+                end
+            end
+            return true
+        end
+    end
+    return false
+end
 
 function FW.cStdBtn(p,nm,txt,ico,pos,sz)return cStdBtn(p,nm,txt,ico,pos,sz)end
 function FW.cRndBtn(p,nm,ico,pos,sz)return cRndBtn(p,nm,ico,pos,sz)end
@@ -161,117 +204,9 @@ local execBtn=cStdBtn(btns,"Exec","Execute Script","rbxassetid://89434276213036"
 local clrBtn=cStdBtn(btns,"Clr","Clear Editor","rbxassetid://73909411554012",UDim2.new(0.2,0,0.37,0),UDim2.new(0.15,0,0.325,0))
 local pstBtn=cStdBtn(btns,"Pst","Paste Clipboard","rbxassetid://133018045821797",UDim2.new(0.36,0,0.37,0),UDim2.new(0.15,0,0.325,0))
 local execClpBtn=cStdBtn(btns,"ExecClp","Execute Clipboard","rbxassetid://89434276213036",UDim2.new(0.52,0,0.37,0),UDim2.new(0.15,0,0.325,0))
+srcRef = src
+lnRef = ln
 return ep,src,ln,ts,addTab,execBtn,clrBtn,pstBtn,execClpBtn
-end
-
-function FW.cCloudPage()
-local cp=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="CloudPage",Position=UDim2.new(-0.001,0,0,0)})
-local btns=cI(cp,{ZIndex=2,ImageColor3=Color3.fromRGB(16,19,27),Image="rbxassetid://123590482033481",Size=UDim2.new(1.001,0,0.271,0),ClipsDescendants=true,BackgroundTransparency=1,Name="Btns",Position=UDim2.new(-0.001,0,0.726,0)})
-local cloudBtn=cRndBtn(btns,"CloudBtn","rbxassetid://118013866377216",UDim2.new(0.68,0,0.368,0),UDim2.new(0.078,0,0.394,0))
-local localBtn=cRndBtn(btns,"LocalBtn","rbxassetid://94595204123047",UDim2.new(0.778,0,0.368,0),UDim2.new(0.078,0,0.394,0))
-local createBtn=cRndBtn(btns,"CreateBtn","rbxassetid://128679881757557",UDim2.new(0.879,0,0.368,0),UDim2.new(0.078,0,0.394,0))
-local sf=cF(cp,{BackgroundColor3=Color3.fromRGB(30,36,51),ClipsDescendants=true,Size=UDim2.new(0.882,0,0.089,0),Position=UDim2.new(0.058,0,0.067,0),Name="SearchFrame"})
-cC(sf,0.28)
-cI(sf,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://126215064299468",Size=UDim2.new(0.031,0,0.344,0),BackgroundTransparency=1,Name="SearchIco",Position=UDim2.new(0.028,0,0.322,0)})
-local sb=cTB(sf,{Name="SearchBox",TextXAlignment=Enum.TextXAlignment.Left,PlaceholderColor3=Color3.fromRGB(162,177,234),TextWrapped=true,TextSize=32,TextColor3=Color3.fromRGB(162,177,234),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),PlaceholderText="Search for Scripts here..",Size=UDim2.new(0.257,0,0.278,0),Position=UDim2.new(0.371,0,0.356,0),Text="",BackgroundTransparency=1})
-cTC(sb,32)
-local cps=cF(cp,{BackgroundColor3=Color3.fromRGB(40,43,63),ClipsDescendants=true,Size=UDim2.new(0.946,0,0.726,0),Position=UDim2.new(0.036,0,0.206,0),Name="CloudScripts",BackgroundTransparency=1})
-cC(cps,0)
-local scr=cSF(cps,{Active=true,BackgroundTransparency=1,Name="Scrolling",Size=UDim2.new(1,0,1,0),ScrollBarImageColor3=Color3.fromRGB(143,163,221),ScrollBarThickness=8})
-c(n("UIListLayout",scr),{Wraps=true,Padding=UDim.new(0,20),SortOrder=Enum.SortOrder.LayoutOrder,FillDirection=Enum.FillDirection.Horizontal})
-c(n("UIPadding",scr),{PaddingTop=UDim.new(0,16),PaddingLeft=UDim.new(0,35)})
-return cp,cloudBtn,localBtn,createBtn,sb,scr
-end
-
-function FW.cConsolePage()
-local cop=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="ConsolePage",Position=UDim2.new(-0.001,0,0,0)})
-local btns=cI(cop,{ZIndex=2,ImageColor3=Color3.fromRGB(16,19,27),Image="rbxassetid://123590482033481",Size=UDim2.new(1.001,0,0.271,0),ClipsDescendants=true,BackgroundTransparency=1,Name="Btns",Position=UDim2.new(-0.001,0,0.726,0)})
-local toggleBtn=cRndBtn(btns,"ToggleBtn","rbxassetid://107390243416427",UDim2.new(0.68,0,0.368,0),UDim2.new(0.078,0,0.394,0))
-local copyBtn=cRndBtn(btns,"CopyBtn","rbxassetid://133018045821797",UDim2.new(0.786,0,0.368,0),UDim2.new(0.078,0,0.394,0))
-local clearBtn=cRndBtn(btns,"ClearBtn","rbxassetid://73909411554012",UDim2.new(0.879,0,0.368,0),UDim2.new(0.078,0,0.394,0))
-local sf=cF(cop,{BackgroundColor3=Color3.fromRGB(30,36,51),ClipsDescendants=true,Size=UDim2.new(0.882,0,0.089,0),Position=UDim2.new(0.058,0,0.067,0),Name="SearchFrame"})
-cC(sf,0)
-local sb=cTB(sf,{Name="SearchBox",TextXAlignment=Enum.TextXAlignment.Left,PlaceholderColor3=Color3.fromRGB(162,177,234),TextWrapped=true,TextSize=32,TextColor3=Color3.fromRGB(162,177,234),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),PlaceholderText="Search console logs...",Size=UDim2.new(0.257,0,0.311,0),Position=UDim2.new(0.371,0,0.356,0),Text="",BackgroundTransparency=1})
-cTC(sb,32)
-local ci=cSF(cop,{Name="ConsoleOutput",BackgroundColor3=Color3.fromRGB(20,23,30),Size=UDim2.new(0.882,0,0.55,0),Position=UDim2.new(0.058,0,0.18,0),ScrollBarImageColor3=Color3.fromRGB(143,163,221),ScrollBarThickness=8,BackgroundTransparency=0})
-cC(ci,0)
-c(n("UIListLayout",ci),{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2)})
-local logTmpl=cB(ci,{Visible=false,Name="LogTmpl",BackgroundTransparency=1,Size=UDim2.new(1,0,0,25),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextWrapped=true,TextSize=18,FontFace=Font.new("rbxassetid://11702779409",Enum.FontWeight.Medium,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),RichText=true,Text=""})
-return cop,toggleBtn,copyBtn,clearBtn,sb,ci,logTmpl
-end
-
-function FW.cExtraPage()
-local exp=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="ExtraPage",Position=UDim2.new(-0.001,0,0,0)})
-local tf=cF(exp,{BackgroundColor3=Color3.fromRGB(30,36,51),Size=UDim2.new(0.9,0,0.12,0),Position=UDim2.new(0.05,0,0.05,0),Name="TitleFrame"})
-cC(tf,0.15)
-cS(tf,2,Color3.fromRGB(35,39,54))
-local tl=cT(tf,{Text="Extra Features",TextSize=36,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-cTC(tl,36)
-local cf=cSF(exp,{BackgroundColor3=Color3.fromRGB(20,23,30),Size=UDim2.new(0.9,0,0.75,0),Position=UDim2.new(0.05,0,0.2,0),Name="ContentFrame",ScrollBarImageColor3=Color3.fromRGB(143,163,221),ScrollBarThickness=8})
-cC(cf,0.1)
-c(n("UIListLayout",cf),{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,15)})
-c(n("UIPadding",cf),{PaddingTop=UDim.new(0,20),PaddingLeft=UDim.new(0,20),PaddingRight=UDim.new(0,20),PaddingBottom=UDim.new(0,20)})
-return exp,cf
-end
-
-function FW.cSection(p,title,desc)
-local sec=cF(p,{BackgroundColor3=Color3.fromRGB(26,31,43),Size=UDim2.new(1,0,0,120),Name=title.."Sec"})
-cC(sec,0.1)
-cS(sec,2,Color3.fromRGB(35,39,54))
-local st=cT(sec,{Text=title,TextSize=28,TextColor3=Color3.fromRGB(166,190,255),BackgroundTransparency=1,Size=UDim2.new(0.7,0,0.4,0),Position=UDim2.new(0.05,0,0.1,0),TextXAlignment=Enum.TextXAlignment.Left,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-cTC(st,28)
-local sd=cT(sec,{Text=desc,TextSize=20,TextColor3=Color3.fromRGB(162,177,234),BackgroundTransparency=1,Size=UDim2.new(0.9,0,0.4,0),Position=UDim2.new(0.05,0,0.5,0),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextWrapped=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
-cTC(sd,20)
-return sec
-end
-
-function FW.cSecBtn(p,txt,pos,sz)
-local btn=cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=txt.."Btn"})
-cC(btn,0.2)
-cG(btn,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
-local bl=cT(btn,{Text=txt,TextSize=22,TextColor3=Color3.fromRGB(29,29,38),BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-cTC(bl,22)
-local bc=cB(btn,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="",Name=txt.."Clk"})
-return bc
-end
-
-function FW.cScriptFrame(p,nm,desc,isLocal,isAuto)
-local fr=cF(p,{Visible=true,BackgroundColor3=Color3.fromRGB(26,31,43),ClipsDescendants=true,Size=UDim2.new(0.168,0,0.37,0),Name=nm})
-cS(fr,3,Color3.fromRGB(30,36,51))
-cC(fr,0.15)
-cAR(fr,1.063)
-local sd=cT(fr,{TextWrapped=true,TextSize=28,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(162,177,234),BackgroundTransparency=1,Size=UDim2.new(0.887,0,0.26,0),Text=desc,Name="ScriptDesc",Position=UDim2.new(0.081,0,0.546,0)})
-cTC(sd,28)
-local gd=cF(fr,{BackgroundColor3=Color3.fromRGB(255,255,255),ClipsDescendants=true,Size=UDim2.new(1,0,0.323,0),Position=UDim2.new(-0.001,0,0.129,0),Name="GradDown"})
-if isLocal then cG(gd,Color3.fromRGB(100,150,200),Color3.fromRGB(70,100,140))else cG(gd,Color3.fromRGB(143,163,221),Color3.fromRGB(104,118,160))end
-local sn=cF(fr,{BackgroundColor3=Color3.fromRGB(255,255,255),ClipsDescendants=true,Size=UDim2.new(1,0,0.454,0),Position=UDim2.new(-0.001,0,0,0),Name="ScriptName"})
-if isLocal then cG(sn,Color3.fromRGB(100,150,200),Color3.fromRGB(70,100,140))else cG(sn,Color3.fromRGB(143,163,221),Color3.fromRGB(104,118,160))end
-cC(sn,0.4)
-local snl=cT(sn,{TextWrapped=true,TextSize=34,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Heavy,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(29,29,38),BackgroundTransparency=1,Size=UDim2.new(0.655,0,0.287,0),ClipsDescendants=true,Text=nm,Name="ScriptName",Position=UDim2.new(0.197,0,0.434,0)})
-cTC(snl,34)
-local clk=cB(fr,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,ZIndex=3,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  "})
-cC(clk,0)
-cTC(clk,14)
-return fr,clk
-end
-
-function FW.cDialog(title,w,h)
-local dlg=cF(g["3"],{Visible=false,BackgroundColor3=Color3.fromRGB(16,19,27),Size=UDim2.new(w or 0.6,0,h or 0.7,0),Position=UDim2.new((1-(w or 0.6))/2,0,(1-(h or 0.7))/2,0),Name="Dialog",ZIndex=10})
-cC(dlg,0.1)
-cS(dlg,3,Color3.fromRGB(35,39,54))
-local tl=cT(dlg,{Text=title,TextSize=32,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-cTC(tl,32)
-return dlg
-end
-
-function FW.cDlgBtn(p,txt,pos,sz,col)
-local btn=cF(p,{BackgroundColor3=col,Size=sz,Position=pos,Name=txt.."Btn"})
-cC(btn,0.2)
-if col==Color3.fromRGB(255,255,255)then cG(btn,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))end
-local lbl=cT(btn,{Text=txt,TextColor3=col==Color3.fromRGB(255,255,255)and Color3.fromRGB(29,29,38)or Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-cTC(lbl,24)
-local clk=cB(btn,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="",Name=txt.."Clk"})
-return clk
 end
 
 function FW.updLines(src,ln)
@@ -294,18 +229,32 @@ td.closeButton=cb
 tabs[td.id]=td
 ts.CanvasSize=UDim2.new(0,ts.UIListLayout.AbsoluteContentSize.X,0,0)
 tabCnt=tabCnt+1
+FW.saveTabs()
 return td.id,tb,cb
 end
 
-function FW.switchTab(tid,src,ln)
+function FW.switchTab(tid)
 if tabs[tid] then
-if tabs[curTab] then tabs[curTab].content=src.Text end
-for _,tab in pairs(tabs)do if tab.button then tab.button.BackgroundColor3=Color3.fromRGB(30,36,51)end end
-curTab=tid
-if tabs[tid].button then tabs[tid].button.BackgroundColor3=Color3.fromRGB(50,56,71)end
-src.Text=tabs[tid].content
-FW.updLines(src,ln)
+if tabs[curTab] and srcRef then 
+tabs[curTab].content=srcRef.Text 
 end
+for _,tab in pairs(tabs)do 
+if tab.button then 
+tab.button.BackgroundColor3=Color3.fromRGB(30,36,51)
+end 
+end
+curTab=tid
+if tabs[tid].button then 
+tabs[tid].button.BackgroundColor3=Color3.fromRGB(50,56,71)
+end
+if srcRef then 
+srcRef.Text=tabs[tid].content
+FW.updLines(srcRef,lnRef)
+end
+FW.saveTabs()
+return true
+end
+return false
 end
 
 function FW.closeTab(tid,ts)
@@ -315,8 +264,15 @@ if cnt<=1 then return false end
 if tabs[tid] then
 if tabs[tid].button then tabs[tid].button:Destroy()end
 tabs[tid]=nil
-if curTab==tid then for id,_ in pairs(tabs)do curTab=id break end end
+if curTab==tid then 
+for id,_ in pairs(tabs)do 
+curTab=id 
+FW.switchTab(id)
+break 
+end 
+end
 ts.CanvasSize=UDim2.new(0,ts.UIListLayout.AbsoluteContentSize.X,0,0)
+FW.saveTabs()
 return true
 end
 return false
@@ -326,6 +282,7 @@ function FW.renameTab(tid,nm)
 if tabs[tid] then
 tabs[tid].name=nm
 if tabs[tid].button then tabs[tid].button.Text=nm end
+FW.saveTabs()
 return true
 end
 return false
@@ -370,6 +327,24 @@ local box=sbb:FindFirstChild("Box")
 if box then box.UIGradient.Color=ColorSequence.new{ColorSequenceKeypoint.new(0,Color3.fromRGB(166,190,255)),ColorSequenceKeypoint.new(1,Color3.fromRGB(93,117,160))}end
 end
 end
+end
+
+function FW.restoreTabs(ts)
+if FW.loadTabs() then
+for id, tab in pairs(tabs) do
+if tab.name and tab.content then
+local tb=cB(ts,{BackgroundColor3=Color3.fromRGB(30,36,51),Size=UDim2.new(0,120,0.8,0),Position=UDim2.new(0,0,0.1,0),Text=tab.name,TextColor3=Color3.fromRGB(255,255,255),TextSize=18,Name="Tab"..id,TextScaled=true})
+cC(tb,0.2)
+local cb=cB(tb,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,20,0,20),Position=UDim2.new(1,-25,0,5),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="CloseBtn"})
+cC(cb,0.5)
+tabs[id].button=tb
+tabs[id].closeButton=cb
+end
+end
+ts.CanvasSize=UDim2.new(0,ts.UIListLayout.AbsoluteContentSize.X,0,0)
+return true
+end
+return false
 end
 
 function FW.getUI()return g end
