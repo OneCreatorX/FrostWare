@@ -40,6 +40,9 @@ local srcRef = nil
 local lnRef = nil
 local consoleOutput = {}
 local consoleRef = nil
+local consoleScrollRef = nil
+local consoleEnabled = true
+local oldPrint, oldWarn, oldError
 
 local cStdBtn=_e.fn(function(p,nm,txt,ico,pos,sz)
     local btn=cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})
@@ -106,21 +109,35 @@ function FW.loadTabs()
     return false
 end
 
-function FW.addConsoleLog(msg, msgType)
+function FW.addConsoleLog(msg, msgType, canCopy)
+    if not consoleEnabled then return end
+    
     local timestamp = os.date("[%H:%M:%S]")
     local color = Color3.fromRGB(255, 255, 255)
+    local prefix = ""
     
     if msgType == "error" then
         color = Color3.fromRGB(255, 100, 100)
+        prefix = "[ERROR] "
     elseif msgType == "warn" then
         color = Color3.fromRGB(255, 200, 100)
+        prefix = "[WARN] "
     elseif msgType == "info" then
         color = Color3.fromRGB(100, 200, 255)
+        prefix = "[INFO] "
     end
     
-    table.insert(consoleOutput, {text = timestamp .. " " .. tostring(msg), color = color})
+    local logEntry = {
+        text = timestamp .. " " .. prefix .. tostring(msg),
+        color = color,
+        canCopy = canCopy ~= false,
+        fullText = tostring(msg),
+        type = msgType or "info"
+    }
     
-    if #consoleOutput > 100 then
+    table.insert(consoleOutput, logEntry)
+    
+    if #consoleOutput > 200 then
         table.remove(consoleOutput, 1)
     end
     
@@ -128,22 +145,93 @@ function FW.addConsoleLog(msg, msgType)
 end
 
 function FW.updateConsole()
-    if consoleRef then
-        local fullText = ""
-        for i, log in ipairs(consoleOutput) do
-            fullText = fullText .. log.text
-            if i < #consoleOutput then
-                fullText = fullText .. "\n"
+    if consoleRef and consoleScrollRef then
+        for _, child in pairs(consoleScrollRef:GetChildren()) do
+            if child:IsA("Frame") then
+                child:Destroy()
             end
         end
-        consoleRef.Text = fullText
-        consoleRef.CanvasPosition = Vector2.new(0, consoleRef.AbsoluteCanvasSize.Y)
+        
+        local yPos = 0
+        for i, log in ipairs(consoleOutput) do
+            local logFrame = cF(consoleScrollRef, {
+                BackgroundColor3 = Color3.fromRGB(16, 19, 27),
+                Size = UDim2.new(1, 0, 0, 25),
+                Position = UDim2.new(0, 0, 0, yPos),
+                Name = "LogEntry" .. i
+            })
+            
+            if i % 2 == 0 then
+                logFrame.BackgroundColor3 = Color3.fromRGB(20, 23, 30)
+            end
+            
+            local logText = cT(logFrame, {
+                Text = log.text,
+                TextSize = 14,
+                TextColor3 = log.color,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(0.85, 0, 1, 0),
+                TextXAlignment = Enum.TextXAlignment.Left,
+                FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
+                TextWrapped = false,
+                TextTruncate = Enum.TextTruncate.AtEnd
+            })
+            cTC(logText, 14)
+            
+            if log.canCopy then
+                local copyBtn = cB(logFrame, {
+                    BackgroundColor3 = Color3.fromRGB(100, 150, 255),
+                    Size = UDim2.new(0.12, 0, 0.8, 0),
+                    Position = UDim2.new(0.86, 0, 0.1, 0),
+                    Text = "Copy",
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 12,
+                    TextScaled = true
+                })
+                cC(copyBtn, 0.02)
+                cTC(copyBtn, 12)
+                
+                copyBtn.MouseButton1Click:Connect(function()
+                    if setclipboard then
+                        setclipboard(log.fullText)
+                        FW.showAlert("Success", "Copied to clipboard!", 1)
+                    end
+                end)
+            end
+            
+            yPos = yPos + 25
+        end
+        
+        consoleScrollRef.CanvasSize = UDim2.new(0, 0, 0, yPos)
+        consoleScrollRef.CanvasPosition = Vector2.new(0, yPos)
     end
 end
 
 function FW.clearConsole()
     consoleOutput = {}
     FW.updateConsole()
+end
+
+function FW.toggleConsole()
+    consoleEnabled = not consoleEnabled
+    if consoleEnabled then
+        FW.addConsoleLog("Console enabled", "info")
+    end
+    return consoleEnabled
+end
+
+function FW.copyAllConsole()
+    local allText = ""
+    for i, log in ipairs(consoleOutput) do
+        allText = allText .. log.text
+        if i < #consoleOutput then
+            allText = allText .. "\n"
+        end
+    end
+    if setclipboard then
+        setclipboard(allText)
+        FW.showAlert("Success", "All console output copied!", 2)
+    end
 end
 
 function FW.cStdBtn(p,nm,txt,ico,pos,sz)return cStdBtn(p,nm,txt,ico,pos,sz)end
@@ -270,27 +358,30 @@ local consoleFrame=cF(cop,{BackgroundColor3=Color3.fromRGB(16,19,27),Size=UDim2.
 cC(consoleFrame,0.02)
 cS(consoleFrame,2,Color3.fromRGB(35,39,54))
 
-local consoleScroll=cSF(consoleFrame,{BackgroundColor3=Color3.fromRGB(12,15,22),Size=UDim2.new(1,0,0.85,0),Position=UDim2.new(0,0,0,0),ScrollBarThickness=8,CanvasSize=UDim2.new(0,0,5,0),Name="ConsoleScroll"})
+local consoleScroll=cSF(consoleFrame,{BackgroundColor3=Color3.fromRGB(12,15,22),Size=UDim2.new(1,0,0.85,0),Position=UDim2.new(0,0,0,0),ScrollBarThickness=8,CanvasSize=UDim2.new(0,0,0,0),Name="ConsoleScroll"})
 cC(consoleScroll,0.02)
-
-local consoleText=cT(consoleScroll,{Text="Console initialized...",TextSize=14,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,FontFace=Font.new("rbxassetid://11702779409",Enum.FontWeight.Medium,Enum.FontStyle.Normal),TextWrapped=true,Name="ConsoleText"})
-cTC(consoleText,14)
 
 local btnFrame=cF(consoleFrame,{BackgroundTransparency=1,Size=UDim2.new(1,0,0.15,0),Position=UDim2.new(0,0,0.85,0),Name="ButtonFrame"})
 
-local clearConsoleBtn=cStdBtn(btnFrame,"ClearConsole","Clear Console","rbxassetid://73909411554012",UDim2.new(0.02,0,0.2,0),UDim2.new(0.2,0,0.6,0))
-local refreshBtn=cStdBtn(btnFrame,"Refresh","Refresh","rbxassetid://94595204123047",UDim2.new(0.24,0,0.2,0),UDim2.new(0.2,0,0.6,0))
+local clearConsoleBtn=cStdBtn(btnFrame,"ClearConsole","Clear Console","rbxassetid://73909411554012",UDim2.new(0.02,0,0.2,0),UDim2.new(0.18,0,0.6,0))
+local copyAllBtn=cStdBtn(btnFrame,"CopyAll","Copy All","rbxassetid://133018045821797",UDim2.new(0.22,0,0.2,0),UDim2.new(0.18,0,0.6,0))
+local toggleBtn=cStdBtn(btnFrame,"Toggle","Toggle Console","rbxassetid://94595204123047",UDim2.new(0.42,0,0.2,0),UDim2.new(0.18,0,0.6,0))
 
-consoleRef = consoleText
+consoleRef = cop
+consoleScrollRef = consoleScroll
 
 clearConsoleBtn.MouseButton1Click:Connect(function()
     FW.clearConsole()
     FW.showAlert("Success","Console cleared!",2)
 end)
 
-refreshBtn.MouseButton1Click:Connect(function()
-    FW.updateConsole()
-    FW.showAlert("Info","Console refreshed!",1)
+copyAllBtn.MouseButton1Click:Connect(function()
+    FW.copyAllConsole()
+end)
+
+toggleBtn.MouseButton1Click:Connect(function()
+    local enabled = FW.toggleConsole()
+    FW.showAlert("Info", enabled and "Console enabled!" or "Console disabled!", 2)
 end)
 
 return cop
@@ -486,9 +577,9 @@ local ob=g["1"]:FindFirstChild("OpenBtn")
 if ob then ob.Visible=true end
 end
 
-local oldPrint = print
-local oldWarn = warn
-local oldError = error
+oldPrint = print
+oldWarn = warn
+oldError = error
 
 print = function(...)
     local args = {...}
@@ -523,6 +614,10 @@ error = function(...)
     oldError(...)
 end
 
-FW.addConsoleLog("FrostWare Console initialized", "info")
+spawn(function()
+    wait(1)
+    FW.addConsoleLog("FrostWare Console initialized", "info")
+    FW.addConsoleLog("Console captures print(), warn(), and error() automatically", "info")
+end)
 
 return FW
