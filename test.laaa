@@ -39,10 +39,11 @@ local tabsDir = "FrostWare/Tabs/"
 local srcRef = nil
 local lnRef = nil
 local consoleOutput = {}
-local consoleRef = nil
 local consoleScrollRef = nil
 local consoleEnabled = true
 local oldPrint, oldWarn, oldError
+local sessionStart = tick()
+local timeBarRef = nil
 
 local cStdBtn=_e.fn(function(p,nm,txt,ico,pos,sz)
     local btn=cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})
@@ -68,6 +69,20 @@ local cRndBtn=_e.fn(function(p,nm,ico,pos,sz)
     cAR(btn,1)
     return clk
 end)
+
+function FW.formatTime(seconds)
+    local hours = math.floor(seconds / 3600)
+    local minutes = math.floor((seconds % 3600) / 60)
+    local secs = math.floor(seconds % 60)
+    return string.format("%02d:%02d:%02d", hours, minutes, secs)
+end
+
+function FW.updateTimeBar()
+    if timeBarRef then
+        local elapsed = tick() - sessionStart
+        timeBarRef.Text = "Session: " .. FW.formatTime(elapsed)
+    end
+end
 
 function FW.saveTabs()
     if not isfolder(tabsDir) then makefolder(tabsDir) end
@@ -145,7 +160,7 @@ function FW.addConsoleLog(msg, msgType, canCopy)
 end
 
 function FW.updateConsole()
-    if consoleRef and consoleScrollRef then
+    if consoleScrollRef then
         for _, child in pairs(consoleScrollRef:GetChildren()) do
             if child:IsA("Frame") then
                 child:Destroy()
@@ -277,6 +292,14 @@ end
 
 function FW.cSidebar()
 local sb=cI(g["6"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://133862668499122",Size=UDim2.new(0.25,0,1,0),BackgroundTransparency=1,Name="Sidebar"})
+
+local timeBar=cF(sb,{BackgroundColor3=Color3.fromRGB(20,25,32),Size=UDim2.new(0.714,0,0.06,0),Position=UDim2.new(0.088,0,0.1,0),Name="TimeBarFrame"})
+cC(timeBar,0.18)
+cS(timeBar,1,Color3.fromRGB(35,39,54))
+local timeText=cT(timeBar,{Text="Session: 00:00:00",TextSize=18,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
+cTC(timeText,18)
+timeBarRef = timeText
+
 local ub=cF(sb,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.61,0,0.088,0),Position=UDim2.new(0.192,0,0.826,0),Name="UpBtn"})
 cC(ub,0.18)
 cG(ub,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
@@ -367,7 +390,6 @@ local clearConsoleBtn=cStdBtn(btnFrame,"ClearConsole","Clear Console","rbxasseti
 local copyAllBtn=cStdBtn(btnFrame,"CopyAll","Copy All","rbxassetid://133018045821797",UDim2.new(0.22,0,0.2,0),UDim2.new(0.18,0,0.6,0))
 local toggleBtn=cStdBtn(btnFrame,"Toggle","Toggle Console","rbxassetid://94595204123047",UDim2.new(0.42,0,0.2,0),UDim2.new(0.18,0,0.6,0))
 
-consoleRef = cop
 consoleScrollRef = consoleScroll
 
 clearConsoleBtn.MouseButton1Click:Connect(function()
@@ -405,25 +427,34 @@ end
 
 function FW.cTab(ts,nm,cont)
 local td={name=nm or "Tab "..tabCnt,content=cont or "-- New Tab\nprint('Hello from "..(nm or "Tab "..tabCnt).."!')",id=tabCnt}
+
 local tabFrame=cF(ts,{BackgroundColor3=Color3.fromRGB(30,36,51),Size=UDim2.new(0,120,0.8,0),Position=UDim2.new(0,0,0.1,0),Name="TabFrame"..td.id})
 cC(tabFrame,0.2)
+cS(tabFrame,1,Color3.fromRGB(50,55,65))
+
 local tb=cB(tabFrame,{BackgroundTransparency=1,Size=UDim2.new(0.8,0,1,0),Position=UDim2.new(0,0,0,0),Text=td.name,TextColor3=Color3.fromRGB(255,255,255),TextSize=18,Name="TabBtn"..td.id,TextScaled=true,ZIndex=2})
-local cb=cB(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,20,0,20),Position=UDim2.new(1,-25,0,5),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="CloseBtn",ZIndex=3})
+
+local cb=cF(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,20,0,20),Position=UDim2.new(1,-25,0,5),Name="CloseFrame",ZIndex=3})
 cC(cb,0.5)
+local closeBtn=cB(cb,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="CloseBtn",ZIndex=4})
+
 td.button=tb
-td.closeButton=cb
+td.closeButton=closeBtn
 td.frame=tabFrame
 tabs[td.id]=td
+
 tb.MouseButton1Click:Connect(function()
 FW.switchTab(td.id)
 end)
-cb.MouseButton1Click:Connect(function()
+
+closeBtn.MouseButton1Click:Connect(function()
 FW.closeTab(td.id,ts)
 end)
+
 ts.CanvasSize=UDim2.new(0,ts.UIListLayout.AbsoluteContentSize.X,0,0)
 tabCnt=tabCnt+1
 FW.saveTabs()
-return td.id,tb,cb
+return td.id,tb,closeBtn
 end
 
 function FW.switchTab(tid)
@@ -532,16 +563,18 @@ for id, tab in pairs(tabs) do
 if tab.name and tab.content then
 local tabFrame=cF(ts,{BackgroundColor3=Color3.fromRGB(30,36,51),Size=UDim2.new(0,120,0.8,0),Position=UDim2.new(0,0,0.1,0),Name="TabFrame"..id})
 cC(tabFrame,0.2)
+cS(tabFrame,1,Color3.fromRGB(50,55,65))
 local tb=cB(tabFrame,{BackgroundTransparency=1,Size=UDim2.new(0.8,0,1,0),Position=UDim2.new(0,0,0,0),Text=tab.name,TextColor3=Color3.fromRGB(255,255,255),TextSize=18,Name="TabBtn"..id,TextScaled=true,ZIndex=2})
-local cb=cB(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,20,0,20),Position=UDim2.new(1,-25,0,5),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="CloseBtn",ZIndex=3})
+local cb=cF(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,20,0,20),Position=UDim2.new(1,-25,0,5),Name="CloseFrame",ZIndex=3})
 cC(cb,0.5)
+local closeBtn=cB(cb,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="CloseBtn",ZIndex=4})
 tabs[id].button=tb
-tabs[id].closeButton=cb
+tabs[id].closeButton=closeBtn
 tabs[id].frame=tabFrame
 tb.MouseButton1Click:Connect(function()
 FW.switchTab(id)
 end)
-cb.MouseButton1Click:Connect(function()
+closeBtn.MouseButton1Click:Connect(function()
 FW.closeTab(id,ts)
 end)
 end
@@ -614,10 +647,158 @@ error = function(...)
     oldError(...)
 end
 
-spawn(function()
-    wait(1)
-    FW.addConsoleLog("FrostWare Console initialized", "info")
-    FW.addConsoleLog("Console captures print(), warn(), and error() automatically", "info")
-end)
+local function initializeFrostWare()
+    local ui, openClk = FW.cBaseUI()
+    local sb, upClk, edClk, lsClk, coClk, exClk, slide = FW.cSidebar()
+    local ed, src, ln, ts, addTab, execBtn, clrBtn, pstBtn, execClpBtn = FW.cEditor()
+    local lsp = FW.cLocalScriptsPage()
+    local cop = FW.cConsolePage()
+    local exp = FW.cExtraPage()
+    
+    local function setupEditor()
+        local tabsRestored = FW.restoreTabs(ts)
+        
+        if not tabsRestored then
+            local mainTab = FW.cTab(ts, "Main", "-- FrostWare V2 Editor\nprint('Hello World!')")
+            FW.switchTab(mainTab)
+        else
+            local curTab = FW.getCurTab()
+            FW.switchTab(curTab)
+        end
+        
+        FW.updLines(src, ln)
+        
+        src:GetPropertyChangedSignal("Text"):Connect(function()
+            FW.updLines(src, ln)
+            local curTab = FW.getCurTab()
+            local tabs = FW.getTabs()
+            if tabs[curTab] then
+                tabs[curTab].content = src.Text
+                spawn(function()
+                    wait(0.5)
+                    FW.saveTabs()
+                end)
+            end
+        end)
+        
+        addTab.MouseButton1Click:Connect(function()
+            local newId, tabBtn, closeBtn = FW.cTab(ts, "New Tab", "-- New Tab\nprint('Hello!')")
+            FW.switchTab(newId)
+        end)
+    end
+    
+    local function setupButtons()
+        execBtn.MouseButton1Click:Connect(function()
+            local code = src.Text
+            if code and code ~= "" then
+                local success, result = pcall(function()
+                    return loadstring(code)
+                end)
+                if success and result then
+                    local execSuccess, execErr = pcall(result)
+                    if execSuccess then
+                        FW.showAlert("Success", "Script executed!", 2)
+                    else
+                        FW.showAlert("Error", "Execution error: " .. tostring(execErr), 4)
+                    end
+                else
+                    FW.showAlert("Error", "Compilation error: " .. tostring(result), 4)
+                end
+            end
+        end)
+        
+        clrBtn.MouseButton1Click:Connect(function()
+            src.Text = ""
+            local curTab = FW.getCurTab()
+            local tabs = FW.getTabs()
+            if tabs[curTab] then
+                tabs[curTab].content = ""
+            end
+            FW.updLines(src, ln)
+            FW.saveTabs()
+        end)
+        
+        pstBtn.MouseButton1Click:Connect(function()
+            local clipboard = getclipboard and getclipboard() or ""
+            if clipboard ~= "" then
+                src.Text = clipboard
+                local curTab = FW.getCurTab()
+                local tabs = FW.getTabs()
+                if tabs[curTab] then
+                    tabs[curTab].content = clipboard
+                end
+                FW.updLines(src, ln)
+                FW.saveTabs()
+            end
+        end)
+        
+        execClpBtn.MouseButton1Click:Connect(function()
+            local clipboard = getclipboard and getclipboard() or ""
+            if clipboard ~= "" then
+                local success, result = pcall(function()
+                    return loadstring(clipboard)
+                end)
+                if success and result then
+                    local execSuccess, execErr = pcall(result)
+                    if execSuccess then
+                        FW.showAlert("Success", "Clipboard executed!", 2)
+                    else
+                        FW.showAlert("Error", "Execution error: " .. tostring(execErr), 4)
+                    end
+                else
+                    FW.showAlert("Error", "Compilation error: " .. tostring(result), 4)
+                end
+            end
+        end)
+    end
+    
+    local function setupNavigation()
+        edClk.MouseButton1Click:Connect(function()
+            FW.switchPage("Editor", sb)
+        end)
+        
+        lsClk.MouseButton1Click:Connect(function()
+            FW.switchPage("LocalScripts", sb)
+        end)
+        
+        coClk.MouseButton1Click:Connect(function()
+            FW.switchPage("Console", sb)
+        end)
+        
+        exClk.MouseButton1Click:Connect(function()
+            FW.switchPage("Extra", sb)
+        end)
+        
+        slide.MouseButton1Click:Connect(function()
+            FW.hide()
+        end)
+        
+        openClk.MouseButton1Click:Connect(function()
+            FW.show()
+        end)
+    end
+    
+    setupEditor()
+    setupButtons()
+    setupNavigation()
+    
+    spawn(function()
+        while wait(1) do
+            FW.updateTimeBar()
+        end
+    end)
+    
+    FW.switchPage("Editor", sb)
+    FW.show()
+    
+    spawn(function()
+        wait(1)
+        FW.addConsoleLog("FrostWare Console initialized", "info")
+        FW.addConsoleLog("Console captures print(), warn(), and error() automatically", "info")
+        print("FrostWare V2 loaded successfully!")
+    end)
+end
+
+initializeFrostWare()
 
 return FW
