@@ -38,6 +38,8 @@ local tabCnt = 1
 local tabsDir = "FrostWare/Tabs/"
 local srcRef = nil
 local lnRef = nil
+local consoleOutput = {}
+local consoleRef = nil
 
 local cStdBtn=_e.fn(function(p,nm,txt,ico,pos,sz)
     local btn=cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})
@@ -102,6 +104,46 @@ function FW.loadTabs()
         end
     end
     return false
+end
+
+function FW.addConsoleLog(msg, msgType)
+    local timestamp = os.date("[%H:%M:%S]")
+    local color = Color3.fromRGB(255, 255, 255)
+    
+    if msgType == "error" then
+        color = Color3.fromRGB(255, 100, 100)
+    elseif msgType == "warn" then
+        color = Color3.fromRGB(255, 200, 100)
+    elseif msgType == "info" then
+        color = Color3.fromRGB(100, 200, 255)
+    end
+    
+    table.insert(consoleOutput, {text = timestamp .. " " .. tostring(msg), color = color})
+    
+    if #consoleOutput > 100 then
+        table.remove(consoleOutput, 1)
+    end
+    
+    FW.updateConsole()
+end
+
+function FW.updateConsole()
+    if consoleRef then
+        local fullText = ""
+        for i, log in ipairs(consoleOutput) do
+            fullText = fullText .. log.text
+            if i < #consoleOutput then
+                fullText = fullText .. "\n"
+            end
+        end
+        consoleRef.Text = fullText
+        consoleRef.CanvasPosition = Vector2.new(0, consoleRef.AbsoluteCanvasSize.Y)
+    end
+end
+
+function FW.clearConsole()
+    consoleOutput = {}
+    FW.updateConsole()
 end
 
 function FW.cStdBtn(p,nm,txt,ico,pos,sz)return cStdBtn(p,nm,txt,ico,pos,sz)end
@@ -174,7 +216,7 @@ local function cSBtn(nm,txt,ico,pos,sel)
 end
 
 local ed,edClk=cSBtn("Editor","Editor","rbxassetid://94595204123047",UDim2.new(0.088,0,0.186,0),true)
-local cl,clClk=cSBtn("Cloud","Cloud","rbxassetid://93729735363108",UDim2.new(0.088,0,0.285,0),false)
+local ls,lsClk=cSBtn("LocalScripts","Local Scripts","rbxassetid://93729735363108",UDim2.new(0.088,0,0.285,0),false)
 local co,coClk=cSBtn("Console","Console","rbxassetid://107390243416427",UDim2.new(0.088,0,0.384,0),false)
 local ex,exClk=cSBtn("Extra","Extra","rbxassetid://128679881757557",UDim2.new(0.088,0,0.483,0),false)
 
@@ -183,7 +225,7 @@ cC(logo,0)
 local close=cI(sb,{ZIndex=2,ImageColor3=Color3.fromRGB(34,41,58),Image="rbxassetid://124705542662472",Size=UDim2.new(0.13,0,1,0),BackgroundTransparency=1,Name="Close",Position=UDim2.new(0.891,0,0,0)})
 local slide=cB(close,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,0.189,0),Name="Slide",Text="  ",Position=UDim2.new(0,0,0.43,0)})
 cTC(slide,14)
-return sb,ubClk,edClk,clClk,coClk,exClk,slide
+return sb,ubClk,edClk,lsClk,coClk,exClk,slide
 end
 
 function FW.cEditor()
@@ -211,17 +253,46 @@ lnRef = ln
 return ep,src,ln,ts,addTab,execBtn,clrBtn,pstBtn,execClpBtn
 end
 
-function FW.cCloudPage()
-local cp=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="CloudPage",Position=UDim2.new(-0.001,0,0,0)})
-local title=cT(cp,{Text="Cloud Scripts",TextSize=48,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.2,0),Position=UDim2.new(0,0,0.3,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-cTC(title,48)
-return cp
+function FW.cLocalScriptsPage()
+local lsp=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="LocalScriptsPage",Position=UDim2.new(-0.001,0,0,0)})
+local title=cT(lsp,{Text="Local Scripts Manager",TextSize=36,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.08,0),Position=UDim2.new(0,0,0.02,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+cTC(title,36)
+return lsp
 end
 
 function FW.cConsolePage()
 local cop=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="ConsolePage",Position=UDim2.new(-0.001,0,0,0)})
-local title=cT(cop,{Text="Console",TextSize=48,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.2,0),Position=UDim2.new(0,0,0.3,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-cTC(title,48)
+
+local title=cT(cop,{Text="Console Output",TextSize=32,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.08,0),Position=UDim2.new(0,0,0.02,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+cTC(title,32)
+
+local consoleFrame=cF(cop,{BackgroundColor3=Color3.fromRGB(16,19,27),Size=UDim2.new(0.95,0,0.75,0),Position=UDim2.new(0.025,0,0.12,0),Name="ConsoleFrame"})
+cC(consoleFrame,0.02)
+cS(consoleFrame,2,Color3.fromRGB(35,39,54))
+
+local consoleScroll=cSF(consoleFrame,{BackgroundColor3=Color3.fromRGB(12,15,22),Size=UDim2.new(1,0,0.85,0),Position=UDim2.new(0,0,0,0),ScrollBarThickness=8,CanvasSize=UDim2.new(0,0,5,0),Name="ConsoleScroll"})
+cC(consoleScroll,0.02)
+
+local consoleText=cT(consoleScroll,{Text="Console initialized...",TextSize=14,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,FontFace=Font.new("rbxassetid://11702779409",Enum.FontWeight.Medium,Enum.FontStyle.Normal),TextWrapped=true,Name="ConsoleText"})
+cTC(consoleText,14)
+
+local btnFrame=cF(consoleFrame,{BackgroundTransparency=1,Size=UDim2.new(1,0,0.15,0),Position=UDim2.new(0,0,0.85,0),Name="ButtonFrame"})
+
+local clearConsoleBtn=cStdBtn(btnFrame,"ClearConsole","Clear Console","rbxassetid://73909411554012",UDim2.new(0.02,0,0.2,0),UDim2.new(0.2,0,0.6,0))
+local refreshBtn=cStdBtn(btnFrame,"Refresh","Refresh","rbxassetid://94595204123047",UDim2.new(0.24,0,0.2,0),UDim2.new(0.2,0,0.6,0))
+
+consoleRef = consoleText
+
+clearConsoleBtn.MouseButton1Click:Connect(function()
+    FW.clearConsole()
+    FW.showAlert("Success","Console cleared!",2)
+end)
+
+refreshBtn.MouseButton1Click:Connect(function()
+    FW.updateConsole()
+    FW.showAlert("Info","Console refreshed!",1)
+end)
+
 return cop
 end
 
@@ -414,5 +485,44 @@ if g["2"] then g["2"].Visible=false end
 local ob=g["1"]:FindFirstChild("OpenBtn")
 if ob then ob.Visible=true end
 end
+
+local oldPrint = print
+local oldWarn = warn
+local oldError = error
+
+print = function(...)
+    local args = {...}
+    local msg = ""
+    for i, v in ipairs(args) do
+        msg = msg .. tostring(v)
+        if i < #args then msg = msg .. " " end
+    end
+    FW.addConsoleLog(msg, "info")
+    oldPrint(...)
+end
+
+warn = function(...)
+    local args = {...}
+    local msg = ""
+    for i, v in ipairs(args) do
+        msg = msg .. tostring(v)
+        if i < #args then msg = msg .. " " end
+    end
+    FW.addConsoleLog(msg, "warn")
+    oldWarn(...)
+end
+
+error = function(...)
+    local args = {...}
+    local msg = ""
+    for i, v in ipairs(args) do
+        msg = msg .. tostring(v)
+        if i < #args then msg = msg .. " " end
+    end
+    FW.addConsoleLog(msg, "error")
+    oldError(...)
+end
+
+FW.addConsoleLog("FrostWare Console initialized", "info")
 
 return FW
