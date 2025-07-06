@@ -37,6 +37,83 @@ local editorTabs = {}
 local currentTabIndex = 1
 local tabCounter = 1
 
+local cStdBtn=_e.fn(function(p,name,text,icon,pos,size)
+    local btn=cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=size,Position=pos,Name=name})
+    cC(btn,0.2)
+    cG(btn,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
+    local lbl=cT(btn,{TextWrapped=true,TextSize=28,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(29,29,38),BackgroundTransparency=1,Size=UDim2.new(0.617,0,0.337,0),Text=text,Name="Label",Position=UDim2.new(0.27622,0,0.34831,0)})
+    cTC(lbl,28)
+    cI(btn,{ScaleType=Enum.ScaleType.Fit,Image=icon,Size=UDim2.new(0.0979,0,0.35955,0),BackgroundTransparency=1,Name="Icon",Position=UDim2.new(0.1014,0,0.32584,0)})
+    local clk=cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="Click",Text="  "})
+    cC(clk,0)
+    cTC(clk,14)
+    return clk
+end)
+
+local cRndBtn=_e.fn(function(p,name,icon,pos,size)
+    local btn=cF(p,{ZIndex=2,BackgroundColor3=Color3.fromRGB(255,255,255),Size=size,Position=pos,Name=name})
+    cC(btn,1)
+    cI(btn,{ZIndex=2,ScaleType=Enum.ScaleType.Fit,Image=icon,Size=UDim2.new(0.2963,0,0.36111,0),BackgroundTransparency=1,Name="Icon",Position=UDim2.new(0.35185,0,0.31481,0)})
+    cG(btn,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
+    local clk=cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,ZIndex=3,Size=UDim2.new(1,0,1,0),Name="Click",Text="  "})
+    cC(clk,0)
+    cTC(clk,14)
+    cAR(btn,1)
+    return clk
+end)
+
+function FrostWareBase.createStandardButton(parent, name, text, icon, position, size)
+    return cStdBtn(parent, name, text, icon, position, size)
+end
+
+function FrostWareBase.createRoundButton(parent, name, icon, position, size)
+    return cRndBtn(parent, name, icon, position, size)
+end
+
+function FrostWareBase.createFrame(parent, props)
+    return cF(parent, props)
+end
+
+function FrostWareBase.createTextLabel(parent, props)
+    return cT(parent, props)
+end
+
+function FrostWareBase.createTextButton(parent, props)
+    return cB(parent, props)
+end
+
+function FrostWareBase.createTextBox(parent, props)
+    return cTB(parent, props)
+end
+
+function FrostWareBase.createImageLabel(parent, props)
+    return cI(parent, props)
+end
+
+function FrostWareBase.createScrollingFrame(parent, props)
+    return cSF(parent, props)
+end
+
+function FrostWareBase.addCorner(element, radius)
+    return cC(element, radius)
+end
+
+function FrostWareBase.addGradient(element, color1, color2, rotation)
+    return cG(element, color1, color2, rotation)
+end
+
+function FrostWareBase.addStroke(element, thickness, color)
+    return cS(element, thickness, color)
+end
+
+function FrostWareBase.addTextConstraint(element, maxSize)
+    return cTC(element, maxSize)
+end
+
+function FrostWareBase.addAspectRatio(element, ratio)
+    return cAR(element, ratio)
+end
+
 function FrostWareBase.createBaseUI()
     g["1"]=c(n("ScreenGui",cs.RobloxGui),{IgnoreGuiInset=true,DisplayOrder=999999999,ScreenInsets=Enum.ScreenInsets.None,Name="FW",ZIndexBehavior=Enum.ZIndexBehavior.Sibling,ResetOnSpawn=false})
 
@@ -141,7 +218,131 @@ function FrostWareBase.createEditor()
     cTC(ln,25)
     cC(ef)
     
-    return ep,src,ln,tabScroll,addTabBtn
+    local btns=cI(ep,{ZIndex=2,ImageColor3=Color3.fromRGB(16,19,27),Image="rbxassetid://123590482033481",Size=UDim2.new(1.00073,0,0.16102,0),ClipsDescendants=true,BackgroundTransparency=1,Name="Buttons",Position=UDim2.new(-0.00064,0,0.83623,0)})
+    local execBtn=cStdBtn(btns,"Execute","Execute Script","rbxassetid://89434276213036",UDim2.new(0.0429,0,0.36993,0),UDim2.new(0.15,0,0.32482,0))
+    local clearBtn=cStdBtn(btns,"Clear","Clear Editor","rbxassetid://73909411554012",UDim2.new(0.2,0,0.36993,0),UDim2.new(0.15,0,0.32482,0))
+    local pasteBtn=cStdBtn(btns,"Paste","Paste Clipboard","rbxassetid://133018045821797",UDim2.new(0.36,0,0.36993,0),UDim2.new(0.15,0,0.32482,0))
+    local execClipBtn=cStdBtn(btns,"ExecClip","Execute Clipboard","rbxassetid://89434276213036",UDim2.new(0.52,0,0.36993,0),UDim2.new(0.15,0,0.32482,0))
+    
+    return ep,src,ln,tabScroll,addTabBtn,execBtn,clearBtn,pasteBtn,execClipBtn
+end
+
+function FrostWareBase.createCloudPage()
+    local cp=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.00073,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="CloudPage",Position=UDim2.new(-0.00064,0,-0.00021,0)})
+    local btns=cI(cp,{ZIndex=2,ImageColor3=Color3.fromRGB(16,19,27),Image="rbxassetid://123590482033481",Size=UDim2.new(1.00073,0,0.27102,0),ClipsDescendants=true,BackgroundTransparency=1,Name="Buttons",Position=UDim2.new(-0.00064,0,0.72623,0)})
+    local cloudBtn=cRndBtn(btns,"CloudPage","rbxassetid://118013866377216",UDim2.new(0.68,0,0.36835,0),UDim2.new(0.07832,0,0.39416,0))
+    local localBtn=cRndBtn(btns,"LocalPage","rbxassetid://94595204123047",UDim2.new(0.77803,0,0.36835,0),UDim2.new(0.07832,0,0.39416,0))
+    local createBtn=cRndBtn(btns,"CreatePage","rbxassetid://128679881757557",UDim2.new(0.87905,0,0.36835,0),UDim2.new(0.07832,0,0.39416,0))
+    local sf=cF(cp,{BackgroundColor3=Color3.fromRGB(30,36,51),ClipsDescendants=true,Size=UDim2.new(0.88244,0,0.08902,0),Position=UDim2.new(0.05818,0,0.0665,0),Name="SearchFrame"})
+    cC(sf,0.28)
+    cI(sf,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://126215064299468",Size=UDim2.new(0.03125,0,0.34444,0),BackgroundTransparency=1,Name="Icon",Position=UDim2.new(0.02796,0,0.32222,0)})
+    local sb=cTB(sf,{Name="SearchBox",TextXAlignment=Enum.TextXAlignment.Left,PlaceholderColor3=Color3.fromRGB(162,177,234),TextWrapped=true,TextSize=32,TextColor3=Color3.fromRGB(162,177,234),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),PlaceholderText="Search for Scripts here..",Size=UDim2.new(0.2574,0,0.27778,0),Position=UDim2.new(0.37089,0,0.35556,0),Text="",BackgroundTransparency=1})
+    cTC(sb,32)
+    local cps=cF(cp,{BackgroundColor3=Color3.fromRGB(40,43,63),ClipsDescendants=true,Size=UDim2.new(0.94557,0,0.72601,0),Position=UDim2.new(0.03609,0,0.20582,0),Name="CloudPageScripts",BackgroundTransparency=1})
+    cC(cps,0)
+    local scr=cSF(cps,{Active=true,BackgroundTransparency=1,Name="Scrolling",Size=UDim2.new(1,0,1,0),ScrollBarImageColor3=Color3.fromRGB(143,163,221),ScrollBarThickness=8})
+    c(n("UIListLayout",scr),{Wraps=true,Padding=UDim.new(0,20),SortOrder=Enum.SortOrder.LayoutOrder,FillDirection=Enum.FillDirection.Horizontal})
+    c(n("UIPadding",scr),{PaddingTop=UDim.new(0,16),PaddingLeft=UDim.new(0,35)})
+    return cp,cloudBtn,localBtn,createBtn,sb,scr
+end
+
+function FrostWareBase.createConsolePage()
+    local cop=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.00073,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="ConsolePage",Position=UDim2.new(-0.00064,0,-0.00021,0)})
+    local btns=cI(cop,{ZIndex=2,ImageColor3=Color3.fromRGB(16,19,27),Image="rbxassetid://123590482033481",Size=UDim2.new(1.00073,0,0.27102,0),ClipsDescendants=true,BackgroundTransparency=1,Name="Buttons",Position=UDim2.new(-0.00064,0,0.72623,0)})
+    local toggleBtn=cRndBtn(btns,"ToggleBtn","rbxassetid://107390243416427",UDim2.new(0.68,0,0.36835,0),UDim2.new(0.07832,0,0.39416,0))
+    local copyBtn=cRndBtn(btns,"CopyBtn","rbxassetid://133018045821797",UDim2.new(0.78592,0,0.36835,0),UDim2.new(0.07832,0,0.39416,0))
+    local clearBtn=cRndBtn(btns,"ClearBtn","rbxassetid://73909411554012",UDim2.new(0.87905,0,0.36835,0),UDim2.new(0.07832,0,0.39416,0))
+    local sf=cF(cop,{BackgroundColor3=Color3.fromRGB(30,36,51),ClipsDescendants=true,Size=UDim2.new(0.88244,0,0.08902,0),Position=UDim2.new(0.05818,0,0.0665,0),Name="SearchFrame"})
+    cC(sf,0)
+    local sb=cTB(sf,{Name="SearchBox",TextXAlignment=Enum.TextXAlignment.Left,PlaceholderColor3=Color3.fromRGB(162,177,234),TextWrapped=true,TextSize=32,TextColor3=Color3.fromRGB(162,177,234),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),PlaceholderText="Search console logs...",Size=UDim2.new(0.2574,0,0.31111,0),Position=UDim2.new(0.37089,0,0.35556,0),Text="",BackgroundTransparency=1})
+    cTC(sb,32)
+    local ci=cSF(cop,{Name="ConsoleOutput",BackgroundColor3=Color3.fromRGB(20,23,30),Size=UDim2.new(0.88244,0,0.55,0),Position=UDim2.new(0.05806,0,0.18,0),ScrollBarImageColor3=Color3.fromRGB(143,163,221),ScrollBarThickness=8,BackgroundTransparency=0})
+    cC(ci,0)
+    c(n("UIListLayout",ci),{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2)})
+    local logTemplate=cB(ci,{Visible=false,Name="LogTemplate",BackgroundTransparency=1,Size=UDim2.new(1,0,0,25),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextWrapped=true,TextSize=18,FontFace=Font.new("rbxassetid://11702779409",Enum.FontWeight.Medium,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),RichText=true,Text=""})
+    return cop,toggleBtn,copyBtn,clearBtn,sb,ci,logTemplate
+end
+
+function FrostWareBase.createExtraPage()
+    local exp=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.00073,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="ExtraPage",Position=UDim2.new(-0.00064,0,-0.00021,0)})
+    local titleFrame=cF(exp,{BackgroundColor3=Color3.fromRGB(30,36,51),Size=UDim2.new(0.9,0,0.12,0),Position=UDim2.new(0.05,0,0.05,0),Name="TitleFrame"})
+    cC(titleFrame,0.15)
+    cS(titleFrame,2,Color3.fromRGB(35,39,54))
+    local titleLabel=cT(titleFrame,{Text="Extra Features",TextSize=36,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    cTC(titleLabel,36)
+    local contentFrame=cSF(exp,{BackgroundColor3=Color3.fromRGB(20,23,30),Size=UDim2.new(0.9,0,0.75,0),Position=UDim2.new(0.05,0,0.2,0),Name="ContentFrame",ScrollBarImageColor3=Color3.fromRGB(143,163,221),ScrollBarThickness=8})
+    cC(contentFrame,0.1)
+    c(n("UIListLayout",contentFrame),{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,15)})
+    c(n("UIPadding",contentFrame),{PaddingTop=UDim.new(0,20),PaddingLeft=UDim.new(0,20),PaddingRight=UDim.new(0,20),PaddingBottom=UDim.new(0,20)})
+    return exp,contentFrame
+end
+
+function FrostWareBase.createSection(parent, title, description)
+    local section=cF(parent,{BackgroundColor3=Color3.fromRGB(26,31,43),Size=UDim2.new(1,0,0,120),Name=title.."Section"})
+    cC(section,0.1)
+    cS(section,2,Color3.fromRGB(35,39,54))
+    local sectionTitle=cT(section,{Text=title,TextSize=28,TextColor3=Color3.fromRGB(166,190,255),BackgroundTransparency=1,Size=UDim2.new(0.7,0,0.4,0),Position=UDim2.new(0.05,0,0.1,0),TextXAlignment=Enum.TextXAlignment.Left,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    cTC(sectionTitle,28)
+    local sectionDesc=cT(section,{Text=description,TextSize=20,TextColor3=Color3.fromRGB(162,177,234),BackgroundTransparency=1,Size=UDim2.new(0.9,0,0.4,0),Position=UDim2.new(0.05,0,0.5,0),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextWrapped=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
+    cTC(sectionDesc,20)
+    return section
+end
+
+function FrostWareBase.createSectionButton(parent, text, position, size)
+    local btn=cF(parent,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=size,Position=position,Name=text.."Btn"})
+    cC(btn,0.2)
+    cG(btn,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
+    local btnLabel=cT(btn,{Text=text,TextSize=22,TextColor3=Color3.fromRGB(29,29,38),BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    cTC(btnLabel,22)
+    local btnClick=cB(btn,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="",Name=text.."Click"})
+    return btnClick
+end
+
+function FrostWareBase.createScriptFrame(parent, name, description, isLocal, isAutoExec)
+    local frame=cF(parent,{Visible=true,BackgroundColor3=Color3.fromRGB(26,31,43),ClipsDescendants=true,Size=UDim2.new(0.16786,0,0.37028,0),Name=name})
+    cS(frame,3,Color3.fromRGB(30,36,51))
+    cC(frame,0.15)
+    cAR(frame,1.06281)
+    local sd=cT(frame,{TextWrapped=true,TextSize=28,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(162,177,234),BackgroundTransparency=1,Size=UDim2.new(0.88732,0,0.25952,0),Text=description,Name="ScriptDescription",Position=UDim2.new(0.08099,0,0.54647,0)})
+    cTC(sd,28)
+    local gd=cF(frame,{BackgroundColor3=Color3.fromRGB(255,255,255),ClipsDescendants=true,Size=UDim2.new(1,0,0.32342,0),Position=UDim2.new(-0.00111,0,0.12927,0),Name="GradientDown"})
+    if isLocal then
+        cG(gd,Color3.fromRGB(100,150,200),Color3.fromRGB(70,100,140))
+    else
+        cG(gd,Color3.fromRGB(143,163,221),Color3.fromRGB(104,118,160))
+    end
+    local sn=cF(frame,{BackgroundColor3=Color3.fromRGB(255,255,255),ClipsDescendants=true,Size=UDim2.new(1,0,0.45353,0),Position=UDim2.new(-0.00111,0,0,0),Name="ScriptName"})
+    if isLocal then
+        cG(sn,Color3.fromRGB(100,150,200),Color3.fromRGB(70,100,140))
+    else
+        cG(sn,Color3.fromRGB(143,163,221),Color3.fromRGB(104,118,160))
+    end
+    cC(sn,0.4)
+    local snl=cT(sn,{TextWrapped=true,TextSize=34,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Heavy,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(29,29,38),BackgroundTransparency=1,Size=UDim2.new(0.65493,0,0.28689,0),ClipsDescendants=true,Text=name,Name="ScriptName",Position=UDim2.new(0.19718,0,0.43443,0)})
+    cTC(snl,34)
+    local clk=cB(frame,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,ZIndex=3,Size=UDim2.new(1,0,1,0),Name="Click",Text="  "})
+    cC(clk,0)
+    cTC(clk,14)
+    return frame,clk
+end
+
+function FrostWareBase.createDialog(title, width, height)
+    local dialog=cF(g["3"],{Visible=false,BackgroundColor3=Color3.fromRGB(16,19,27),Size=UDim2.new(width or 0.6,0,height or 0.7,0),Position=UDim2.new((1-(width or 0.6))/2,0,(1-(height or 0.7))/2,0),Name="Dialog",ZIndex=10})
+    cC(dialog,0.1)
+    cS(dialog,3,Color3.fromRGB(35,39,54))
+    local titleLabel=cT(dialog,{Text=title,TextSize=32,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    cTC(titleLabel,32)
+    return dialog
+end
+
+function FrostWareBase.createDialogButton(parent, text, position, size, color)
+    local btn=cF(parent,{BackgroundColor3=color,Size=size,Position=position,Name=text.."Btn"})
+    cC(btn,0.2)
+    if color==Color3.fromRGB(255,255,255)then cG(btn,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))end
+    local label=cT(btn,{Text=text,TextColor3=color==Color3.fromRGB(255,255,255)and Color3.fromRGB(29,29,38)or Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    cTC(label,24)
+    local click=cB(btn,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="",Name=text.."Click"})
+    return click
 end
 
 function FrostWareBase.updateLineNumbers(src, lineNumbers)
