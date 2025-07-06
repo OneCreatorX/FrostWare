@@ -38,7 +38,6 @@ local tabCnt = 1
 local tabsDir = "FrostWare/Tabs/"
 local srcRef = nil
 local lnRef = nil
-local tabScrollRef = nil
 
 local cStdBtn=_e.fn(function(p,nm,txt,ico,pos,sz)
     local btn=cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})
@@ -63,22 +62,6 @@ local cRndBtn=_e.fn(function(p,nm,ico,pos,sz)
     cTC(clk,14)
     cAR(btn,1)
     return clk
-end)
-
-local cSBtn=_e.fn(function(p,nm,txt,ico,pos,sel)
-    local btn=cF(p,{BackgroundColor3=sel and Color3.fromRGB(30,36,51)or Color3.fromRGB(31,34,50),Size=UDim2.new(0.714,0,0.088,0),Position=pos,Name=nm,BackgroundTransparency=sel and 0 or 1})
-    cC(btn,0.18)
-    local box=cF(btn,{ZIndex=sel and 2 or 0,BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.167,0,0.629,0),Position=UDim2.new(0.093,0,0.2,0),Name="Box"})
-    cC(box,0.24)
-    cAR(box,0.982)
-    if sel then cG(box,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))else cG(box,Color3.fromRGB(66,79,113),Color3.fromRGB(36,44,63))end
-    cI(box,{ZIndex=sel and 2 or 0,ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.527,0,sel and 0.571 or 0.5,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.236,0,sel and 0.232 or 0.25,0)})
-    local lbl=cT(btn,{TextWrapped=true,TextSize=32,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(sel and 0.248 or 0.359,0,0.36,0),Text=txt,Name="Lbl",Position=UDim2.new(0.379,0,0.348,0)})
-    cTC(lbl,32)
-    local clk=cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  "})
-    cC(clk,0)
-    cTC(clk,14)
-    return btn,clk
 end)
 
 function FW.saveTabs()
@@ -173,10 +156,28 @@ cI(ub,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://110667923648139",Size=UD
 local ubClk=cB(ub,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="UpClk",Text=""})
 cC(ubClk,0)
 cTC(ubClk,14)
-local ed,edClk=cSBtn(sb,"Editor","Editor","rbxassetid://94595204123047",UDim2.new(0.088,0,0.186,0),true)
-local cl,clClk=cSBtn(sb,"Cloud","Cloud","rbxassetid://93729735363108",UDim2.new(0.088,0,0.285,0),false)
-local co,coClk=cSBtn(sb,"Console","Console","rbxassetid://107390243416427",UDim2.new(0.088,0,0.384,0),false)
-local ex,exClk=cSBtn(sb,"Extra","Extra","rbxassetid://128679881757557",UDim2.new(0.088,0,0.483,0),false)
+
+local function cSBtn(nm,txt,ico,pos,sel)
+    local btn=cF(sb,{BackgroundColor3=sel and Color3.fromRGB(30,36,51)or Color3.fromRGB(31,34,50),Size=UDim2.new(0.714,0,0.088,0),Position=pos,Name=nm,BackgroundTransparency=sel and 0 or 1})
+    cC(btn,0.18)
+    local box=cF(btn,{ZIndex=sel and 2 or 0,BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.167,0,0.629,0),Position=UDim2.new(0.093,0,0.2,0),Name="Box"})
+    cC(box,0.24)
+    cAR(box,0.982)
+    if sel then cG(box,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))else cG(box,Color3.fromRGB(66,79,113),Color3.fromRGB(36,44,63))end
+    cI(box,{ZIndex=sel and 2 or 0,ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.527,0,sel and 0.571 or 0.5,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.236,0,sel and 0.232 or 0.25,0)})
+    local lbl=cT(btn,{TextWrapped=true,TextSize=32,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(sel and 0.248 or 0.359,0,0.36,0),Text=txt,Name="Lbl",Position=UDim2.new(0.379,0,0.348,0)})
+    cTC(lbl,32)
+    local clk=cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  ",ZIndex=5})
+    cC(clk,0)
+    cTC(clk,14)
+    return btn,clk
+end
+
+local ed,edClk=cSBtn("Editor","Editor","rbxassetid://94595204123047",UDim2.new(0.088,0,0.186,0),true)
+local cl,clClk=cSBtn("Cloud","Cloud","rbxassetid://93729735363108",UDim2.new(0.088,0,0.285,0),false)
+local co,coClk=cSBtn("Console","Console","rbxassetid://107390243416427",UDim2.new(0.088,0,0.384,0),false)
+local ex,exClk=cSBtn("Extra","Extra","rbxassetid://128679881757557",UDim2.new(0.088,0,0.483,0),false)
+
 local logo=cI(sb,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://102761807757832",Size=UDim2.new(0.145,0,0.069,0),BackgroundTransparency=1,Name="Logo",Position=UDim2.new(0.141,0,0.067,0)})
 cC(logo,0)
 local close=cI(sb,{ZIndex=2,ImageColor3=Color3.fromRGB(34,41,58),Image="rbxassetid://124705542662472",Size=UDim2.new(0.13,0,1,0),BackgroundTransparency=1,Name="Close",Position=UDim2.new(0.891,0,0,0)})
@@ -207,8 +208,28 @@ local pstBtn=cStdBtn(btns,"Pst","Paste Clipboard","rbxassetid://133018045821797"
 local execClpBtn=cStdBtn(btns,"ExecClp","Execute Clipboard","rbxassetid://89434276213036",UDim2.new(0.52,0,0.37,0),UDim2.new(0.15,0,0.325,0))
 srcRef = src
 lnRef = ln
-tabScrollRef = ts
 return ep,src,ln,ts,addTab,execBtn,clrBtn,pstBtn,execClpBtn
+end
+
+function FW.cCloudPage()
+local cp=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="CloudPage",Position=UDim2.new(-0.001,0,0,0)})
+local title=cT(cp,{Text="Cloud Scripts",TextSize=48,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.2,0),Position=UDim2.new(0,0,0.3,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+cTC(title,48)
+return cp
+end
+
+function FW.cConsolePage()
+local cop=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="ConsolePage",Position=UDim2.new(-0.001,0,0,0)})
+local title=cT(cop,{Text="Console",TextSize=48,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.2,0),Position=UDim2.new(0,0,0.3,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+cTC(title,48)
+return cop
+end
+
+function FW.cExtraPage()
+local exp=cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="ExtraPage",Position=UDim2.new(-0.001,0,0,0)})
+local title=cT(exp,{Text="Extra Features",TextSize=48,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.2,0),Position=UDim2.new(0,0,0.3,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+cTC(title,48)
+return exp
 end
 
 function FW.updLines(src,ln)
@@ -222,28 +243,21 @@ end
 
 function FW.cTab(ts,nm,cont)
 local td={name=nm or "Tab "..tabCnt,content=cont or "-- New Tab\nprint('Hello from "..(nm or "Tab "..tabCnt).."!')",id=tabCnt}
-
 local tabFrame=cF(ts,{BackgroundColor3=Color3.fromRGB(30,36,51),Size=UDim2.new(0,120,0.8,0),Position=UDim2.new(0,0,0.1,0),Name="TabFrame"..td.id})
 cC(tabFrame,0.2)
-
 local tb=cB(tabFrame,{BackgroundTransparency=1,Size=UDim2.new(0.8,0,1,0),Position=UDim2.new(0,0,0,0),Text=td.name,TextColor3=Color3.fromRGB(255,255,255),TextSize=18,Name="TabBtn"..td.id,TextScaled=true,ZIndex=2})
-
 local cb=cB(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,20,0,20),Position=UDim2.new(1,-25,0,5),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="CloseBtn",ZIndex=3})
 cC(cb,0.5)
-
 td.button=tb
 td.closeButton=cb
 td.frame=tabFrame
 tabs[td.id]=td
-
 tb.MouseButton1Click:Connect(function()
 FW.switchTab(td.id)
 end)
-
 cb.MouseButton1Click:Connect(function()
 FW.closeTab(td.id,ts)
 end)
-
 ts.CanvasSize=UDim2.new(0,ts.UIListLayout.AbsoluteContentSize.X,0,0)
 tabCnt=tabCnt+1
 FW.saveTabs()
