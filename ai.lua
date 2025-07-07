@@ -3,11 +3,11 @@ spawn(function()
     local FW = _G.FW
     local HttpService = game:GetService("HttpService")
     
-    local FrostyFixed = {}
-    FrostyFixed.__index = FrostyFixed
+    local FrostyEnhanced = {}
+    FrostyEnhanced.__index = FrostyEnhanced
     local WS_URL = "wss://system.heatherx.site:8443"
     local chatHistory = {}
-    local MAX_VISUAL_MESSAGES = 12
+    local MAX_VISUAL_MESSAGES = 15
     local aiChatPage = nil
     local chatScroll = nil
     local inputBox = nil
@@ -17,28 +17,10 @@ spawn(function()
     local messageCount = 0
     local connectionStatus = nil
     local statusLabel = nil
+    local logContainer = nil
 
-    local function getOrDownloadImageAsset(url, filename)
-        local folder = "Images/"
-        local path = folder .. filename
-        if not isfolder(folder) then
-            makefolder(folder)
-        end
-        if not isfile(path) then
-            local success, data = pcall(function()
-                return game:HttpGet(url)
-            end)
-            if not success then
-                warn("Error downloading image: " .. tostring(data))
-                return nil
-            end
-            writefile(path, data)
-        end
-        return getcustomasset(path)
-    end
-
-    function FrostyFixed.new()
-        local self = setmetatable({}, FrostyFixed)
+    function FrostyEnhanced.new()
+        local self = setmetatable({}, FrostyEnhanced)
         self.ws = nil
         self.currentToken = nil
         self.isAuthenticated = false
@@ -49,7 +31,7 @@ spawn(function()
         return self
     end
 
-    function FrostyFixed:connect()
+    function FrostyEnhanced:connect()
         if self.isConnecting then return false end
         self.isConnecting = true
         
@@ -89,7 +71,7 @@ spawn(function()
         return true
     end
 
-    function FrostyFixed:authenticate()
+    function FrostyEnhanced:authenticate()
         if not self.ws then return end
         
         local authData = {
@@ -102,7 +84,7 @@ spawn(function()
         self.ws:Send(HttpService:JSONEncode(authData))
     end
 
-    function FrostyFixed:handleMessage(message)
+    function FrostyEnhanced:handleMessage(message)
         local success, data = pcall(function()
             return HttpService:JSONDecode(message)
         end)
@@ -127,9 +109,8 @@ spawn(function()
         elseif data.type == "execute_script" then
             self.currentToken = data.newToken
             self:processScript(data.script, data.taskId, data.message)
-        elseif data.type == "image_response" then
-            self.currentToken = data.newToken
-            self:processImage(data.imageUrl, data.message)
+        elseif data.type == "log" then
+            self:processLog(data.message, data.logType)
         elseif data.type == "error" then
             if data.newToken then
                 self.currentToken = data.newToken
@@ -138,7 +119,39 @@ spawn(function()
         end
     end
 
-    function FrostyFixed:processResponse(message)
+    function FrostyEnhanced:processLog(message, logType)
+        if not logContainer or not logContainer.Parent then return end
+        
+        local color = Color3.fromRGB(200, 200, 200)
+        if logType == "error" then
+            color = Color3.fromRGB(255, 120, 120)
+        elseif logType == "success" then
+            color = Color3.fromRGB(120, 255, 120)
+        elseif logType == "warning" then
+            color = Color3.fromRGB(255, 200, 120)
+        end
+        
+        local logLabel = FW.cT(logContainer, {
+            Text = "• " .. message,
+            TextSize = 11,
+            TextColor3 = color,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 15),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Regular, Enum.FontStyle.Italic),
+            ClipsDescendants = true
+        })
+        FW.cTC(logLabel, 11)
+        
+        spawn(function()
+            task.wait(5)
+            if logLabel and logLabel.Parent then
+                logLabel:Destroy()
+            end
+        end)
+    end
+
+    function FrostyEnhanced:processResponse(message)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             table.insert(chatHistory, { role = "model", message = message })
             self:typewriterEffect(currentThinkingLabel, message, 0.02)
@@ -147,107 +160,7 @@ spawn(function()
         end
     end
 
-    function FrostyFixed:processImage(imageUrl, message)
-        if currentThinkingLabel and currentThinkingLabel.Parent then
-            self:typewriterEffect(currentThinkingLabel, message, 0.02)
-            
-            spawn(function()
-                task.wait(1)
-                
-                if imageUrl:find("data:image") then
-                    local filename = "generated_" .. os.time() .. ".png"
-                    local assetUrl = getOrDownloadImageAsset(imageUrl, filename)
-                    
-                    if assetUrl then
-                        self:addImageToChat(assetUrl, message)
-                    else
-                        if currentThinkingLabel and currentThinkingLabel.Parent then
-                            currentThinkingLabel.Text = "Error downloading image"
-                        end
-                    end
-                else
-                    self:addImageToChat(imageUrl, message)
-                end
-                
-                currentThinkingLabel = nil
-                isProcessing = false
-            end)
-        end
-    end
-
-    function FrostyFixed:addImageToChat(imageUrl, message)
-        messageCount = messageCount + 1
-        
-        local msgFrame = FW.cF(chatScroll, {
-            BackgroundColor3 = Color3.fromRGB(35, 42, 58),
-            Size = UDim2.new(0.92, 0, 0, 0),
-            Position = UDim2.new(0.04, 0, 0, 0),
-            Name = "Message",
-            AutomaticSize = Enum.AutomaticSize.Y,
-            LayoutOrder = messageCount,
-            ClipsDescendants = true
-        })
-        FW.cC(msgFrame, 0.4)
-        FW.cS(msgFrame, 2, Color3.fromRGB(55, 65, 85))
-        
-        local padding = Instance.new("UIPadding")
-        padding.PaddingTop = UDim.new(0, 15)
-        padding.PaddingBottom = UDim.new(0, 15)
-        padding.PaddingLeft = UDim.new(0, 18)
-        padding.PaddingRight = UDim.new(0, 18)
-        padding.Parent = msgFrame
-        
-        local layout = Instance.new("UIListLayout")
-        layout.SortOrder = Enum.SortOrder.LayoutOrder
-        layout.Padding = UDim.new(0, 8)
-        layout.Parent = msgFrame
-        
-        local senderLabel = FW.cT(msgFrame, {
-            Text = "Frosty Fixed",
-            TextSize = 15,
-            TextColor3 = Color3.fromRGB(100, 255, 150),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 20),
-            TextXAlignment = Enum.TextXAlignment.Left,
-            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
-            LayoutOrder = 1,
-            ClipsDescendants = true
-        })
-        FW.cTC(senderLabel, 15)
-        
-        local imageLabel = FW.cI(msgFrame, {
-            Image = imageUrl,
-            Size = UDim2.new(0.8, 0, 0, 200),
-            Position = UDim2.new(0, 0, 0, 0),
-            BackgroundColor3 = Color3.fromRGB(45, 52, 68),
-            ScaleType = Enum.ScaleType.Fit,
-            LayoutOrder = 2,
-            ClipsDescendants = true
-        })
-        FW.cC(imageLabel, 0.3)
-        FW.cS(imageLabel, 2, Color3.fromRGB(75, 85, 105))
-        
-        local msgLabel = FW.cT(msgFrame, {
-            Text = message,
-            TextSize = 14,
-            TextColor3 = Color3.fromRGB(240, 245, 255),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 0),
-            AutomaticSize = Enum.AutomaticSize.Y,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextYAlignment = Enum.TextYAlignment.Top,
-            TextWrapped = true,
-            FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
-            LayoutOrder = 3,
-            ClipsDescendants = true
-        })
-        FW.cTC(msgLabel, 14)
-        
-        self:updateScroll()
-        self:cleanOldMessages()
-    end
-
-    function FrostyFixed:processScript(script, taskId, statusMessage)
+    function FrostyEnhanced:processScript(script, taskId, statusMessage)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             self:typewriterEffect(currentThinkingLabel, statusMessage, 0.02)
             
@@ -267,7 +180,7 @@ spawn(function()
         end
     end
 
-    function FrostyFixed:processError(error)
+    function FrostyEnhanced:processError(error)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             currentThinkingLabel.Text = "Error: " .. error
             task.wait(3)
@@ -276,7 +189,7 @@ spawn(function()
         end
     end
 
-    function FrostyFixed:executeScript(script, taskId)
+    function FrostyEnhanced:executeScript(script, taskId)
         local infoScript = script:match("INFO_SCRIPT_START(.-)INFO_SCRIPT_END")
         local actionScript = script:match("ACTION_SCRIPT_START(.-)ACTION_SCRIPT_END")
         
@@ -295,7 +208,7 @@ spawn(function()
                 return true, result
             else
                 if taskId then
-                    self:sendScriptResult(taskId, nil, false)
+                    self:sendScriptResult(taskId, tostring(result), false)
                 end
                 return false, result
             end
@@ -328,7 +241,7 @@ spawn(function()
         return false, "Unknown script type"
     end
 
-    function FrostyFixed:sendScriptResult(taskId, result, success)
+    function FrostyEnhanced:sendScriptResult(taskId, result, success)
         if not self.ws or not self.isAuthenticated then return end
         
         local resultData = {
@@ -342,7 +255,7 @@ spawn(function()
         self.ws:Send(HttpService:JSONEncode(resultData))
     end
 
-    function FrostyFixed:sendMessage(message)
+    function FrostyEnhanced:sendMessage(message)
         if not self.ws or not self.isAuthenticated or not self.currentToken then
             return false
         end
@@ -370,12 +283,12 @@ spawn(function()
         return true
     end
 
-    function FrostyFixed:ping()
+    function FrostyEnhanced:ping()
         if not self.ws then return end
         self.ws:Send(HttpService:JSONEncode({ type = "ping" }))
     end
 
-    function FrostyFixed:reset()
+    function FrostyEnhanced:reset()
         self.ws = nil
         self.currentToken = nil
         self.isAuthenticated = false
@@ -383,14 +296,14 @@ spawn(function()
         self.accessTime = 0
     end
 
-    function FrostyFixed:close()
+    function FrostyEnhanced:close()
         if self.ws then
             self.ws:Close()
         end
         self:reset()
     end
 
-    function FrostyFixed:typewriterEffect(textLabel, fullText, speed)
+    function FrostyEnhanced:typewriterEffect(textLabel, fullText, speed)
         if not textLabel or not textLabel.Parent then return end
         
         speed = speed or 0.02
@@ -408,7 +321,7 @@ spawn(function()
         end)
     end
 
-    function FrostyFixed:cleanOldMessages()
+    function FrostyEnhanced:cleanOldMessages()
         if not chatScroll then return end
         
         local messages = {}
@@ -431,7 +344,7 @@ spawn(function()
         end
     end
 
-    function FrostyFixed:updateScroll()
+    function FrostyEnhanced:updateScroll()
         spawn(function()
             task.wait(0.1)
             if chatLayout and chatLayout.Parent then
@@ -445,7 +358,7 @@ spawn(function()
         end)
     end
 
-    local chat = FrostyFixed.new()
+    local chat = FrostyEnhanced.new()
 
     local function addMessageUI(sender, message, isUser)
         messageCount = messageCount + 1
@@ -512,14 +425,14 @@ spawn(function()
         if not connectionStatus or not statusLabel then return end
         
         if chat.isAuthenticated then
-            connectionStatus.Text = "🟢 Fixed AI Active"
+            connectionStatus.Text = "🟢 Enhanced AI Active"
             connectionStatus.TextColor3 = Color3.fromRGB(100, 255, 150)
-            statusLabel.Text = "Frosty Fixed AI Ready!"
+            statusLabel.Text = "Frosty Enhanced AI Ready!"
             statusLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
         elseif chat.isConnecting then
             connectionStatus.Text = "🟡 Connecting..."
             connectionStatus.TextColor3 = Color3.fromRGB(255, 220, 120)
-            statusLabel.Text = "Connecting to Fixed AI..."
+            statusLabel.Text = "Connecting to Enhanced AI..."
             statusLabel.TextColor3 = Color3.fromRGB(255, 220, 120)
         else
             connectionStatus.Text = "🔴 Premium Required"
@@ -561,7 +474,7 @@ spawn(function()
     FW.cC(headerPanel, 0.35)
 
     local title = FW.cT(headerPanel, {
-        Text = "Frosty Fixed AI",
+        Text = "Frosty Enhanced AI",
         TextSize = 24,
         TextColor3 = Color3.fromRGB(100, 255, 150),
         BackgroundTransparency = 1,
@@ -575,7 +488,7 @@ spawn(function()
     FW.cTC(title, 24)
 
     statusLabel = FW.cT(headerPanel, {
-        Text = "Connecting to Fixed AI...",
+        Text = "Connecting to Enhanced AI...",
         TextSize = 13,
         TextColor3 = Color3.fromRGB(255, 220, 120),
         BackgroundTransparency = 1,
@@ -588,10 +501,30 @@ spawn(function()
     })
     FW.cTC(statusLabel, 13)
 
+    logContainer = FW.cF(aiChatPage, {
+        BackgroundColor3 = Color3.fromRGB(25, 30, 40),
+        Size = UDim2.new(0.92, 0, 0.08, 0),
+        Position = UDim2.new(0.04, 0, 0.15, 0),
+        Name = "LogContainer",
+        ClipsDescendants = true
+    })
+    FW.cC(logContainer, 0.3)
+    FW.cS(logContainer, 2, Color3.fromRGB(45, 55, 70))
+
+    local logLayout = Instance.new("UIListLayout")
+    logLayout.Parent = logContainer
+    logLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    logLayout.Padding = UDim.new(0, 2)
+
+    local logPadding = Instance.new("UIPadding")
+    logPadding.PaddingTop = UDim.new(0, 5)
+    logPadding.PaddingLeft = UDim.new(0, 10)
+    logPadding.Parent = logContainer
+
     local chatContainer = FW.cF(aiChatPage, {
         BackgroundColor3 = Color3.fromRGB(45, 52, 68),
-        Size = UDim2.new(0.92, 0, 0.71, 0),
-        Position = UDim2.new(0.04, 0, 0.15, 0),
+        Size = UDim2.new(0.92, 0, 0.63, 0),
+        Position = UDim2.new(0.04, 0, 0.25, 0),
         Name = "ChatContainer",
         ClipsDescendants = true
     })
@@ -623,8 +556,8 @@ spawn(function()
 
     local inputContainer = FW.cF(aiChatPage, {
         BackgroundColor3 = Color3.fromRGB(45, 52, 68),
-        Size = UDim2.new(0.92, 0, 0.14, 0),
-        Position = UDim2.new(0.04, 0, 0.88, 0),
+        Size = UDim2.new(0.92, 0, 0.12, 0),
+        Position = UDim2.new(0.04, 0, 0.9, 0),
         Name = "InputContainer",
         ClipsDescendants = true
     })
@@ -645,7 +578,7 @@ spawn(function()
         Size = UDim2.new(0.7, -10, 0.5, 0),
         Position = UDim2.new(0.04, 0, 0.15, 0),
         Text = "",
-        PlaceholderText = "Ask Frosty Fixed anything...",
+        PlaceholderText = "Ask Frosty Enhanced anything...",
         TextColor3 = Color3.fromRGB(240, 245, 255),
         PlaceholderColor3 = Color3.fromRGB(180, 190, 210),
         TextSize = 15,
@@ -689,7 +622,7 @@ spawn(function()
     sendBtn.MouseButton1Click:Connect(function()
         if isProcessing or not chat.isAuthenticated then 
             if not chat.isAuthenticated then
-                FW.showAlert("Premium Required", "Premium access needed for Fixed AI!", 3)
+                FW.showAlert("Premium Required", "Premium access needed for Enhanced AI!", 3)
             elseif isProcessing then
                 FW.showAlert("Processing", "Please wait for current request to complete!", 2)
             end
@@ -703,7 +636,7 @@ spawn(function()
         addMessageUI("You", message, true)
         inputBox.Text = ""
         
-        local _, msgLabel = addMessageUI("Frosty Fixed", "Procesando solicitud...", false)
+        local _, msgLabel = addMessageUI("Frosty Enhanced", "Iniciando procesamiento...", false)
         currentThinkingLabel = msgLabel
         
         spawn(function()
@@ -731,8 +664,8 @@ spawn(function()
         end
     end)
 
-    local welcomeMessage = "¡Bienvenido a Frosty Fixed AI, " .. game.Players.LocalPlayer.Name .. "! Soy la versión corregida con contexto de cliente mejorado. Puedo ejecutar scripts correctamente apuntando al LocalPlayer, obtener información del juego sin bucles infinitos, y generar imágenes. ¡Todos los problemas han sido solucionados!"
-    addMessageUI("Frosty Fixed", welcomeMessage, false)
+    local welcomeMessage = "¡Bienvenido a Frosty Enhanced AI, " .. game.Players.LocalPlayer.Name .. "! Soy la versión más avanzada con validación de scripts, logging en tiempo real, manejo robusto de errores y recuperación automática. Puedo ejecutar acciones complejas, obtener información del juego y corregir scripts automáticamente. ¡Todo funciona de manera inteligente y confiable!"
+    addMessageUI("Frosty Enhanced", welcomeMessage, false)
 
     local sidebar = FW.getUI()["6"]:FindFirstChild("Sidebar")
     if sidebar then
@@ -798,7 +731,7 @@ spawn(function()
             FW.cTC(clk, 14)
             return btn, clk
         end
-        local aiBtn, aiClk = cSBtn("FixedAI", "Fixed AI", "rbxassetid://6034229496", UDim2.new(0.088, 0, 0.582, 0), false)
+        local aiBtn, aiClk = cSBtn("EnhancedAI", "Enhanced AI", "rbxassetid://6034229496", UDim2.new(0.088, 0, 0.582, 0), false)
         aiClk.MouseButton1Click:Connect(function()
             FW.switchPage("AIChat", sidebar)
         end)
