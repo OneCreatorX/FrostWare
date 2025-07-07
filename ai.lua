@@ -2,9 +2,10 @@ spawn(function()
     wait(1)
     local FW = _G.FW
     local HttpService = game:GetService("HttpService")
+    local LocalizationService = game:GetService("LocalizationService")
     
-    local FrostyMultiAgent = {}
-    FrostyMultiAgent.__index = FrostyMultiAgent
+    local FrostyUltra = {}
+    FrostyUltra.__index = FrostyUltra
     local WS_URL = "wss://system.heatherx.site:8443"
     local chatHistory = {}
     local MAX_VISUAL_MESSAGES = 15
@@ -19,9 +20,43 @@ spawn(function()
     local statusLabel = nil
     local logContainer = nil
     local currentScript = nil
+    local userLanguage = "en"
 
-    function FrostyMultiAgent.new()
-        local self = setmetatable({}, FrostyMultiAgent)
+    local function getOrDownloadImageAsset(url, filename)
+        local folder = "Images/"
+        local path = folder .. filename
+        if not isfolder(folder) then
+            makefolder(folder)
+        end
+        if not isfile(path) then
+            local success, data = pcall(function()
+                return game:HttpGet(url)
+            end)
+            if not success then
+                warn("Error downloading image: " .. tostring(data))
+                return nil
+            end
+            writefile(path, data)
+        end
+        return getcustomasset(path)
+    end
+
+    local function detectUserLanguage()
+        local success, result = pcall(function()
+            return LocalizationService.RobloxLocaleId
+        end)
+        
+        if success and result then
+            local lang = result:sub(1, 2):lower()
+            userLanguage = lang
+            return lang
+        end
+        
+        return "en"
+    end
+
+    function FrostyUltra.new()
+        local self = setmetatable({}, FrostyUltra)
         self.ws = nil
         self.currentToken = nil
         self.isAuthenticated = false
@@ -29,10 +64,11 @@ spawn(function()
         self.hwid = gethwid and gethwid()
         self.user = game.Players.LocalPlayer.Name
         self.accessTime = 0
+        self.language = detectUserLanguage()
         return self
     end
 
-    function FrostyMultiAgent:connect()
+    function FrostyUltra:connect()
         if self.isConnecting then return false end
         self.isConnecting = true
         
@@ -72,7 +108,7 @@ spawn(function()
         return true
     end
 
-    function FrostyMultiAgent:authenticate()
+    function FrostyUltra:authenticate()
         if not self.ws then return end
         
         local authData = {
@@ -85,7 +121,19 @@ spawn(function()
         self.ws:Send(HttpService:JSONEncode(authData))
     end
 
-    function FrostyMultiAgent:handleMessage(message)
+    function FrostyUltra:requestWelcomeMessage()
+        if not self.ws or not self.isAuthenticated then return end
+        
+        local welcomeData = {
+            type = "get_welcome",
+            language = self.language,
+            username = self.user
+        }
+        
+        self.ws:Send(HttpService:JSONEncode(welcomeData))
+    end
+
+    function FrostyUltra:handleMessage(message)
         local success, data = pcall(function()
             return HttpService:JSONDecode(message)
         end)
@@ -97,6 +145,7 @@ spawn(function()
             self.isAuthenticated = true
             self.isConnecting = false
             self.accessTime = data.accessTime or 0
+            self:requestWelcomeMessage()
         elseif data.type == "auth_failed" then
             self.isAuthenticated = false
             self.isConnecting = false
@@ -104,12 +153,17 @@ spawn(function()
             if data.message:find("access time") then
                 FW.showAlert("Premium Required", "Need " .. (data.required or 10) .. "h premium access!", 4)
             end
+        elseif data.type == "welcome_message" then
+            self:addWelcomeMessage(data.message)
         elseif data.type == "final_response" then
             self.currentToken = data.newToken
             self:processResponse(data.message)
         elseif data.type == "execute_script" then
             self.currentToken = data.newToken
             self:processScript(data.script, data.message, data.hwid)
+        elseif data.type == "image_response" then
+            self.currentToken = data.newToken
+            self:processImage(data.imageUrl, data.message)
         elseif data.type == "log" then
             self:processLog(data.message, data.logType)
         elseif data.type == "error" then
@@ -120,7 +174,13 @@ spawn(function()
         end
     end
 
-    function FrostyMultiAgent:processLog(message, logType)
+    function FrostyUltra:addWelcomeMessage(message)
+        if chatScroll then
+            self:addMessageUI("Frosty Ultra", message, false)
+        end
+    end
+
+    function FrostyUltra:processLog(message, logType)
         if not logContainer or not logContainer.Parent then return end
         
         local color = Color3.fromRGB(200, 200, 200)
@@ -152,7 +212,7 @@ spawn(function()
         end)
     end
 
-    function FrostyMultiAgent:processResponse(message)
+    function FrostyUltra:processResponse(message)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             table.insert(chatHistory, { role = "model", message = message })
             self:typewriterEffect(currentThinkingLabel, message, 0.02)
@@ -161,7 +221,112 @@ spawn(function()
         end
     end
 
-    function FrostyMultiAgent:processScript(script, statusMessage, hwid)
+    function FrostyUltra:processImage(imageUrl, message)
+        if currentThinkingLabel and currentThinkingLabel.Parent then
+            self:typewriterEffect(currentThinkingLabel, message, 0.02)
+            
+            spawn(function()
+                task.wait(1)
+                
+                local filename = "downloaded_" .. os.time() .. ".jpg"
+                local assetUrl = getOrDownloadImageAsset(imageUrl, filename)
+                
+                if assetUrl then
+                    self:addImageToChat(assetUrl, message)
+                    
+                    spawn(function()
+                        task.wait(30)
+                        local folder = "Images/"
+                        local path = folder .. filename
+                        if isfile(path) then
+                            delfile(path)
+                        end
+                    end)
+                else
+                    if currentThinkingLabel and currentThinkingLabel.Parent then
+                        currentThinkingLabel.Text = "Error downloading image"
+                    end
+                end
+                
+                currentThinkingLabel = nil
+                isProcessing = false
+            end)
+        end
+    end
+
+    function FrostyUltra:addImageToChat(imageUrl, message)
+        messageCount = messageCount + 1
+        
+        local msgFrame = FW.cF(chatScroll, {
+            BackgroundColor3 = Color3.fromRGB(35, 42, 58),
+            Size = UDim2.new(0.92, 0, 0, 0),
+            Position = UDim2.new(0.04, 0, 0, 0),
+            Name = "Message",
+            AutomaticSize = Enum.AutomaticSize.Y,
+            LayoutOrder = messageCount,
+            ClipsDescendants = true
+        })
+        FW.cC(msgFrame, 0.4)
+        FW.cS(msgFrame, 2, Color3.fromRGB(55, 65, 85))
+        
+        local padding = Instance.new("UIPadding")
+        padding.PaddingTop = UDim.new(0, 15)
+        padding.PaddingBottom = UDim.new(0, 15)
+        padding.PaddingLeft = UDim.new(0, 18)
+        padding.PaddingRight = UDim.new(0, 18)
+        padding.Parent = msgFrame
+        
+        local layout = Instance.new("UIListLayout")
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Padding = UDim.new(0, 8)
+        layout.Parent = msgFrame
+        
+        local senderLabel = FW.cT(msgFrame, {
+            Text = "Frosty Ultra",
+            TextSize = 15,
+            TextColor3 = Color3.fromRGB(100, 255, 150),
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 20),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+            LayoutOrder = 1,
+            ClipsDescendants = true
+        })
+        FW.cTC(senderLabel, 15)
+        
+        local imageLabel = FW.cI(msgFrame, {
+            Image = imageUrl,
+            Size = UDim2.new(0.8, 0, 0, 200),
+            Position = UDim2.new(0, 0, 0, 0),
+            BackgroundColor3 = Color3.fromRGB(45, 52, 68),
+            ScaleType = Enum.ScaleType.Fit,
+            LayoutOrder = 2,
+            ClipsDescendants = true
+        })
+        FW.cC(imageLabel, 0.3)
+        FW.cS(imageLabel, 2, Color3.fromRGB(75, 85, 105))
+        
+        local msgLabel = FW.cT(msgFrame, {
+            Text = message,
+            TextSize = 14,
+            TextColor3 = Color3.fromRGB(240, 245, 255),
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Top,
+            TextWrapped = true,
+            FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
+            LayoutOrder = 3,
+            ClipsDescendants = true
+        })
+        FW.cTC(msgLabel, 14)
+        
+        self:updateScroll()
+        self:cleanOldMessages()
+    end
+
+    function FrostyUltra:processScript(script, statusMessage, hwid)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             self:typewriterEffect(currentThinkingLabel, statusMessage, 0.02)
             currentScript = script
@@ -173,7 +338,7 @@ spawn(function()
                 if success then
                     self:sendScriptSuccess(hwid)
                     if currentThinkingLabel and currentThinkingLabel.Parent then
-                        currentThinkingLabel.Text = "✅ ¡Acción completada exitosamente!"
+                        currentThinkingLabel.Text = "✅ Action completed successfully!"
                         task.wait(2)
                         currentThinkingLabel = nil
                         isProcessing = false
@@ -186,7 +351,7 @@ spawn(function()
         end
     end
 
-    function FrostyMultiAgent:processError(error)
+    function FrostyUltra:processError(error)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             currentThinkingLabel.Text = "❌ Error: " .. error
             task.wait(3)
@@ -195,7 +360,7 @@ spawn(function()
         end
     end
 
-    function FrostyMultiAgent:executeScript(script)
+    function FrostyUltra:executeScript(script)
         local actionScript = script:match("ACTION_SCRIPT_START(.-)ACTION_SCRIPT_END")
         
         if actionScript then
@@ -209,7 +374,7 @@ spawn(function()
         return false, "Invalid script format"
     end
 
-    function FrostyMultiAgent:sendScriptSuccess(hwid)
+    function FrostyUltra:sendScriptSuccess(hwid)
         if not self.ws or not self.isAuthenticated then return end
         
         local successData = {
@@ -220,7 +385,7 @@ spawn(function()
         self.ws:Send(HttpService:JSONEncode(successData))
     end
 
-    function FrostyMultiAgent:sendScriptError(hwid, error, script)
+    function FrostyUltra:sendScriptError(hwid, error, script)
         if not self.ws or not self.isAuthenticated then return end
         
         local errorData = {
@@ -233,7 +398,7 @@ spawn(function()
         self.ws:Send(HttpService:JSONEncode(errorData))
     end
 
-    function FrostyMultiAgent:sendMessage(message)
+    function FrostyUltra:sendMessage(message)
         if not self.ws or not self.isAuthenticated or not self.currentToken then
             return false
         end
@@ -261,12 +426,12 @@ spawn(function()
         return true
     end
 
-    function FrostyMultiAgent:ping()
+    function FrostyUltra:ping()
         if not self.ws then return end
         self.ws:Send(HttpService:JSONEncode({ type = "ping" }))
     end
 
-    function FrostyMultiAgent:reset()
+    function FrostyUltra:reset()
         self.ws = nil
         self.currentToken = nil
         self.isAuthenticated = false
@@ -275,14 +440,14 @@ spawn(function()
         currentScript = nil
     end
 
-    function FrostyMultiAgent:close()
+    function FrostyUltra:close()
         if self.ws then
             self.ws:Close()
         end
         self:reset()
     end
 
-    function FrostyMultiAgent:typewriterEffect(textLabel, fullText, speed)
+    function FrostyUltra:typewriterEffect(textLabel, fullText, speed)
         if not textLabel or not textLabel.Parent then return end
         
         speed = speed or 0.02
@@ -300,7 +465,7 @@ spawn(function()
         end)
     end
 
-    function FrostyMultiAgent:cleanOldMessages()
+    function FrostyUltra:cleanOldMessages()
         if not chatScroll then return end
         
         local messages = {}
@@ -323,7 +488,7 @@ spawn(function()
         end
     end
 
-    function FrostyMultiAgent:updateScroll()
+    function FrostyUltra:updateScroll()
         spawn(function()
             task.wait(0.1)
             if chatLayout and chatLayout.Parent then
@@ -337,9 +502,7 @@ spawn(function()
         end)
     end
 
-    local chat = FrostyMultiAgent.new()
-
-    local function addMessageUI(sender, message, isUser)
+    function FrostyUltra:addMessageUI(sender, message, isUser)
         messageCount = messageCount + 1
         
         local msgFrame = FW.cF(chatScroll, {
@@ -395,23 +558,25 @@ spawn(function()
         })
         FW.cTC(msgLabel, 14)
         
-        chat:updateScroll()
-        chat:cleanOldMessages()
+        self:updateScroll()
+        self:cleanOldMessages()
         return msgFrame, msgLabel
     end
+
+    local chat = FrostyUltra.new()
 
     local function updateConnectionStatus()
         if not connectionStatus or not statusLabel then return end
         
         if chat.isAuthenticated then
-            connectionStatus.Text = "🟢 Multi-Agent AI Active"
+            connectionStatus.Text = "🟢 Ultra AI Active"
             connectionStatus.TextColor3 = Color3.fromRGB(100, 255, 150)
-            statusLabel.Text = "Frosty Multi-Agent AI Ready!"
+            statusLabel.Text = "Frosty Ultra AI Ready!"
             statusLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
         elseif chat.isConnecting then
             connectionStatus.Text = "🟡 Connecting..."
             connectionStatus.TextColor3 = Color3.fromRGB(255, 220, 120)
-            statusLabel.Text = "Connecting to Multi-Agent AI..."
+            statusLabel.Text = "Connecting to Ultra AI..."
             statusLabel.TextColor3 = Color3.fromRGB(255, 220, 120)
         else
             connectionStatus.Text = "🔴 Premium Required"
@@ -453,7 +618,7 @@ spawn(function()
     FW.cC(headerPanel, 0.35)
 
     local title = FW.cT(headerPanel, {
-        Text = "Frosty Multi-Agent AI",
+        Text = "Frosty Ultra AI",
         TextSize = 24,
         TextColor3 = Color3.fromRGB(100, 255, 150),
         BackgroundTransparency = 1,
@@ -467,7 +632,7 @@ spawn(function()
     FW.cTC(title, 24)
 
     statusLabel = FW.cT(headerPanel, {
-        Text = "Connecting to Multi-Agent AI...",
+        Text = "Connecting to Ultra AI...",
         TextSize = 13,
         TextColor3 = Color3.fromRGB(255, 220, 120),
         BackgroundTransparency = 1,
@@ -557,7 +722,7 @@ spawn(function()
         Size = UDim2.new(0.7, -10, 0.5, 0),
         Position = UDim2.new(0.04, 0, 0.15, 0),
         Text = "",
-        PlaceholderText = "Try: 'eliminar accesorios de jugadores' or 'delete player accessories'",
+        PlaceholderText = "Try any language: 'eliminar accesorios', 'show me a cat', 'donnez-moi vitesse'",
         TextColor3 = Color3.fromRGB(240, 245, 255),
         PlaceholderColor3 = Color3.fromRGB(180, 190, 210),
         TextSize = 15,
@@ -601,7 +766,7 @@ spawn(function()
     sendBtn.MouseButton1Click:Connect(function()
         if isProcessing or not chat.isAuthenticated then 
             if not chat.isAuthenticated then
-                FW.showAlert("Premium Required", "Premium access needed for Multi-Agent AI!", 3)
+                FW.showAlert("Premium Required", "Premium access needed for Ultra AI!", 3)
             elseif isProcessing then
                 FW.showAlert("Processing", "Please wait for current request to complete!", 2)
             end
@@ -612,10 +777,10 @@ spawn(function()
         if message == "" or #message > 2000 then return end
         
         isProcessing = true
-        addMessageUI("You", message, true)
+        chat:addMessageUI("You", message, true)
         inputBox.Text = ""
         
-        local _, msgLabel = addMessageUI("Frosty Multi-Agent", "Iniciando análisis multi-agente...", false)
+        local _, msgLabel = chat:addMessageUI("Frosty Ultra", "Starting ultra analysis...", false)
         currentThinkingLabel = msgLabel
         
         spawn(function()
@@ -642,9 +807,6 @@ spawn(function()
             updateConnectionStatus()
         end
     end)
-
-    local welcomeMessage = "¡Bienvenido a Frosty Multi-Agent AI, " .. game.Players.LocalPlayer.Name .. "! Soy un sistema avanzado con 7 agentes especializados que trabajan en equipo para entender y ejecutar tus instrucciones perfectamente. Puedo manejar comandos simples como 'eliminar accesorios de jugadores' y convertirlos en scripts funcionales. ¡Prueba comandos en español o inglés!"
-    addMessageUI("Frosty Multi-Agent", welcomeMessage, false)
 
     local sidebar = FW.getUI()["6"]:FindFirstChild("Sidebar")
     if sidebar then
@@ -710,7 +872,7 @@ spawn(function()
             FW.cTC(clk, 14)
             return btn, clk
         end
-        local aiBtn, aiClk = cSBtn("MultiAgentAI", "Multi-Agent AI", "rbxassetid://6034229496", UDim2.new(0.088, 0, 0.582, 0), false)
+        local aiBtn, aiClk = cSBtn("UltraAI", "Ultra AI", "rbxassetid://6034229496", UDim2.new(0.088, 0, 0.582, 0), false)
         aiClk.MouseButton1Click:Connect(function()
             FW.switchPage("AIChat", sidebar)
         end)
