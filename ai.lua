@@ -3,8 +3,8 @@ spawn(function()
     local FW = _G.FW
     local HttpService = game:GetService("HttpService")
     
-    local FrostyOptimized = {}
-    FrostyOptimized.__index = FrostyOptimized
+    local FrostyMultiAgent = {}
+    FrostyMultiAgent.__index = FrostyMultiAgent
     local WS_URL = "wss://system.heatherx.site:8443"
     local chatHistory = {}
     local MAX_VISUAL_MESSAGES = 15
@@ -18,9 +18,10 @@ spawn(function()
     local connectionStatus = nil
     local statusLabel = nil
     local logContainer = nil
+    local currentScript = nil
 
-    function FrostyOptimized.new()
-        local self = setmetatable({}, FrostyOptimized)
+    function FrostyMultiAgent.new()
+        local self = setmetatable({}, FrostyMultiAgent)
         self.ws = nil
         self.currentToken = nil
         self.isAuthenticated = false
@@ -31,7 +32,7 @@ spawn(function()
         return self
     end
 
-    function FrostyOptimized:connect()
+    function FrostyMultiAgent:connect()
         if self.isConnecting then return false end
         self.isConnecting = true
         
@@ -71,7 +72,7 @@ spawn(function()
         return true
     end
 
-    function FrostyOptimized:authenticate()
+    function FrostyMultiAgent:authenticate()
         if not self.ws then return end
         
         local authData = {
@@ -84,7 +85,7 @@ spawn(function()
         self.ws:Send(HttpService:JSONEncode(authData))
     end
 
-    function FrostyOptimized:handleMessage(message)
+    function FrostyMultiAgent:handleMessage(message)
         local success, data = pcall(function()
             return HttpService:JSONDecode(message)
         end)
@@ -108,7 +109,7 @@ spawn(function()
             self:processResponse(data.message)
         elseif data.type == "execute_script" then
             self.currentToken = data.newToken
-            self:processScript(data.script, data.message)
+            self:processScript(data.script, data.message, data.hwid)
         elseif data.type == "log" then
             self:processLog(data.message, data.logType)
         elseif data.type == "error" then
@@ -119,7 +120,7 @@ spawn(function()
         end
     end
 
-    function FrostyOptimized:processLog(message, logType)
+    function FrostyMultiAgent:processLog(message, logType)
         if not logContainer or not logContainer.Parent then return end
         
         local color = Color3.fromRGB(200, 200, 200)
@@ -132,7 +133,7 @@ spawn(function()
         end
         
         local logLabel = FW.cT(logContainer, {
-            Text = "• " .. message,
+            Text = message,
             TextSize = 11,
             TextColor3 = color,
             BackgroundTransparency = 1,
@@ -144,14 +145,14 @@ spawn(function()
         FW.cTC(logLabel, 11)
         
         spawn(function()
-            task.wait(5)
+            task.wait(8)
             if logLabel and logLabel.Parent then
                 logLabel:Destroy()
             end
         end)
     end
 
-    function FrostyOptimized:processResponse(message)
+    function FrostyMultiAgent:processResponse(message)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             table.insert(chatHistory, { role = "model", message = message })
             self:typewriterEffect(currentThinkingLabel, message, 0.02)
@@ -160,36 +161,41 @@ spawn(function()
         end
     end
 
-    function FrostyOptimized:processScript(script, statusMessage)
+    function FrostyMultiAgent:processScript(script, statusMessage, hwid)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             self:typewriterEffect(currentThinkingLabel, statusMessage, 0.02)
+            currentScript = script
             
             spawn(function()
                 task.wait(0.5)
                 local success, result = self:executeScript(script)
                 
-                if not success then
+                if success then
+                    self:sendScriptSuccess(hwid)
                     if currentThinkingLabel and currentThinkingLabel.Parent then
-                        currentThinkingLabel.Text = "Error: " .. tostring(result)
-                        task.wait(3)
+                        currentThinkingLabel.Text = "✅ ¡Acción completada exitosamente!"
+                        task.wait(2)
                         currentThinkingLabel = nil
                         isProcessing = false
                     end
+                    FW.showAlert("Success", "Action executed successfully!", 2)
+                else
+                    self:sendScriptError(hwid, tostring(result), script)
                 end
             end)
         end
     end
 
-    function FrostyOptimized:processError(error)
+    function FrostyMultiAgent:processError(error)
         if currentThinkingLabel and currentThinkingLabel.Parent then
-            currentThinkingLabel.Text = "Error: " .. error
+            currentThinkingLabel.Text = "❌ Error: " .. error
             task.wait(3)
             currentThinkingLabel = nil
             isProcessing = false
         end
     end
 
-    function FrostyOptimized:executeScript(script)
+    function FrostyMultiAgent:executeScript(script)
         local actionScript = script:match("ACTION_SCRIPT_START(.-)ACTION_SCRIPT_END")
         
         if actionScript then
@@ -197,31 +203,37 @@ spawn(function()
                 loadstring(actionScript)()
             end)
             
-            if success then
-                if currentThinkingLabel and currentThinkingLabel.Parent then
-                    currentThinkingLabel.Text = "¡Acción completada exitosamente! ✓"
-                    task.wait(2)
-                    currentThinkingLabel = nil
-                    isProcessing = false
-                end
-                FW.showAlert("Success", "Action executed!", 2)
-                return true, nil
-            else
-                if currentThinkingLabel and currentThinkingLabel.Parent then
-                    currentThinkingLabel.Text = "Error en acción: " .. tostring(error)
-                    task.wait(3)
-                    currentThinkingLabel = nil
-                    isProcessing = false
-                end
-                FW.showAlert("Error", "Execution failed: " .. tostring(error), 4)
-                return false, error
-            end
+            return success, error
         end
         
-        return false, "Unknown script type"
+        return false, "Invalid script format"
     end
 
-    function FrostyOptimized:sendMessage(message)
+    function FrostyMultiAgent:sendScriptSuccess(hwid)
+        if not self.ws or not self.isAuthenticated then return end
+        
+        local successData = {
+            type = "script_success",
+            hwid = hwid
+        }
+        
+        self.ws:Send(HttpService:JSONEncode(successData))
+    end
+
+    function FrostyMultiAgent:sendScriptError(hwid, error, script)
+        if not self.ws or not self.isAuthenticated then return end
+        
+        local errorData = {
+            type = "script_error",
+            hwid = hwid,
+            error = error,
+            script = script
+        }
+        
+        self.ws:Send(HttpService:JSONEncode(errorData))
+    end
+
+    function FrostyMultiAgent:sendMessage(message)
         if not self.ws or not self.isAuthenticated or not self.currentToken then
             return false
         end
@@ -249,27 +261,28 @@ spawn(function()
         return true
     end
 
-    function FrostyOptimized:ping()
+    function FrostyMultiAgent:ping()
         if not self.ws then return end
         self.ws:Send(HttpService:JSONEncode({ type = "ping" }))
     end
 
-    function FrostyOptimized:reset()
+    function FrostyMultiAgent:reset()
         self.ws = nil
         self.currentToken = nil
         self.isAuthenticated = false
         self.isConnecting = false
         self.accessTime = 0
+        currentScript = nil
     end
 
-    function FrostyOptimized:close()
+    function FrostyMultiAgent:close()
         if self.ws then
             self.ws:Close()
         end
         self:reset()
     end
 
-    function FrostyOptimized:typewriterEffect(textLabel, fullText, speed)
+    function FrostyMultiAgent:typewriterEffect(textLabel, fullText, speed)
         if not textLabel or not textLabel.Parent then return end
         
         speed = speed or 0.02
@@ -287,7 +300,7 @@ spawn(function()
         end)
     end
 
-    function FrostyOptimized:cleanOldMessages()
+    function FrostyMultiAgent:cleanOldMessages()
         if not chatScroll then return end
         
         local messages = {}
@@ -310,7 +323,7 @@ spawn(function()
         end
     end
 
-    function FrostyOptimized:updateScroll()
+    function FrostyMultiAgent:updateScroll()
         spawn(function()
             task.wait(0.1)
             if chatLayout and chatLayout.Parent then
@@ -324,7 +337,7 @@ spawn(function()
         end)
     end
 
-    local chat = FrostyOptimized.new()
+    local chat = FrostyMultiAgent.new()
 
     local function addMessageUI(sender, message, isUser)
         messageCount = messageCount + 1
@@ -391,14 +404,14 @@ spawn(function()
         if not connectionStatus or not statusLabel then return end
         
         if chat.isAuthenticated then
-            connectionStatus.Text = "🟢 Optimized AI Active"
+            connectionStatus.Text = "🟢 Multi-Agent AI Active"
             connectionStatus.TextColor3 = Color3.fromRGB(100, 255, 150)
-            statusLabel.Text = "Frosty Optimized AI Ready!"
+            statusLabel.Text = "Frosty Multi-Agent AI Ready!"
             statusLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
         elseif chat.isConnecting then
             connectionStatus.Text = "🟡 Connecting..."
             connectionStatus.TextColor3 = Color3.fromRGB(255, 220, 120)
-            statusLabel.Text = "Connecting to Optimized AI..."
+            statusLabel.Text = "Connecting to Multi-Agent AI..."
             statusLabel.TextColor3 = Color3.fromRGB(255, 220, 120)
         else
             connectionStatus.Text = "🔴 Premium Required"
@@ -440,7 +453,7 @@ spawn(function()
     FW.cC(headerPanel, 0.35)
 
     local title = FW.cT(headerPanel, {
-        Text = "Frosty Optimized AI",
+        Text = "Frosty Multi-Agent AI",
         TextSize = 24,
         TextColor3 = Color3.fromRGB(100, 255, 150),
         BackgroundTransparency = 1,
@@ -454,7 +467,7 @@ spawn(function()
     FW.cTC(title, 24)
 
     statusLabel = FW.cT(headerPanel, {
-        Text = "Connecting to Optimized AI...",
+        Text = "Connecting to Multi-Agent AI...",
         TextSize = 13,
         TextColor3 = Color3.fromRGB(255, 220, 120),
         BackgroundTransparency = 1,
@@ -469,7 +482,7 @@ spawn(function()
 
     logContainer = FW.cF(aiChatPage, {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(0.92, 0, 0.08, 0),
+        Size = UDim2.new(0.92, 0, 0.1, 0),
         Position = UDim2.new(0.04, 0, 0.15, 0),
         Name = "LogContainer",
         ClipsDescendants = true
@@ -489,8 +502,8 @@ spawn(function()
 
     local chatContainer = FW.cF(aiChatPage, {
         BackgroundColor3 = Color3.fromRGB(45, 52, 68),
-        Size = UDim2.new(0.92, 0, 0.63, 0),
-        Position = UDim2.new(0.04, 0, 0.25, 0),
+        Size = UDim2.new(0.92, 0, 0.61, 0),
+        Position = UDim2.new(0.04, 0, 0.27, 0),
         Name = "ChatContainer",
         ClipsDescendants = true
     })
@@ -544,7 +557,7 @@ spawn(function()
         Size = UDim2.new(0.7, -10, 0.5, 0),
         Position = UDim2.new(0.04, 0, 0.15, 0),
         Text = "",
-        PlaceholderText = "Ask Frosty Optimized for actions...",
+        PlaceholderText = "Try: 'eliminar accesorios de jugadores' or 'delete player accessories'",
         TextColor3 = Color3.fromRGB(240, 245, 255),
         PlaceholderColor3 = Color3.fromRGB(180, 190, 210),
         TextSize = 15,
@@ -588,7 +601,7 @@ spawn(function()
     sendBtn.MouseButton1Click:Connect(function()
         if isProcessing or not chat.isAuthenticated then 
             if not chat.isAuthenticated then
-                FW.showAlert("Premium Required", "Premium access needed for Optimized AI!", 3)
+                FW.showAlert("Premium Required", "Premium access needed for Multi-Agent AI!", 3)
             elseif isProcessing then
                 FW.showAlert("Processing", "Please wait for current request to complete!", 2)
             end
@@ -602,7 +615,7 @@ spawn(function()
         addMessageUI("You", message, true)
         inputBox.Text = ""
         
-        local _, msgLabel = addMessageUI("Frosty Optimized", "Procesando solicitud...", false)
+        local _, msgLabel = addMessageUI("Frosty Multi-Agent", "Iniciando análisis multi-agente...", false)
         currentThinkingLabel = msgLabel
         
         spawn(function()
@@ -630,8 +643,8 @@ spawn(function()
         end
     end)
 
-    local welcomeMessage = "¡Bienvenido a Frosty Optimized AI, " .. game.Players.LocalPlayer.Name .. "! Soy la versión optimizada enfocada en ejecutar acciones avanzadas en Roblox. Puedo darte velocidad, hacerte volar, teletransportarte, eliminar jugadores, darte noclip, invisibilidad, salto infinito y mucho más. ¡Pídeme cualquier acción y la ejecutaré al instante!"
-    addMessageUI("Frosty Optimized", welcomeMessage, false)
+    local welcomeMessage = "¡Bienvenido a Frosty Multi-Agent AI, " .. game.Players.LocalPlayer.Name .. "! Soy un sistema avanzado con 7 agentes especializados que trabajan en equipo para entender y ejecutar tus instrucciones perfectamente. Puedo manejar comandos simples como 'eliminar accesorios de jugadores' y convertirlos en scripts funcionales. ¡Prueba comandos en español o inglés!"
+    addMessageUI("Frosty Multi-Agent", welcomeMessage, false)
 
     local sidebar = FW.getUI()["6"]:FindFirstChild("Sidebar")
     if sidebar then
@@ -697,7 +710,7 @@ spawn(function()
             FW.cTC(clk, 14)
             return btn, clk
         end
-        local aiBtn, aiClk = cSBtn("OptimizedAI", "Optimized AI", "rbxassetid://6034229496", UDim2.new(0.088, 0, 0.582, 0), false)
+        local aiBtn, aiClk = cSBtn("MultiAgentAI", "Multi-Agent AI", "rbxassetid://6034229496", UDim2.new(0.088, 0, 0.582, 0), false)
         aiClk.MouseButton1Click:Connect(function()
             FW.switchPage("AIChat", sidebar)
         end)
