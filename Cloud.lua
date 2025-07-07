@@ -5,6 +5,12 @@ spawn(function()
     
     print("Creating cloud page...")
     
+    local FW = _G.FW
+    if not FW then
+        warn("FW not found in global scope")
+        return
+    end
+    
     local ui = FW.getUI()
     if not ui then
         warn("FW.getUI() returned nil")
@@ -51,6 +57,22 @@ spawn(function()
     })
     FW.cC(mainFrame, 0.02)
     FW.cS(mainFrame, 2, Color3.fromRGB(35, 39, 54))
+    
+    local uploadBtn = FW.cStdBtn(mainFrame, "UploadBtn", "Upload Script", "rbxassetid://6034229496", UDim2.new(0.05, 0, 0.05, 0), UDim2.new(0.2, 0, 0.08, 0))
+    local downloadBtn = FW.cStdBtn(mainFrame, "DownloadBtn", "Download", "rbxassetid://6034229496", UDim2.new(0.27, 0, 0.05, 0), UDim2.new(0.2, 0, 0.08, 0))
+    local deleteBtn = FW.cStdBtn(mainFrame, "DeleteBtn", "Delete", "rbxassetid://6034229496", UDim2.new(0.49, 0, 0.05, 0), UDim2.new(0.2, 0, 0.08, 0))
+    
+    uploadBtn.MouseButton1Click:Connect(function()
+        FW.showAlert("Info", "Upload functionality coming soon!", 2)
+    end)
+    
+    downloadBtn.MouseButton1Click:Connect(function()
+        FW.showAlert("Info", "Download functionality coming soon!", 2)
+    end)
+    
+    deleteBtn.MouseButton1Click:Connect(function()
+        FW.showAlert("Info", "Delete functionality coming soon!", 2)
+    end)
     
     print("Cloud UI elements created")
     
