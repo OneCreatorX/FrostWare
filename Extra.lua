@@ -83,4 +83,29 @@ spawn(function()
     end
     
     updateExtraPage()
+    
+    local modules = {
+        "https://raw.githubusercontent.com/TuUsuario/TuRepo/main/Cloud.lua",
+        "https://raw.githubusercontent.com/TuUsuario/TuRepo/main/Scripts.lua",
+        "https://raw.githubusercontent.com/TuUsuario/TuRepo/main/Settings.lua"
+    }
+    
+    for _, moduleUrl in pairs(modules) do
+        spawn(function()
+            local success, moduleCode = pcall(function()
+                return game:HttpGet(moduleUrl)
+            end)
+            
+            if success then
+                local success2, error = pcall(function()
+                    loadstring(moduleCode)()
+                end)
+                
+                if not success2 then
+                    warn("Error loading module: " .. tostring(error))
+                end
+            end
+        end)
+        wait(0.5)
+    end
 end)
