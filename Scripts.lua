@@ -376,6 +376,7 @@ function showOpts(data)
             end
             
             if scriptContent then
+            FW.showAlert("Success", "Script loading", 2)
                 local success, result = pcall(function()
                     return loadstring(scriptContent)
                 end)
