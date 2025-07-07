@@ -1,6 +1,6 @@
 local FW = loadstring(game:HttpGet("https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/test.la"))()
 
-local REPO_BASE = "https://raw.githubusercontent.com/TuUsuario/TuRepo/main/"
+local REPO_BASE = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/"
 
 local modules = {
     "extra.lua",
