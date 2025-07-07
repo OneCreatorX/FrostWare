@@ -14,8 +14,7 @@ local scriptsDir = "FrostWare/Scripts/"
 local defScripts = {
     ["Infinite Yield"] = "loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()",
     ["Dark Dex"] = "loadstring(game:HttpGet('https://raw.githubusercontent.com/infyiff/backup/main/dex.lua'))()",
-    ["Remote Spy"] = "loadstring(game:HttpGet('https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua'))()",
-    ["CMD-X"] = "loadstring(game:HttpGet('https://raw.githubusercontent.com/CMD-X/CMD-X/master/Source', true))()"
+    ["Remote Spy"] = "loadstring(game:HttpGet('https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua'))()"
 }
 
 local function switchSec(sec)
@@ -108,7 +107,7 @@ function updateList()
                 BackgroundColor3 = Color3.fromRGB(100, 150, 100),
                 Size = UDim2.new(0.12, 0, 0.6, 0),
                 Position = UDim2.new(0.73, 0, 0.2, 0),
-                Text = "Run",
+                Text = "> - <",
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 14,
                 TextScaled = true
@@ -143,6 +142,7 @@ function updateList()
             
             execBtn.MouseButton1Click:Connect(function()
                 local success, result = pcall(function()
+                FW.showAlert("Success", name .. " Loading!", 2)
                     return loadstring(content)
                 end)
                 if success and result then
