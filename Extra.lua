@@ -1,56 +1,71 @@
 _G.FW = loadstring(game:HttpGet("https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/test.la"))()
 local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
+local Stats = game:GetService("Stats")
 
 local playerCountLabel = nil
-local currentTransparency = 0
+local pingLabel = nil
+local fpsLabel = nil
+local memoryLabel = nil
+local timeLabel = nil
+local startTime = tick()
+local fpsCounter = 0
+local lastFpsUpdate = tick()
+
+local function updateStats()
+    spawn(function()
+        RunService.Heartbeat:Connect(function()
+            fpsCounter = fpsCounter + 1
+        end)
+        
+        while task.wait(1) do
+            if playerCountLabel and playerCountLabel.Parent then
+                local currentPlayers = #game.Players:GetPlayers()
+                local maxPlayers = game.Players.MaxPlayers
+                playerCountLabel.Text = "👥 " .. currentPlayers .. "/" .. maxPlayers
+            end
+            
+            if pingLabel and pingLabel.Parent then
+                local ping = game.Players.LocalPlayer:GetNetworkPing() * 1000
+                pingLabel.Text = "📡 " .. math.floor(ping) .. "ms"
+            end
+            
+            if fpsLabel and fpsLabel.Parent then
+                local currentTime = tick()
+                local fps = math.floor(fpsCounter / (currentTime - lastFpsUpdate))
+                fpsLabel.Text = "🎯 " .. fps .. " FPS"
+                fpsCounter = 0
+                lastFpsUpdate = currentTime
+            end
+            
+            if memoryLabel and memoryLabel.Parent then
+                local memory = Stats:GetTotalMemoryUsageMb()
+                memoryLabel.Text = "💾 " .. math.floor(memory) .. "MB"
+            end
+            
+            if timeLabel and timeLabel.Parent then
+                local elapsed = tick() - startTime
+                local minutes = math.floor(elapsed / 60)
+                local seconds = math.floor(elapsed % 60)
+                timeLabel.Text = "⏱️ " .. minutes .. ":" .. string.format("%02d", seconds)
+            end
+        end
+    end)
+end
 
 local function hideUI()
     local ui = _G.FW.getUI()
-    if ui then
-        for _, element in pairs(ui:GetChildren()) do
-            if element:IsA("GuiObject") then
-                element.Visible = false
-            end
-        end
+    if ui and ui["3"] then
+        ui["3"].Visible = false
+        ui["2"].Visible = false
         
         spawn(function()
             wait(5)
-            for _, element in pairs(ui:GetChildren()) do
-                if element:IsA("GuiObject") then
-                    element.Visible = true
-                end
-            end
+            ui["3"].Visible = true
+            ui["2"].Visible = true
             _G.FW.showAlert("Success", "UI restored!", 2)
         end)
     end
-end
-
-local function changeUITransparency(transparency)
-    local function updateElement(element)
-        if element:IsA("Frame") or element:IsA("TextLabel") or element:IsA("TextButton") then
-            if element:FindFirstChild("BackgroundTransparency") then
-                element.BackgroundTransparency = math.min(transparency, 0.95)
-            end
-        elseif element:IsA("ImageLabel") or element:IsA("ImageButton") then
-            if element:FindFirstChild("ImageTransparency") then
-                element.ImageTransparency = math.min(transparency, 0.95)
-            end
-            if element:FindFirstChild("BackgroundTransparency") then
-                element.BackgroundTransparency = math.min(transparency, 0.95)
-            end
-        end
-        
-        for _, child in pairs(element:GetChildren()) do
-            updateElement(child)
-        end
-    end
-    
-    local ui = _G.FW.getUI()
-    if ui then
-        updateElement(ui)
-    end
-    
-    currentTransparency = transparency
 end
 
 local function extremeAntiLag()
@@ -111,6 +126,77 @@ local function extremeAntiLag()
     _G.FW.showAlert("Success", "Extreme anti-lag applied!", 2)
 end
 
+local function createEmojiButton(parent, emoji, text, pos, size, callback)
+    local btn = _G.FW.cF(parent, {
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        Size = size,
+        Position = pos,
+        Name = text:gsub(" ", "")
+    })
+    _G.FW.cC(btn, 0.2)
+    _G.FW.cG(btn, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
+    
+    local emojiLabel = _G.FW.cT(btn, {
+        Text = emoji,
+        TextSize = 24,
+        TextColor3 = Color3.fromRGB(29, 29, 38),
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0.3, 0, 0.6, 0),
+        Position = UDim2.new(0.05, 0, 0.2, 0),
+        TextScaled = true,
+        FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    })
+    
+    local textLabel = _G.FW.cT(btn, {
+        Text = text,
+        TextSize = 16,
+        TextColor3 = Color3.fromRGB(29, 29, 38),
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0.6, 0, 0.6, 0),
+        Position = UDim2.new(0.35, 0, 0.2, 0),
+        TextScaled = true,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    })
+    _G.FW.cTC(textLabel, 16)
+    
+    local clickBtn = _G.FW.cB(btn, {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        Text = "",
+        ZIndex = 5
+    })
+    
+    clickBtn.MouseButton1Click:Connect(callback)
+    
+    return btn
+end
+
+local function createStatLabel(parent, text, pos, size)
+    local frame = _G.FW.cF(parent, {
+        BackgroundColor3 = Color3.fromRGB(16, 19, 27),
+        Size = size,
+        Position = pos,
+        Name = text:gsub(" ", "")
+    })
+    _G.FW.cC(frame, 0.15)
+    _G.FW.cS(frame, 1, Color3.fromRGB(35, 39, 54))
+    
+    local label = _G.FW.cT(frame, {
+        Text = text,
+        TextSize = 14,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0.9, 0, 0.8, 0),
+        Position = UDim2.new(0.05, 0, 0.1, 0),
+        TextScaled = true,
+        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    })
+    _G.FW.cTC(label, 14)
+    
+    return label
+end
+
 spawn(function()
     wait(2)
     
@@ -118,85 +204,56 @@ spawn(function()
         local extraPage = _G.FW.getUI()["11"]:FindFirstChild("ExtraPage")
         if extraPage then
             local title = extraPage:FindFirstChild("TextLabel")
-            if title then title.Text = "System Tools" end
+            if title then title.Text = "🛠️ System Tools" end
             
             local mainFrame = _G.FW.cF(extraPage, {
                 BackgroundColor3 = Color3.fromRGB(20, 25, 32),
-                Size = UDim2.new(0.9, 0, 0.85, 0),
-                Position = UDim2.new(0.05, 0, 0.1, 0),
+                Size = UDim2.new(0.95, 0, 0.9, 0),
+                Position = UDim2.new(0.025, 0, 0.08, 0),
                 Name = "MainFrame"
             })
             _G.FW.cC(mainFrame, 0.02)
             _G.FW.cS(mainFrame, 2, Color3.fromRGB(35, 39, 54))
             
-            playerCountLabel = _G.FW.cT(mainFrame, {
-                Text = "Players: 0/0",
+            local statsFrame = _G.FW.cF(mainFrame, {
+                BackgroundColor3 = Color3.fromRGB(16, 19, 27),
+                Size = UDim2.new(0.9, 0, 0.15, 0),
+                Position = UDim2.new(0.05, 0, 0.02, 0),
+                Name = "StatsFrame"
+            })
+            _G.FW.cC(statsFrame, 0.02)
+            _G.FW.cS(statsFrame, 1, Color3.fromRGB(35, 39, 54))
+            
+            local statsTitle = _G.FW.cT(statsFrame, {
+                Text = "📊 Live Stats",
                 TextSize = 16,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 BackgroundTransparency = 1,
-                Size = UDim2.new(0.9, 0, 0.08, 0),
-                Position = UDim2.new(0.05, 0, 0.02, 0),
-                TextScaled = true,
-                FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-            })
-            _G.FW.cTC(playerCountLabel, 16)
-            
-            local resetBtn = _G.FW.cStdBtn(mainFrame, "ResetBtn", "Reset Character", "rbxassetid://73909411554012", UDim2.new(0.05, 0, 0.12, 0), UDim2.new(0.28, 0, 0.12, 0))
-            local rejoinBtn = _G.FW.cStdBtn(mainFrame, "RejoinBtn", "Rejoin Server", "rbxassetid://89434276213036", UDim2.new(0.36, 0, 0.12, 0), UDim2.new(0.28, 0, 0.12, 0))
-            local serverHopBtn = _G.FW.cStdBtn(mainFrame, "ServerHopBtn", "Server Hop", "rbxassetid://94595204123047", UDim2.new(0.67, 0, 0.12, 0), UDim2.new(0.28, 0, 0.12, 0))
-            
-            local copyIdBtn = _G.FW.cStdBtn(mainFrame, "CopyIdBtn", "Copy User ID", "rbxassetid://133018045821797", UDim2.new(0.05, 0, 0.27, 0), UDim2.new(0.28, 0, 0.12, 0))
-            local hideUIBtn = _G.FW.cStdBtn(mainFrame, "HideUIBtn", "Hide UI (5s)", "rbxassetid://6034229496", UDim2.new(0.36, 0, 0.27, 0), UDim2.new(0.28, 0, 0.12, 0))
-            local antiLagBtn = _G.FW.cStdBtn(mainFrame, "AntiLagBtn", "Extreme Anti-Lag", "rbxassetid://6034229496", UDim2.new(0.67, 0, 0.27, 0), UDim2.new(0.28, 0, 0.12, 0))
-            
-            local transparencyFrame = _G.FW.cF(mainFrame, {
-                BackgroundColor3 = Color3.fromRGB(16, 19, 27),
                 Size = UDim2.new(0.9, 0, 0.25, 0),
-                Position = UDim2.new(0.05, 0, 0.42, 0),
-                Name = "TransparencyFrame"
-            })
-            _G.FW.cC(transparencyFrame, 0.02)
-            _G.FW.cS(transparencyFrame, 1, Color3.fromRGB(35, 39, 54))
-            
-            local transparencyLabel = _G.FW.cT(transparencyFrame, {
-                Text = "UI Transparency: 0%",
-                TextSize = 14,
-                TextColor3 = Color3.fromRGB(255, 255, 255),
-                BackgroundTransparency = 1,
-                Size = UDim2.new(0.9, 0, 0.2, 0),
                 Position = UDim2.new(0.05, 0, 0.05, 0),
                 TextScaled = true,
                 FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
             })
-            _G.FW.cTC(transparencyLabel, 14)
+            _G.FW.cTC(statsTitle, 16)
             
-            local trans0Btn = _G.FW.cStdBtn(transparencyFrame, "Trans0", "0%", "rbxassetid://6034229496", UDim2.new(0.05, 0, 0.3, 0), UDim2.new(0.18, 0, 0.3, 0))
-            local trans25Btn = _G.FW.cStdBtn(transparencyFrame, "Trans25", "25%", "rbxassetid://6034229496", UDim2.new(0.25, 0, 0.3, 0), UDim2.new(0.18, 0, 0.3, 0))
-            local trans50Btn = _G.FW.cStdBtn(transparencyFrame, "Trans50", "50%", "rbxassetid://6034229496", UDim2.new(0.45, 0, 0.3, 0), UDim2.new(0.18, 0, 0.3, 0))
-            local trans75Btn = _G.FW.cStdBtn(transparencyFrame, "Trans75", "75%", "rbxassetid://6034229496", UDim2.new(0.65, 0, 0.3, 0), UDim2.new(0.18, 0, 0.3, 0))
-            local trans90Btn = _G.FW.cStdBtn(transparencyFrame, "Trans90", "90%", "rbxassetid://6034229496", UDim2.new(0.77, 0, 0.3, 0), UDim2.new(0.18, 0, 0.3, 0))
+            playerCountLabel = createStatLabel(statsFrame, "👥 0/0", UDim2.new(0.02, 0, 0.35, 0), UDim2.new(0.18, 0, 0.6, 0))
+            pingLabel = createStatLabel(statsFrame, "📡 0ms", UDim2.new(0.22, 0, 0.35, 0), UDim2.new(0.18, 0, 0.6, 0))
+            fpsLabel = createStatLabel(statsFrame, "🎯 0 FPS", UDim2.new(0.42, 0, 0.35, 0), UDim2.new(0.18, 0, 0.6, 0))
+            memoryLabel = createStatLabel(statsFrame, "💾 0MB", UDim2.new(0.62, 0, 0.35, 0), UDim2.new(0.18, 0, 0.6, 0))
+            timeLabel = createStatLabel(statsFrame, "⏱️ 0:00", UDim2.new(0.82, 0, 0.35, 0), UDim2.new(0.16, 0, 0.6, 0))
             
-            local resetTransBtn = _G.FW.cStdBtn(transparencyFrame, "ResetTrans", "Reset Transparency", "rbxassetid://6034229496", UDim2.new(0.05, 0, 0.65, 0), UDim2.new(0.4, 0, 0.3, 0))
-            
-            resetBtn.MouseButton1Click:Connect(function()
+            createEmojiButton(mainFrame, "💀", "Reset Character", UDim2.new(0.05, 0, 0.2, 0), UDim2.new(0.28, 0, 0.08, 0), function()
                 if game.Players.LocalPlayer.Character then
                     game.Players.LocalPlayer.Character:FindFirstChild("Humanoid"):ChangeState(Enum.HumanoidStateType.Dead)
                     _G.FW.showAlert("Success", "Character reset!", 2)
                 end
             end)
             
-            rejoinBtn.MouseButton1Click:Connect(function()
+            createEmojiButton(mainFrame, "🔄", "Rejoin Server", UDim2.new(0.36, 0, 0.2, 0), UDim2.new(0.28, 0, 0.08, 0), function()
                 game:GetService("TeleportService"):Teleport(game.PlaceId, game.Players.LocalPlayer)
             end)
             
-            copyIdBtn.MouseButton1Click:Connect(function()
-                if setclipboard then
-                    setclipboard(tostring(game.Players.LocalPlayer.UserId))
-                    _G.FW.showAlert("Success", "User ID copied!", 2)
-                end
-            end)
-            
-            serverHopBtn.MouseButton1Click:Connect(function()
+            createEmojiButton(mainFrame, "🌐", "Server Hop", UDim2.new(0.67, 0, 0.2, 0), UDim2.new(0.28, 0, 0.08, 0), function()
                 local success, servers = pcall(function()
                     return game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
                 end)
@@ -210,55 +267,50 @@ spawn(function()
                 end
             end)
             
-            hideUIBtn.MouseButton1Click:Connect(function()
+            createEmojiButton(mainFrame, "📋", "Copy User ID", UDim2.new(0.05, 0, 0.3, 0), UDim2.new(0.28, 0, 0.08, 0), function()
+                if setclipboard then
+                    setclipboard(tostring(game.Players.LocalPlayer.UserId))
+                    _G.FW.showAlert("Success", "User ID copied!", 2)
+                end
+            end)
+            
+            createEmojiButton(mainFrame, "👁️", "Hide UI (5s)", UDim2.new(0.36, 0, 0.3, 0), UDim2.new(0.28, 0, 0.08, 0), function()
                 hideUI()
                 _G.FW.showAlert("Info", "UI hidden for 5 seconds!", 1)
             end)
             
-            antiLagBtn.MouseButton1Click:Connect(function()
+            createEmojiButton(mainFrame, "⚡", "Extreme Anti-Lag", UDim2.new(0.67, 0, 0.3, 0), UDim2.new(0.28, 0, 0.08, 0), function()
                 extremeAntiLag()
             end)
             
-            trans0Btn.MouseButton1Click:Connect(function()
-                changeUITransparency(0)
-                transparencyLabel.Text = "UI Transparency: 0%"
-            end)
-            
-            trans25Btn.MouseButton1Click:Connect(function()
-                changeUITransparency(0.25)
-                transparencyLabel.Text = "UI Transparency: 25%"
-            end)
-            
-            trans50Btn.MouseButton1Click:Connect(function()
-                changeUITransparency(0.5)
-                transparencyLabel.Text = "UI Transparency: 50%"
-            end)
-            
-            trans75Btn.MouseButton1Click:Connect(function()
-                changeUITransparency(0.75)
-                transparencyLabel.Text = "UI Transparency: 75%"
-            end)
-            
-            trans90Btn.MouseButton1Click:Connect(function()
-                changeUITransparency(0.9)
-                transparencyLabel.Text = "UI Transparency: 90%"
-            end)
-            
-            resetTransBtn.MouseButton1Click:Connect(function()
-                changeUITransparency(0)
-                transparencyLabel.Text = "UI Transparency: 0%"
-                _G.FW.showAlert("Success", "Transparency reset!", 2)
-            end)
-            
-            spawn(function()
-                while task.wait(5) do
-                    if playerCountLabel and playerCountLabel.Parent then
-                        local currentPlayers = #game.Players:GetPlayers()
-                        local maxPlayers = game.Players.MaxPlayers
-                        playerCountLabel.Text = "Players: " .. currentPlayers .. "/" .. maxPlayers
+            createEmojiButton(mainFrame, "🧹", "Clear Workspace", UDim2.new(0.05, 0, 0.4, 0), UDim2.new(0.28, 0, 0.08, 0), function()
+                for _, obj in pairs(workspace:GetChildren()) do
+                    if not obj:IsA("Terrain") and not obj:IsA("Camera") and obj ~= workspace.CurrentCamera then
+                        pcall(function() obj:Destroy() end)
                     end
                 end
+                _G.FW.showAlert("Success", "Workspace cleared!", 2)
             end)
+            
+            createEmojiButton(mainFrame, "🎵", "Toggle Sound", UDim2.new(0.36, 0, 0.4, 0), UDim2.new(0.28, 0, 0.08, 0), function()
+                local settings = UserSettings():GetService("UserGameSettings")
+                if settings.MasterVolume > 0 then
+                    settings.MasterVolume = 0
+                    _G.FW.showAlert("Info", "Sound disabled!", 2)
+                else
+                    settings.MasterVolume = 1
+                    _G.FW.showAlert("Info", "Sound enabled!", 2)
+                end
+            end)
+            
+            createEmojiButton(mainFrame, "🔄", "Refresh UI", UDim2.new(0.67, 0, 0.4, 0), UDim2.new(0.28, 0, 0.08, 0), function()
+                _G.FW.hide()
+                wait(0.5)
+                _G.FW.show()
+                _G.FW.showAlert("Success", "UI refreshed!", 2)
+            end)
+            
+            updateStats()
         end
     end
     
