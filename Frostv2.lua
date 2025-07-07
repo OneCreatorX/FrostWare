@@ -1,3 +1,4 @@
+local FW = loadstring(game:HttpGet("https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/test.la"))()
 local HttpService = game:GetService("HttpService")
 
 local FrostyChat = {}
@@ -5,7 +6,7 @@ FrostyChat.__index = FrostyChat
 
 local WS_URL = "wss://system.heatherx.site:8443"
 local chatHistory = {}
-local MAX_VISUAL_MESSAGES = 2
+local MAX_VISUAL_MESSAGES = 3
 
 local playerCountLabel = nil
 local aiChatPage = nil
@@ -337,10 +338,10 @@ local function cleanOldMessages()
 end
 
 spawn(function()
-    wait(1)
+    wait(2)
     
     local function updateExtraPage()
-        local extraPage = _G.FW.getUI()["11"]:FindFirstChild("ExtraPage")
+        local extraPage = FW.getUI()["11"]:FindFirstChild("ExtraPage")
         if extraPage then
             local title = extraPage:FindFirstChild("TextLabel")
             if title then title.Text = "System Tools" end
