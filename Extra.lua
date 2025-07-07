@@ -84,26 +84,37 @@ spawn(function()
     
     updateExtraPage()
     
+    wait(1)
+    
     local modules = {
         "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Cloud.lua"
     }
     
-    for _, moduleUrl in pairs(modules) do
+    for i, moduleUrl in pairs(modules) do
         spawn(function()
+            print("Loading module " .. i .. ": " .. moduleUrl)
+            
             local success, moduleCode = pcall(function()
                 return game:HttpGet(moduleUrl)
             end)
             
             if success then
+                print("Module " .. i .. " downloaded successfully")
+                
                 local success2, error = pcall(function()
                     loadstring(moduleCode)()
                 end)
                 
-                if not success2 then
-                    warn("Error loading module: " .. tostring(error))
+                if success2 then
+                    print("Module " .. i .. " executed successfully")
+                else
+                    warn("Error executing module " .. i .. ": " .. tostring(error))
                 end
+            else
+                warn("Error downloading module " .. i .. ": " .. tostring(moduleCode))
             end
         end)
-        wait(0.5)
+        
+        wait(1)
     end
 end)
