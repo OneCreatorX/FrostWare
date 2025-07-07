@@ -3,6 +3,7 @@ spawn(function()
     local FW = _G.FW
     local HttpService = game:GetService("HttpService")
     local LocalizationService = game:GetService("LocalizationService")
+    local UserInputService = game:GetService("UserInputService")
     
     local FrostyUltra = {}
     FrostyUltra.__index = FrostyUltra
@@ -18,8 +19,6 @@ spawn(function()
     local messageCount = 0
     local connectionStatus = nil
     local statusLabel = nil
-    local logContainer = nil
-    local currentScript = nil
     local userLanguage = "en"
 
     local function getOrDownloadImageAsset(url, filename)
@@ -160,12 +159,10 @@ spawn(function()
             self:processResponse(data.message)
         elseif data.type == "execute_script" then
             self.currentToken = data.newToken
-            self:processScript(data.script, data.message, data.hwid)
+            self:processScript(data.script, data.message)
         elseif data.type == "image_response" then
             self.currentToken = data.newToken
             self:processImage(data.imageUrl, data.message)
-        elseif data.type == "log" then
-            self:processLog(data.message, data.logType)
         elseif data.type == "error" then
             if data.newToken then
                 self.currentToken = data.newToken
@@ -180,45 +177,13 @@ spawn(function()
         end
     end
 
-    function FrostyUltra:processLog(message, logType)
-        if not logContainer or not logContainer.Parent then return end
-        
-        local color = Color3.fromRGB(200, 200, 200)
-        if logType == "error" then
-            color = Color3.fromRGB(255, 120, 120)
-        elseif logType == "success" then
-            color = Color3.fromRGB(120, 255, 120)
-        elseif logType == "warning" then
-            color = Color3.fromRGB(255, 200, 120)
-        end
-        
-        local logLabel = FW.cT(logContainer, {
-            Text = message,
-            TextSize = 11,
-            TextColor3 = color,
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 15),
-            TextXAlignment = Enum.TextXAlignment.Left,
-            FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Regular, Enum.FontStyle.Italic),
-            ClipsDescendants = true
-        })
-        FW.cTC(logLabel, 11)
-        
-        spawn(function()
-            task.wait(6)
-            if logLabel and logLabel.Parent then
-                logLabel:Destroy()
-            end
-        end)
-    end
-
     function FrostyUltra:processResponse(message)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             table.insert(chatHistory, { role = "model", message = message })
             self:typewriterEffect(currentThinkingLabel, message, 0.02)
             currentThinkingLabel = nil
             isProcessing = false
-            self:forceScrollUpdate()
+            self:forceScrollToBottom()
         end
     end
 
@@ -227,16 +192,16 @@ spawn(function()
             self:typewriterEffect(currentThinkingLabel, message, 0.02)
             
             spawn(function()
-                task.wait(0.8)
+                task.wait(1)
                 
-                local filename = "img_" .. os.time() .. "_" .. math.random(1000, 9999) .. ".jpg"
+                local filename = "downloaded_" .. os.time() .. ".jpg"
                 local assetUrl = getOrDownloadImageAsset(imageUrl, filename)
                 
                 if assetUrl then
                     self:addImageToChat(assetUrl, message)
                     
                     spawn(function()
-                        task.wait(25)
+                        task.wait(30)
                         local folder = "Images/"
                         local path = folder .. filename
                         if isfile(path) then
@@ -245,13 +210,13 @@ spawn(function()
                     end)
                 else
                     if currentThinkingLabel and currentThinkingLabel.Parent then
-                        currentThinkingLabel.Text = "Error loading image"
+                        currentThinkingLabel.Text = "Error downloading image"
                     end
                 end
                 
                 currentThinkingLabel = nil
                 isProcessing = false
-                self:forceScrollUpdate()
+                self:forceScrollToBottom()
             end)
         end
     end
@@ -298,7 +263,7 @@ spawn(function()
         
         local imageLabel = FW.cI(msgFrame, {
             Image = imageUrl,
-            Size = UDim2.new(0.85, 0, 0, 220),
+            Size = UDim2.new(0.8, 0, 0, 200),
             Position = UDim2.new(0, 0, 0, 0),
             BackgroundColor3 = Color3.fromRGB(45, 52, 68),
             ScaleType = Enum.ScaleType.Fit,
@@ -324,21 +289,19 @@ spawn(function()
         })
         FW.cTC(msgLabel, 14)
         
-        self:forceScrollUpdate()
+        self:forceScrollToBottom()
         self:cleanOldMessages()
     end
 
-    function FrostyUltra:processScript(script, statusMessage, hwid)
+    function FrostyUltra:processScript(script, statusMessage)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             self:typewriterEffect(currentThinkingLabel, statusMessage, 0.02)
-            currentScript = script
             
             spawn(function()
                 task.wait(0.5)
                 local success, result = self:executeScript(script)
                 
                 if success then
-                    self:sendScriptSuccess(hwid)
                     if currentThinkingLabel and currentThinkingLabel.Parent then
                         currentThinkingLabel.Text = "✅ Action completed successfully!"
                         task.wait(2)
@@ -347,9 +310,15 @@ spawn(function()
                     end
                     FW.showAlert("Success", "Action executed successfully!", 2)
                 else
-                    self:sendScriptError(hwid, tostring(result), script)
+                    if currentThinkingLabel and currentThinkingLabel.Parent then
+                        currentThinkingLabel.Text = "❌ Error: " .. tostring(result)
+                        task.wait(3)
+                        currentThinkingLabel = nil
+                        isProcessing = false
+                    end
+                    FW.showAlert("Error", "Execution failed: " .. tostring(result), 4)
                 end
-                self:forceScrollUpdate()
+                self:forceScrollToBottom()
             end)
         end
     end
@@ -360,7 +329,7 @@ spawn(function()
             task.wait(3)
             currentThinkingLabel = nil
             isProcessing = false
-            self:forceScrollUpdate()
+            self:forceScrollToBottom()
         end
     end
 
@@ -376,30 +345,6 @@ spawn(function()
         end
         
         return false, "Invalid script format"
-    end
-
-    function FrostyUltra:sendScriptSuccess(hwid)
-        if not self.ws or not self.isAuthenticated then return end
-        
-        local successData = {
-            type = "script_success",
-            hwid = hwid
-        }
-        
-        self.ws:Send(HttpService:JSONEncode(successData))
-    end
-
-    function FrostyUltra:sendScriptError(hwid, error, script)
-        if not self.ws or not self.isAuthenticated then return end
-        
-        local errorData = {
-            type = "script_error",
-            hwid = hwid,
-            error = error,
-            script = script
-        }
-        
-        self.ws:Send(HttpService:JSONEncode(errorData))
     end
 
     function FrostyUltra:sendMessage(message)
@@ -441,7 +386,6 @@ spawn(function()
         self.isAuthenticated = false
         self.isConnecting = false
         self.accessTime = 0
-        currentScript = nil
     end
 
     function FrostyUltra:close()
@@ -469,6 +413,21 @@ spawn(function()
         end)
     end
 
+    function FrostyUltra:forceScrollToBottom()
+        spawn(function()
+            task.wait(0.2)
+            if chatLayout and chatLayout.Parent and chatScroll then
+                local contentSize = chatLayout.AbsoluteContentSize.Y + 50
+                chatScroll.CanvasSize = UDim2.new(0, 0, 0, contentSize)
+                
+                task.wait(0.1)
+                if contentSize > chatScroll.AbsoluteSize.Y then
+                    chatScroll.CanvasPosition = Vector2.new(0, contentSize - chatScroll.AbsoluteSize.Y + 20)
+                end
+            end
+        end)
+    end
+
     function FrostyUltra:cleanOldMessages()
         if not chatScroll then return end
         
@@ -490,26 +449,6 @@ spawn(function()
                 end
             end
         end
-    end
-
-    function FrostyUltra:forceScrollUpdate()
-        spawn(function()
-            for i = 1, 3 do
-                task.wait(0.1)
-                if chatLayout and chatLayout.Parent then
-                    local contentSize = chatLayout.AbsoluteContentSize.Y + 50
-                    chatScroll.CanvasSize = UDim2.new(0, 0, 0, contentSize)
-                    
-                    if contentSize > chatScroll.AbsoluteSize.Y then
-                        chatScroll.CanvasPosition = Vector2.new(0, contentSize - chatScroll.AbsoluteSize.Y)
-                    end
-                end
-            end
-        end)
-    end
-
-    function FrostyUltra:updateScroll()
-        self:forceScrollUpdate()
     end
 
     function FrostyUltra:addMessageUI(sender, message, isUser)
@@ -568,7 +507,7 @@ spawn(function()
         })
         FW.cTC(msgLabel, 14)
         
-        self:forceScrollUpdate()
+        self:forceScrollToBottom()
         self:cleanOldMessages()
         return msgFrame, msgLabel
     end
@@ -594,6 +533,39 @@ spawn(function()
             statusLabel.Text = "Premium access required"
             statusLabel.TextColor3 = Color3.fromRGB(255, 120, 120)
         end
+    end
+
+    local function sendMessage()
+        if isProcessing or not chat.isAuthenticated then 
+            if not chat.isAuthenticated then
+                FW.showAlert("Premium Required", "Premium access needed for Ultra AI!", 3)
+            elseif isProcessing then
+                FW.showAlert("Processing", "Please wait for current request to complete!", 2)
+            end
+            return 
+        end
+        
+        local message = inputBox.Text:gsub("^%s*(.-)%s*$", "%1")
+        if message == "" or #message > 2000 then return end
+        
+        isProcessing = true
+        chat:addMessageUI("You", message, true)
+        inputBox.Text = ""
+        
+        local _, msgLabel = chat:addMessageUI("Frosty Ultra", "Processing...", false)
+        currentThinkingLabel = msgLabel
+        
+        spawn(function()
+            local success = chat:sendMessage(message)
+            if not success then
+                if currentThinkingLabel and currentThinkingLabel.Parent then
+                    currentThinkingLabel.Text = "Connection failed. Please try again."
+                    task.wait(3)
+                    currentThinkingLabel = nil
+                    isProcessing = false
+                end
+            end
+        end)
     end
 
     aiChatPage = FW.cI(FW.getUI()["11"], {
@@ -655,30 +627,10 @@ spawn(function()
     })
     FW.cTC(statusLabel, 13)
 
-    logContainer = FW.cF(aiChatPage, {
-        BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(0.92, 0, 0.08, 0),
-        Position = UDim2.new(0.04, 0, 0.15, 0),
-        Name = "LogContainer",
-        ClipsDescendants = true
-    })
-    FW.cC(logContainer, 0.3)
-    FW.cS(logContainer, 2, Color3.fromRGB(45, 55, 70))
-
-    local logLayout = Instance.new("UIListLayout")
-    logLayout.Parent = logContainer
-    logLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    logLayout.Padding = UDim.new(0, 2)
-
-    local logPadding = Instance.new("UIPadding")
-    logPadding.PaddingTop = UDim.new(0, 5)
-    logPadding.PaddingLeft = UDim.new(0, 10)
-    logPadding.Parent = logContainer
-
     local chatContainer = FW.cF(aiChatPage, {
         BackgroundColor3 = Color3.fromRGB(45, 52, 68),
-        Size = UDim2.new(0.92, 0, 0.63, 0),
-        Position = UDim2.new(0.04, 0, 0.25, 0),
+        Size = UDim2.new(0.92, 0, 0.75, 0),
+        Position = UDim2.new(0.04, 0, 0.15, 0),
         Name = "ChatContainer",
         ClipsDescendants = true
     })
@@ -711,7 +663,7 @@ spawn(function()
     local inputContainer = FW.cF(aiChatPage, {
         BackgroundColor3 = Color3.fromRGB(45, 52, 68),
         Size = UDim2.new(0.92, 0, 0.12, 0),
-        Position = UDim2.new(0.04, 0, 0.9, 0),
+        Position = UDim2.new(0.04, 0, 0.92, 0),
         Name = "InputContainer",
         ClipsDescendants = true
     })
@@ -732,7 +684,7 @@ spawn(function()
         Size = UDim2.new(0.7, -10, 0.5, 0),
         Position = UDim2.new(0.04, 0, 0.15, 0),
         Text = "",
-        PlaceholderText = "Try: 'show me a cat', 'bandera de España', 'https://example.com/image.jpg'",
+        PlaceholderText = "Try: 'show me a cat', 'eliminar accesorios', or paste image URL",
         TextColor3 = Color3.fromRGB(240, 245, 255),
         PlaceholderColor3 = Color3.fromRGB(180, 190, 210),
         TextSize = 15,
@@ -773,42 +725,21 @@ spawn(function()
     })
     FW.cTC(connectionStatus, 12)
 
-    sendBtn.MouseButton1Click:Connect(function()
-        if isProcessing or not chat.isAuthenticated then 
-            if not chat.isAuthenticated then
-                FW.showAlert("Premium Required", "Premium access needed for Ultra AI!", 3)
-            elseif isProcessing then
-                FW.showAlert("Processing", "Please wait for current request to complete!", 2)
-            end
-            return 
-        end
-        
-        local message = inputBox.Text:gsub("^%s*(.-)%s*$", "%1")
-        if message == "" or #message > 2000 then return end
-        
-        isProcessing = true
-        chat:addMessageUI("You", message, true)
-        inputBox.Text = ""
-        
-        local _, msgLabel = chat:addMessageUI("Frosty Ultra", "Processing request...", false)
-        currentThinkingLabel = msgLabel
-        
-        spawn(function()
-            local success = chat:sendMessage(message)
-            if not success then
-                if currentThinkingLabel and currentThinkingLabel.Parent then
-                    currentThinkingLabel.Text = "Connection failed. Please try again."
-                    task.wait(3)
-                    currentThinkingLabel = nil
-                    isProcessing = false
-                end
-            end
-        end)
-    end)
+    sendBtn.MouseButton1Click:Connect(sendMessage)
 
     inputBox.FocusLost:Connect(function(enterPressed)
         if enterPressed and not isProcessing and chat.isAuthenticated then
-            sendBtn.MouseButton1Click:Fire()
+            sendMessage()
+        end
+    end)
+
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        
+        if input.KeyCode == Enum.KeyCode.Return and inputBox:IsFocused() then
+            if not isProcessing and chat.isAuthenticated then
+                sendMessage()
+            end
         end
     end)
 
