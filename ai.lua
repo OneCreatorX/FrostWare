@@ -205,7 +205,7 @@ spawn(function()
         FW.cTC(logLabel, 11)
         
         spawn(function()
-            task.wait(8)
+            task.wait(6)
             if logLabel and logLabel.Parent then
                 logLabel:Destroy()
             end
@@ -218,6 +218,7 @@ spawn(function()
             self:typewriterEffect(currentThinkingLabel, message, 0.02)
             currentThinkingLabel = nil
             isProcessing = false
+            self:forceScrollUpdate()
         end
     end
 
@@ -226,16 +227,16 @@ spawn(function()
             self:typewriterEffect(currentThinkingLabel, message, 0.02)
             
             spawn(function()
-                task.wait(1)
+                task.wait(0.8)
                 
-                local filename = "downloaded_" .. os.time() .. ".jpg"
+                local filename = "img_" .. os.time() .. "_" .. math.random(1000, 9999) .. ".jpg"
                 local assetUrl = getOrDownloadImageAsset(imageUrl, filename)
                 
                 if assetUrl then
                     self:addImageToChat(assetUrl, message)
                     
                     spawn(function()
-                        task.wait(30)
+                        task.wait(25)
                         local folder = "Images/"
                         local path = folder .. filename
                         if isfile(path) then
@@ -244,12 +245,13 @@ spawn(function()
                     end)
                 else
                     if currentThinkingLabel and currentThinkingLabel.Parent then
-                        currentThinkingLabel.Text = "Error downloading image"
+                        currentThinkingLabel.Text = "Error loading image"
                     end
                 end
                 
                 currentThinkingLabel = nil
                 isProcessing = false
+                self:forceScrollUpdate()
             end)
         end
     end
@@ -296,7 +298,7 @@ spawn(function()
         
         local imageLabel = FW.cI(msgFrame, {
             Image = imageUrl,
-            Size = UDim2.new(0.8, 0, 0, 200),
+            Size = UDim2.new(0.85, 0, 0, 220),
             Position = UDim2.new(0, 0, 0, 0),
             BackgroundColor3 = Color3.fromRGB(45, 52, 68),
             ScaleType = Enum.ScaleType.Fit,
@@ -322,7 +324,7 @@ spawn(function()
         })
         FW.cTC(msgLabel, 14)
         
-        self:updateScroll()
+        self:forceScrollUpdate()
         self:cleanOldMessages()
     end
 
@@ -347,6 +349,7 @@ spawn(function()
                 else
                     self:sendScriptError(hwid, tostring(result), script)
                 end
+                self:forceScrollUpdate()
             end)
         end
     end
@@ -357,6 +360,7 @@ spawn(function()
             task.wait(3)
             currentThinkingLabel = nil
             isProcessing = false
+            self:forceScrollUpdate()
         end
     end
 
@@ -488,18 +492,24 @@ spawn(function()
         end
     end
 
-    function FrostyUltra:updateScroll()
+    function FrostyUltra:forceScrollUpdate()
         spawn(function()
-            task.wait(0.1)
-            if chatLayout and chatLayout.Parent then
-                local contentSize = chatLayout.AbsoluteContentSize.Y + 30
-                chatScroll.CanvasSize = UDim2.new(0, 0, 0, contentSize)
-                
-                if contentSize > chatScroll.AbsoluteSize.Y then
-                    chatScroll.CanvasPosition = Vector2.new(0, contentSize - chatScroll.AbsoluteSize.Y)
+            for i = 1, 3 do
+                task.wait(0.1)
+                if chatLayout and chatLayout.Parent then
+                    local contentSize = chatLayout.AbsoluteContentSize.Y + 50
+                    chatScroll.CanvasSize = UDim2.new(0, 0, 0, contentSize)
+                    
+                    if contentSize > chatScroll.AbsoluteSize.Y then
+                        chatScroll.CanvasPosition = Vector2.new(0, contentSize - chatScroll.AbsoluteSize.Y)
+                    end
                 end
             end
         end)
+    end
+
+    function FrostyUltra:updateScroll()
+        self:forceScrollUpdate()
     end
 
     function FrostyUltra:addMessageUI(sender, message, isUser)
@@ -558,7 +568,7 @@ spawn(function()
         })
         FW.cTC(msgLabel, 14)
         
-        self:updateScroll()
+        self:forceScrollUpdate()
         self:cleanOldMessages()
         return msgFrame, msgLabel
     end
@@ -647,7 +657,7 @@ spawn(function()
 
     logContainer = FW.cF(aiChatPage, {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(0.92, 0, 0.1, 0),
+        Size = UDim2.new(0.92, 0, 0.08, 0),
         Position = UDim2.new(0.04, 0, 0.15, 0),
         Name = "LogContainer",
         ClipsDescendants = true
@@ -667,8 +677,8 @@ spawn(function()
 
     local chatContainer = FW.cF(aiChatPage, {
         BackgroundColor3 = Color3.fromRGB(45, 52, 68),
-        Size = UDim2.new(0.92, 0, 0.61, 0),
-        Position = UDim2.new(0.04, 0, 0.27, 0),
+        Size = UDim2.new(0.92, 0, 0.63, 0),
+        Position = UDim2.new(0.04, 0, 0.25, 0),
         Name = "ChatContainer",
         ClipsDescendants = true
     })
@@ -722,7 +732,7 @@ spawn(function()
         Size = UDim2.new(0.7, -10, 0.5, 0),
         Position = UDim2.new(0.04, 0, 0.15, 0),
         Text = "",
-        PlaceholderText = "Try any language: 'eliminar accesorios', 'show me a cat', 'donnez-moi vitesse'",
+        PlaceholderText = "Try: 'show me a cat', 'bandera de España', 'https://example.com/image.jpg'",
         TextColor3 = Color3.fromRGB(240, 245, 255),
         PlaceholderColor3 = Color3.fromRGB(180, 190, 210),
         TextSize = 15,
@@ -780,7 +790,7 @@ spawn(function()
         chat:addMessageUI("You", message, true)
         inputBox.Text = ""
         
-        local _, msgLabel = chat:addMessageUI("Frosty Ultra", "Starting ultra analysis...", false)
+        local _, msgLabel = chat:addMessageUI("Frosty Ultra", "Processing request...", false)
         currentThinkingLabel = msgLabel
         
         spawn(function()
