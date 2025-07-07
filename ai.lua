@@ -3,8 +3,8 @@ spawn(function()
     local FW = _G.FW
     local HttpService = game:GetService("HttpService")
     
-    local FrostyEnhanced = {}
-    FrostyEnhanced.__index = FrostyEnhanced
+    local FrostyOptimized = {}
+    FrostyOptimized.__index = FrostyOptimized
     local WS_URL = "wss://system.heatherx.site:8443"
     local chatHistory = {}
     local MAX_VISUAL_MESSAGES = 15
@@ -19,8 +19,8 @@ spawn(function()
     local statusLabel = nil
     local logContainer = nil
 
-    function FrostyEnhanced.new()
-        local self = setmetatable({}, FrostyEnhanced)
+    function FrostyOptimized.new()
+        local self = setmetatable({}, FrostyOptimized)
         self.ws = nil
         self.currentToken = nil
         self.isAuthenticated = false
@@ -31,7 +31,7 @@ spawn(function()
         return self
     end
 
-    function FrostyEnhanced:connect()
+    function FrostyOptimized:connect()
         if self.isConnecting then return false end
         self.isConnecting = true
         
@@ -71,7 +71,7 @@ spawn(function()
         return true
     end
 
-    function FrostyEnhanced:authenticate()
+    function FrostyOptimized:authenticate()
         if not self.ws then return end
         
         local authData = {
@@ -84,7 +84,7 @@ spawn(function()
         self.ws:Send(HttpService:JSONEncode(authData))
     end
 
-    function FrostyEnhanced:handleMessage(message)
+    function FrostyOptimized:handleMessage(message)
         local success, data = pcall(function()
             return HttpService:JSONDecode(message)
         end)
@@ -108,7 +108,7 @@ spawn(function()
             self:processResponse(data.message)
         elseif data.type == "execute_script" then
             self.currentToken = data.newToken
-            self:processScript(data.script, data.taskId, data.message)
+            self:processScript(data.script, data.message)
         elseif data.type == "log" then
             self:processLog(data.message, data.logType)
         elseif data.type == "error" then
@@ -119,7 +119,7 @@ spawn(function()
         end
     end
 
-    function FrostyEnhanced:processLog(message, logType)
+    function FrostyOptimized:processLog(message, logType)
         if not logContainer or not logContainer.Parent then return end
         
         local color = Color3.fromRGB(200, 200, 200)
@@ -151,7 +151,7 @@ spawn(function()
         end)
     end
 
-    function FrostyEnhanced:processResponse(message)
+    function FrostyOptimized:processResponse(message)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             table.insert(chatHistory, { role = "model", message = message })
             self:typewriterEffect(currentThinkingLabel, message, 0.02)
@@ -160,15 +160,15 @@ spawn(function()
         end
     end
 
-    function FrostyEnhanced:processScript(script, taskId, statusMessage)
+    function FrostyOptimized:processScript(script, statusMessage)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             self:typewriterEffect(currentThinkingLabel, statusMessage, 0.02)
             
             spawn(function()
                 task.wait(0.5)
-                local success, result = self:executeScript(script, taskId)
+                local success, result = self:executeScript(script)
                 
-                if not success and not taskId then
+                if not success then
                     if currentThinkingLabel and currentThinkingLabel.Parent then
                         currentThinkingLabel.Text = "Error: " .. tostring(result)
                         task.wait(3)
@@ -180,7 +180,7 @@ spawn(function()
         end
     end
 
-    function FrostyEnhanced:processError(error)
+    function FrostyOptimized:processError(error)
         if currentThinkingLabel and currentThinkingLabel.Parent then
             currentThinkingLabel.Text = "Error: " .. error
             task.wait(3)
@@ -189,30 +189,10 @@ spawn(function()
         end
     end
 
-    function FrostyEnhanced:executeScript(script, taskId)
-        local infoScript = script:match("INFO_SCRIPT_START(.-)INFO_SCRIPT_END")
+    function FrostyOptimized:executeScript(script)
         local actionScript = script:match("ACTION_SCRIPT_START(.-)ACTION_SCRIPT_END")
         
-        if infoScript then
-            local success, result = pcall(function()
-                local func = loadstring(infoScript)
-                if func then
-                    return func()
-                end
-            end)
-            
-            if success and result then
-                if taskId then
-                    self:sendScriptResult(taskId, result, true)
-                end
-                return true, result
-            else
-                if taskId then
-                    self:sendScriptResult(taskId, tostring(result), false)
-                end
-                return false, result
-            end
-        elseif actionScript then
+        if actionScript then
             local success, error = pcall(function()
                 loadstring(actionScript)()
             end)
@@ -241,21 +221,7 @@ spawn(function()
         return false, "Unknown script type"
     end
 
-    function FrostyEnhanced:sendScriptResult(taskId, result, success)
-        if not self.ws or not self.isAuthenticated then return end
-        
-        local resultData = {
-            type = "script_result",
-            taskId = taskId,
-            result = result,
-            success = success,
-            hwid = self.hwid
-        }
-        
-        self.ws:Send(HttpService:JSONEncode(resultData))
-    end
-
-    function FrostyEnhanced:sendMessage(message)
+    function FrostyOptimized:sendMessage(message)
         if not self.ws or not self.isAuthenticated or not self.currentToken then
             return false
         end
@@ -283,12 +249,12 @@ spawn(function()
         return true
     end
 
-    function FrostyEnhanced:ping()
+    function FrostyOptimized:ping()
         if not self.ws then return end
         self.ws:Send(HttpService:JSONEncode({ type = "ping" }))
     end
 
-    function FrostyEnhanced:reset()
+    function FrostyOptimized:reset()
         self.ws = nil
         self.currentToken = nil
         self.isAuthenticated = false
@@ -296,14 +262,14 @@ spawn(function()
         self.accessTime = 0
     end
 
-    function FrostyEnhanced:close()
+    function FrostyOptimized:close()
         if self.ws then
             self.ws:Close()
         end
         self:reset()
     end
 
-    function FrostyEnhanced:typewriterEffect(textLabel, fullText, speed)
+    function FrostyOptimized:typewriterEffect(textLabel, fullText, speed)
         if not textLabel or not textLabel.Parent then return end
         
         speed = speed or 0.02
@@ -321,7 +287,7 @@ spawn(function()
         end)
     end
 
-    function FrostyEnhanced:cleanOldMessages()
+    function FrostyOptimized:cleanOldMessages()
         if not chatScroll then return end
         
         local messages = {}
@@ -344,7 +310,7 @@ spawn(function()
         end
     end
 
-    function FrostyEnhanced:updateScroll()
+    function FrostyOptimized:updateScroll()
         spawn(function()
             task.wait(0.1)
             if chatLayout and chatLayout.Parent then
@@ -358,7 +324,7 @@ spawn(function()
         end)
     end
 
-    local chat = FrostyEnhanced.new()
+    local chat = FrostyOptimized.new()
 
     local function addMessageUI(sender, message, isUser)
         messageCount = messageCount + 1
@@ -425,14 +391,14 @@ spawn(function()
         if not connectionStatus or not statusLabel then return end
         
         if chat.isAuthenticated then
-            connectionStatus.Text = "🟢 Enhanced AI Active"
+            connectionStatus.Text = "🟢 Optimized AI Active"
             connectionStatus.TextColor3 = Color3.fromRGB(100, 255, 150)
-            statusLabel.Text = "Frosty Enhanced AI Ready!"
+            statusLabel.Text = "Frosty Optimized AI Ready!"
             statusLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
         elseif chat.isConnecting then
             connectionStatus.Text = "🟡 Connecting..."
             connectionStatus.TextColor3 = Color3.fromRGB(255, 220, 120)
-            statusLabel.Text = "Connecting to Enhanced AI..."
+            statusLabel.Text = "Connecting to Optimized AI..."
             statusLabel.TextColor3 = Color3.fromRGB(255, 220, 120)
         else
             connectionStatus.Text = "🔴 Premium Required"
@@ -474,7 +440,7 @@ spawn(function()
     FW.cC(headerPanel, 0.35)
 
     local title = FW.cT(headerPanel, {
-        Text = "Frosty Enhanced AI",
+        Text = "Frosty Optimized AI",
         TextSize = 24,
         TextColor3 = Color3.fromRGB(100, 255, 150),
         BackgroundTransparency = 1,
@@ -488,7 +454,7 @@ spawn(function()
     FW.cTC(title, 24)
 
     statusLabel = FW.cT(headerPanel, {
-        Text = "Connecting to Enhanced AI...",
+        Text = "Connecting to Optimized AI...",
         TextSize = 13,
         TextColor3 = Color3.fromRGB(255, 220, 120),
         BackgroundTransparency = 1,
@@ -578,7 +544,7 @@ spawn(function()
         Size = UDim2.new(0.7, -10, 0.5, 0),
         Position = UDim2.new(0.04, 0, 0.15, 0),
         Text = "",
-        PlaceholderText = "Ask Frosty Enhanced anything...",
+        PlaceholderText = "Ask Frosty Optimized for actions...",
         TextColor3 = Color3.fromRGB(240, 245, 255),
         PlaceholderColor3 = Color3.fromRGB(180, 190, 210),
         TextSize = 15,
@@ -622,7 +588,7 @@ spawn(function()
     sendBtn.MouseButton1Click:Connect(function()
         if isProcessing or not chat.isAuthenticated then 
             if not chat.isAuthenticated then
-                FW.showAlert("Premium Required", "Premium access needed for Enhanced AI!", 3)
+                FW.showAlert("Premium Required", "Premium access needed for Optimized AI!", 3)
             elseif isProcessing then
                 FW.showAlert("Processing", "Please wait for current request to complete!", 2)
             end
@@ -636,7 +602,7 @@ spawn(function()
         addMessageUI("You", message, true)
         inputBox.Text = ""
         
-        local _, msgLabel = addMessageUI("Frosty Enhanced", "Iniciando procesamiento...", false)
+        local _, msgLabel = addMessageUI("Frosty Optimized", "Procesando solicitud...", false)
         currentThinkingLabel = msgLabel
         
         spawn(function()
@@ -664,8 +630,8 @@ spawn(function()
         end
     end)
 
-    local welcomeMessage = "¡Bienvenido a Frosty Enhanced AI, " .. game.Players.LocalPlayer.Name .. "! Soy la versión más avanzada con validación de scripts, logging en tiempo real, manejo robusto de errores y recuperación automática. Puedo ejecutar acciones complejas, obtener información del juego y corregir scripts automáticamente. ¡Todo funciona de manera inteligente y confiable!"
-    addMessageUI("Frosty Enhanced", welcomeMessage, false)
+    local welcomeMessage = "¡Bienvenido a Frosty Optimized AI, " .. game.Players.LocalPlayer.Name .. "! Soy la versión optimizada enfocada en ejecutar acciones avanzadas en Roblox. Puedo darte velocidad, hacerte volar, teletransportarte, eliminar jugadores, darte noclip, invisibilidad, salto infinito y mucho más. ¡Pídeme cualquier acción y la ejecutaré al instante!"
+    addMessageUI("Frosty Optimized", welcomeMessage, false)
 
     local sidebar = FW.getUI()["6"]:FindFirstChild("Sidebar")
     if sidebar then
@@ -731,7 +697,7 @@ spawn(function()
             FW.cTC(clk, 14)
             return btn, clk
         end
-        local aiBtn, aiClk = cSBtn("EnhancedAI", "Enhanced AI", "rbxassetid://6034229496", UDim2.new(0.088, 0, 0.582, 0), false)
+        local aiBtn, aiClk = cSBtn("OptimizedAI", "Optimized AI", "rbxassetid://6034229496", UDim2.new(0.088, 0, 0.582, 0), false)
         aiClk.MouseButton1Click:Connect(function()
             FW.switchPage("AIChat", sidebar)
         end)
