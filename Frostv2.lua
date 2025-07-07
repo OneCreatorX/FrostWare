@@ -24,7 +24,7 @@ function FrostyChat.new()
     self.currentToken = nil
     self.isAuthenticated = false
     self.isConnecting = false
-    self.hwid = gethwid and gethwid() or "1234567890abcdef"
+    self.hwid = gethwid and gethwid()
     self.user = game.Players.LocalPlayer.Name
     
     return self
