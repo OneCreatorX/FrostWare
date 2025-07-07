@@ -67,73 +67,64 @@ spawn(function()
                     child:Destroy()
                 end
             end
-            local yPos = 0
+            local yPos = 10
             for name, content in pairs(localScripts) do
-                local sF = FW.cF(scriptsScrollRef, {
-                    BackgroundColor3 = Color3.fromRGB(40, 45, 60),
-                    Size = UDim2.new(1, 0, 0, 80),
-                    Position = UDim2.new(0, 0, 0, yPos),
-                    Name = "Script_" .. name
+                local scriptCard = FW.cF(scriptsScrollRef, {
+                    BackgroundColor3 = Color3.fromRGB(52, 58, 70),
+                    Size = UDim2.new(1, -20, 0, 70),
+                    Position = UDim2.new(0, 10, 0, yPos),
+                    Name = "ScriptCard_" .. name
                 })
-                FW.cC(sF, 0.15)
-                FW.cS(sF, 1, Color3.fromRGB(60, 70, 90))
+                FW.cC(scriptCard, 0.4)
 
-                local sBtn = FW.cB(sF, {
-                    BackgroundColor3 = Color3.fromRGB(50, 60, 80),
-                    Size = UDim2.new(0.55, 0, 0.7, 0),
-                    Position = UDim2.new(0.03, 0, 0.15, 0),
+                local scriptNameBtn = FW.cB(scriptCard, {
+                    BackgroundColor3 = Color3.fromRGB(66, 73, 88),
+                    Size = UDim2.new(0.5, -10, 1, -20),
+                    Position = UDim2.new(0, 10, 0, 10),
                     Text = name,
-                    TextColor3 = Color3.fromRGB(220, 230, 245),
-                    TextSize = 18,
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 16,
                     TextScaled = true,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
                 })
-                FW.cC(sBtn, 0.15)
-                FW.cTC(sBtn, 18)
+                FW.cC(scriptNameBtn, 0.5)
+                FW.cTC(scriptNameBtn, 16)
 
-                sBtn.MouseEnter:Connect(function()
-                    sBtn.BackgroundColor3 = Color3.fromRGB(60, 75, 100)
-                end)
-                sBtn.MouseLeave:Connect(function()
-                    sBtn.BackgroundColor3 = Color3.fromRGB(50, 60, 80)
-                end)
-
-                local loadBtn = FW.cB(sF, {
-                    BackgroundColor3 = Color3.fromRGB(70, 120, 200),
-                    Size = UDim2.new(0.15, 0, 0.5, 0),
-                    Position = UDim2.new(0.6, 0, 0.25, 0),
+                local loadBtn = FW.cB(scriptCard, {
+                    BackgroundColor3 = Color3.fromRGB(91, 110, 225),
+                    Size = UDim2.new(0.2, -5, 0.6, 0),
+                    Position = UDim2.new(0.52, 0, 0.2, 0),
                     Text = "Load",
                     TextColor3 = Color3.fromRGB(255, 255, 255),
-                    TextSize = 16,
+                    TextSize = 14,
                     TextScaled = true,
                     FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
                 })
-                FW.cC(loadBtn, 0.2)
-                FW.cTC(loadBtn, 16)
+                FW.cC(loadBtn, 0.5)
+                FW.cTC(loadBtn, 14)
 
-                local delBtn = FW.cB(sF, {
-                    BackgroundColor3 = Color3.fromRGB(180, 70, 70),
-                    Size = UDim2.new(0.15, 0, 0.5, 0),
-                    Position = UDim2.new(0.77, 0, 0.25, 0),
+                local deleteBtn = FW.cB(scriptCard, {
+                    BackgroundColor3 = Color3.fromRGB(225, 91, 91),
+                    Size = UDim2.new(0.2, -5, 0.6, 0),
+                    Position = UDim2.new(0.74, 0, 0.2, 0),
                     Text = "Delete",
                     TextColor3 = Color3.fromRGB(255, 255, 255),
-                    TextSize = 16,
+                    TextSize = 14,
                     TextScaled = true,
                     FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
                 })
-                FW.cC(delBtn, 0.2)
-                FW.cTC(delBtn, 16)
+                FW.cC(deleteBtn, 0.5)
+                FW.cTC(deleteBtn, 14)
 
-                local statusDot = FW.cF(sF, {
-                    BackgroundColor3 = defScripts[name] and Color3.fromRGB(100, 180, 100) or Color3.fromRGB(200, 150, 100),
-                    Size = UDim2.new(0.02, 0, 0.3, 0),
-                    Position = UDim2.new(0.95, 0, 0.35, 0),
-                    Name = "StatusDot"
-                })
-                FW.cC(statusDot, 1)
+                scriptNameBtn.MouseEnter:Connect(function()
+                    scriptNameBtn.BackgroundColor3 = Color3.fromRGB(76, 83, 98)
+                end)
+                scriptNameBtn.MouseLeave:Connect(function()
+                    scriptNameBtn.BackgroundColor3 = Color3.fromRGB(66, 73, 88)
+                end)
 
-                sBtn.MouseButton1Click:Connect(function()
+                scriptNameBtn.MouseButton1Click:Connect(function()
                     FW.showAlert("Success", name .. " executing...", 2)
                     local success, result = pcall(function()
                         return loadstring(content)
@@ -141,12 +132,12 @@ spawn(function()
                     if success and result then
                         local execSuccess, execErr = pcall(result)
                         if execSuccess then
-                            FW.showAlert("Success", name .. " executed successfully!", 2)
+                            FW.showAlert("Success", name .. " executed!", 2)
                         else
                             FW.showAlert("Error", "Execution failed!", 3)
                         end
                     else
-                        FW.showAlert("Error", "Script compilation failed!", 3)
+                        FW.showAlert("Error", "Compilation failed!", 3)
                     end
                 end)
 
@@ -159,7 +150,7 @@ spawn(function()
                     end
                 end)
 
-                delBtn.MouseButton1Click:Connect(function()
+                deleteBtn.MouseButton1Click:Connect(function()
                     if not defScripts[name] then
                         localScripts[name] = nil
                         if isfile(scriptsDir .. name .. ".lua") then
@@ -177,66 +168,62 @@ spawn(function()
                     end
                 end)
 
-                yPos = yPos + 85
+                yPos = yPos + 80
             end
-            scriptsScrollRef.CanvasSize = UDim2.new(0, 0, 0, yPos)
+            scriptsScrollRef.CanvasSize = UDim2.new(0, 0, 0, yPos + 10)
         end
     end
 
-    local function createBtn(parent, data, index)
-        local yPos = (index - 1) * 140
-        local btn = FW.cF(parent, {
-            BackgroundColor3 = Color3.fromRGB(40, 45, 60),
-            Size = UDim2.new(0.96, 0, 0, 130),
-            Position = UDim2.new(0.02, 0, 0, yPos),
-            Name = "ScriptBtn"
+    local function createCloudBtn(parent, data, index)
+        local yPos = (index - 1) * 120 + 10
+        local cloudCard = FW.cF(parent, {
+            BackgroundColor3 = Color3.fromRGB(52, 58, 70),
+            Size = UDim2.new(1, -20, 0, 110),
+            Position = UDim2.new(0, 10, 0, yPos),
+            Name = "CloudCard"
         })
-        FW.cC(btn, 0.15)
-        FW.cS(btn, 1, Color3.fromRGB(60, 70, 90))
+        FW.cC(cloudCard, 0.4)
 
-        local titleLbl = FW.cT(btn, {
+        local titleLbl = FW.cT(cloudCard, {
             Text = data.title or "Unknown Script",
-            TextSize = 20,
-            TextColor3 = Color3.fromRGB(220, 230, 245),
+            TextSize = 18,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
             BackgroundTransparency = 1,
             Size = UDim2.new(0.9, 0, 0.3, 0),
-            Position = UDim2.new(0.05, 0, 0.08, 0),
+            Position = UDim2.new(0.05, 0, 0.1, 0),
             TextScaled = true,
             TextXAlignment = Enum.TextXAlignment.Left,
-            TextYAlignment = Enum.TextYAlignment.Top,
             FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
         })
-        FW.cTC(titleLbl, 20)
+        FW.cTC(titleLbl, 18)
 
-        local gameLbl = FW.cT(btn, {
-            Text = "🎮 " .. (data.game and data.game.name or "Universal"),
-            TextSize = 16,
-            TextColor3 = Color3.fromRGB(180, 190, 210),
+        local gameLbl = FW.cT(cloudCard, {
+            Text = "Game: " .. (data.game and data.game.name or "Universal"),
+            TextSize = 14,
+            TextColor3 = Color3.fromRGB(200, 200, 200),
             BackgroundTransparency = 1,
-            Size = UDim2.new(0.9, 0, 0.25, 0),
+            Size = UDim2.new(0.9, 0, 0.2, 0),
             Position = UDim2.new(0.05, 0, 0.4, 0),
             TextScaled = true,
             TextXAlignment = Enum.TextXAlignment.Left,
-            TextYAlignment = Enum.TextYAlignment.Top,
-            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
-        })
-        FW.cTC(gameLbl, 16)
-
-        local statsLbl = FW.cT(btn, {
-            Text = "👁️ " .. (data.views or "0") .. " | ⭐ " .. (data.likeCount or "0") .. " | 📅 " .. (data.createdAt and string.sub(data.createdAt, 1, 10) or "Unknown"),
-            TextSize = 14,
-            TextColor3 = Color3.fromRGB(150, 160, 180),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0.9, 0, 0.25, 0),
-            Position = UDim2.new(0.05, 0, 0.7, 0),
-            TextScaled = true,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextYAlignment = Enum.TextYAlignment.Top,
             FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
         })
-        FW.cTC(statsLbl, 14)
+        FW.cTC(gameLbl, 14)
 
-        local clickBtn = FW.cB(btn, {
+        local statsLbl = FW.cT(cloudCard, {
+            Text = "Views: " .. (data.views or "0") .. " | Likes: " .. (data.likeCount or "0"),
+            TextSize = 12,
+            TextColor3 = Color3.fromRGB(170, 170, 170),
+            BackgroundTransparency = 1,
+            Size = UDim2.new(0.9, 0, 0.2, 0),
+            Position = UDim2.new(0.05, 0, 0.65, 0),
+            TextScaled = true,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+        })
+        FW.cTC(statsLbl, 12)
+
+        local clickBtn = FW.cB(cloudCard, {
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0),
             Text = "",
@@ -244,10 +231,10 @@ spawn(function()
         })
 
         clickBtn.MouseEnter:Connect(function()
-            btn.BackgroundColor3 = Color3.fromRGB(50, 55, 75)
+            cloudCard.BackgroundColor3 = Color3.fromRGB(62, 68, 80)
         end)
         clickBtn.MouseLeave:Connect(function()
-            btn.BackgroundColor3 = Color3.fromRGB(40, 45, 60)
+            cloudCard.BackgroundColor3 = Color3.fromRGB(52, 58, 70)
         end)
 
         clickBtn.MouseButton1Click:Connect(function()
@@ -255,7 +242,7 @@ spawn(function()
             showOpts(data)
         end)
 
-        return btn
+        return cloudCard
     end
 
     function showOpts(data)
@@ -267,27 +254,26 @@ spawn(function()
         local mainUI = ui["11"]
 
         scriptF = FW.cF(mainUI, {
-            BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-            Size = UDim2.new(0.8, 0, 0.7, 0),
-            Position = UDim2.new(0.1, 0, 0.15, 0),
+            BackgroundColor3 = Color3.fromRGB(42, 47, 56),
+            Size = UDim2.new(0.7, 0, 0.8, 0),
+            Position = UDim2.new(0.15, 0, 0.1, 0),
             Name = "ScriptFrame",
             ZIndex = 10
         })
-        FW.cC(scriptF, 0.15)
-        FW.cS(scriptF, 3, Color3.fromRGB(70, 120, 200))
+        FW.cC(scriptF, 0.4)
 
         local titleBar = FW.cF(scriptF, {
-            BackgroundColor3 = Color3.fromRGB(35, 40, 55),
-            Size = UDim2.new(1, 0, 0.12, 0),
+            BackgroundColor3 = Color3.fromRGB(52, 58, 70),
+            Size = UDim2.new(1, 0, 0.1, 0),
             Position = UDim2.new(0, 0, 0, 0),
             Name = "TitleBar"
         })
-        FW.cC(titleBar, 0.15)
+        FW.cC(titleBar, 0.4)
 
         local title = FW.cT(titleBar, {
             Text = data.title or "Script Options",
-            TextSize = 22,
-            TextColor3 = Color3.fromRGB(220, 230, 245),
+            TextSize = 20,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
             BackgroundTransparency = 1,
             Size = UDim2.new(0.8, 0, 1, 0),
             Position = UDim2.new(0.05, 0, 0, 0),
@@ -295,19 +281,19 @@ spawn(function()
             TextXAlignment = Enum.TextXAlignment.Left,
             FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
         })
-        FW.cTC(title, 22)
+        FW.cTC(title, 20)
 
         local closeBtn = FW.cB(titleBar, {
-            BackgroundColor3 = Color3.fromRGB(180, 70, 70),
-            Size = UDim2.new(0.1, 0, 0.7, 0),
-            Position = UDim2.new(0.88, 0, 0.15, 0),
-            Text = "✕",
+            BackgroundColor3 = Color3.fromRGB(225, 91, 91),
+            Size = UDim2.new(0.08, 0, 0.6, 0),
+            Position = UDim2.new(0.9, 0, 0.2, 0),
+            Text = "×",
             TextColor3 = Color3.fromRGB(255, 255, 255),
             TextSize = 18,
             TextScaled = true,
             FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
         })
-        FW.cC(closeBtn, 0.2)
+        FW.cC(closeBtn, 0.5)
         FW.cTC(closeBtn, 18)
 
         closeBtn.MouseButton1Click:Connect(function()
@@ -318,108 +304,116 @@ spawn(function()
         end)
 
         local contentF = FW.cF(scriptF, {
-            BackgroundColor3 = Color3.fromRGB(30, 35, 50),
+            BackgroundTransparency = 1,
             Size = UDim2.new(0.95, 0, 0.85, 0),
-            Position = UDim2.new(0.025, 0, 0.14, 0),
+            Position = UDim2.new(0.025, 0, 0.12, 0),
             Name = "ContentFrame"
         })
-        FW.cC(contentF, 0.12)
 
-        local infoLbl = FW.cT(contentF, {
-            Text = "🎮 " .. (data.game and data.game.name or "Universal") .. "\n👁️ " .. (data.views or "0") .. " views | ⭐ " .. (data.likeCount or "0") .. " likes\n👤 " .. (data.owner and data.owner.username or "Unknown"),
-            TextSize = 16,
-            TextColor3 = Color3.fromRGB(200, 210, 225),
+        local infoPanel = FW.cF(contentF, {
+            BackgroundColor3 = Color3.fromRGB(52, 58, 70),
+            Size = UDim2.new(1, 0, 0.2, 0),
+            Position = UDim2.new(0, 0, 0, 0),
+            Name = "InfoPanel"
+        })
+        FW.cC(infoPanel, 0.4)
+
+        local infoLbl = FW.cT(infoPanel, {
+            Text = "Game: " .. (data.game and data.game.name or "Universal") .. "\nViews: " .. (data.views or "0") .. " | Likes: " .. (data.likeCount or "0") .. "\nAuthor: " .. (data.owner and data.owner.username or "Unknown"),
+            TextSize = 14,
+            TextColor3 = Color3.fromRGB(220, 220, 220),
             BackgroundTransparency = 1,
-            Size = UDim2.new(0.9, 0, 0.2, 0),
-            Position = UDim2.new(0.05, 0, 0.05, 0),
+            Size = UDim2.new(0.9, 0, 0.8, 0),
+            Position = UDim2.new(0.05, 0, 0.1, 0),
             TextScaled = true,
             TextYAlignment = Enum.TextYAlignment.Top,
             FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
         })
-        FW.cTC(infoLbl, 16)
+        FW.cTC(infoLbl, 14)
 
-        local execBtn = FW.cF(contentF, {
-            BackgroundColor3 = Color3.fromRGB(100, 180, 100),
-            Size = UDim2.new(0.28, 0, 0.15, 0),
-            Position = UDim2.new(0.05, 0, 0.28, 0),
-            Name = "ExecuteBtn"
-        })
-        FW.cC(execBtn, 0.2)
-
-        local execLbl = FW.cT(execBtn, {
-            Text = "▶️ Execute",
-            TextSize = 18,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
+        local buttonPanel = FW.cF(contentF, {
             BackgroundTransparency = 1,
-            Size = UDim2.new(0.9, 0, 0.8, 0),
-            Position = UDim2.new(0.05, 0, 0.1, 0),
+            Size = UDim2.new(1, 0, 0.15, 0),
+            Position = UDim2.new(0, 0, 0.25, 0),
+            Name = "ButtonPanel"
+        })
+
+        local execBtn = FW.cB(buttonPanel, {
+            BackgroundColor3 = Color3.fromRGB(91, 110, 225),
+            Size = UDim2.new(0.3, -10, 1, 0),
+            Position = UDim2.new(0, 0, 0, 0),
+            Text = "Execute Script",
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextSize = 16,
             TextScaled = true,
             FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
         })
-        FW.cTC(execLbl, 18)
+        FW.cC(execBtn, 0.5)
+        FW.cTC(execBtn, 16)
 
-        local copyBtn = FW.cF(contentF, {
-            BackgroundColor3 = Color3.fromRGB(200, 150, 100),
-            Size = UDim2.new(0.28, 0, 0.15, 0),
-            Position = UDim2.new(0.36, 0, 0.28, 0),
-            Name = "CopyBtn"
-        })
-        FW.cC(copyBtn, 0.2)
-
-        local copyLbl = FW.cT(copyBtn, {
-            Text = "📋 Copy",
-            TextSize = 18,
+        local copyBtn = FW.cB(buttonPanel, {
+            BackgroundColor3 = Color3.fromRGB(91, 110, 225),
+            Size = UDim2.new(0.3, -10, 1, 0),
+            Position = UDim2.new(0.35, 5, 0, 0),
+            Text = "Copy Script",
             TextColor3 = Color3.fromRGB(255, 255, 255),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0.9, 0, 0.8, 0),
-            Position = UDim2.new(0.05, 0, 0.1, 0),
+            TextSize = 16,
             TextScaled = true,
             FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
         })
-        FW.cTC(copyLbl, 18)
+        FW.cC(copyBtn, 0.5)
+        FW.cTC(copyBtn, 16)
 
-        local saveBtn = FW.cF(contentF, {
-            BackgroundColor3 = Color3.fromRGB(70, 120, 200),
-            Size = UDim2.new(0.28, 0, 0.15, 0),
-            Position = UDim2.new(0.67, 0, 0.28, 0),
-            Name = "SaveBtn"
-        })
-        FW.cC(saveBtn, 0.2)
-
-        local saveLbl = FW.cT(saveBtn, {
-            Text = "💾 Save",
-            TextSize = 18,
+        local saveBtn = FW.cB(buttonPanel, {
+            BackgroundColor3 = Color3.fromRGB(91, 110, 225),
+            Size = UDim2.new(0.3, -10, 1, 0),
+            Position = UDim2.new(0.7, 10, 0, 0),
+            Text = "Save Local",
             TextColor3 = Color3.fromRGB(255, 255, 255),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0.9, 0, 0.8, 0),
-            Position = UDim2.new(0.05, 0, 0.1, 0),
+            TextSize = 16,
             TextScaled = true,
             FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
         })
-        FW.cTC(saveLbl, 18)
+        FW.cC(saveBtn, 0.5)
+        FW.cTC(saveBtn, 16)
 
-        local execClick = FW.cB(execBtn, {
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, 0),
-            Text = "",
-            ZIndex = 5
+        local previewPanel = FW.cF(contentF, {
+            BackgroundColor3 = Color3.fromRGB(52, 58, 70),
+            Size = UDim2.new(1, 0, 0.55, 0),
+            Position = UDim2.new(0, 0, 0.45, 0),
+            Name = "PreviewPanel"
         })
+        FW.cC(previewPanel, 0.4)
 
-        local copyClick = FW.cB(copyBtn, {
+        local previewTitle = FW.cT(previewPanel, {
+            Text = "Script Preview",
+            TextSize = 16,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, 0),
-            Text = "",
-            ZIndex = 5
+            Size = UDim2.new(0.9, 0, 0.1, 0),
+            Position = UDim2.new(0.05, 0, 0.05, 0),
+            TextScaled = true,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
         })
+        FW.cTC(previewTitle, 16)
 
-        local saveClick = FW.cB(saveBtn, {
+        local previewText = FW.cT(previewPanel, {
+            Text = data.script and string.sub(data.script, 1, 500) .. "..." or "Loading preview...",
+            TextSize = 11,
+            TextColor3 = Color3.fromRGB(200, 200, 200),
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, 0),
-            Text = "",
-            ZIndex = 5
+            Size = UDim2.new(0.9, 0, 0.8, 0),
+            Position = UDim2.new(0.05, 0, 0.15, 0),
+            TextScaled = false,
+            TextWrapped = true,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Top,
+            FontFace = Font.new("rbxasset://fonts/families/Inconsolata.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
         })
+        FW.cTC(previewText, 11)
 
-        execClick.MouseButton1Click:Connect(function()
+        execBtn.MouseButton1Click:Connect(function()
             spawn(function()
                 local scriptContent = nil
                 if data.script then
@@ -444,12 +438,12 @@ spawn(function()
                     if success and result then
                         local execSuccess, execErr = pcall(result)
                         if execSuccess then
-                            FW.showAlert("Success", "Script executed successfully!", 2)
+                            FW.showAlert("Success", "Script executed!", 2)
                         else
                             FW.showAlert("Error", "Execution failed!", 3)
                         end
                     else
-                        FW.showAlert("Error", "Script compilation failed!", 3)
+                        FW.showAlert("Error", "Compilation failed!", 3)
                     end
                 else
                     FW.showAlert("Error", "Failed to fetch script!", 3)
@@ -457,7 +451,7 @@ spawn(function()
             end)
         end)
 
-        copyClick.MouseButton1Click:Connect(function()
+        copyBtn.MouseButton1Click:Connect(function()
             spawn(function()
                 local scriptContent = nil
                 if data.script then
@@ -476,14 +470,14 @@ spawn(function()
 
                 if scriptContent and setclipboard then
                     setclipboard(scriptContent)
-                    FW.showAlert("Success", "Script copied to clipboard!", 2)
+                    FW.showAlert("Success", "Script copied!", 2)
                 else
-                    FW.showAlert("Error", "Failed to copy script!", 3)
+                    FW.showAlert("Error", "Failed to copy!", 3)
                 end
             end)
         end)
 
-        saveClick.MouseButton1Click:Connect(function()
+        saveBtn.MouseButton1Click:Connect(function()
             spawn(function()
                 local scriptContent = nil
                 if data.script then
@@ -502,48 +496,12 @@ spawn(function()
 
                 if scriptContent then
                     saveScript(data.title or "CloudScript_" .. tick(), scriptContent)
-                    FW.showAlert("Success", "Script saved locally!", 2)
+                    FW.showAlert("Success", "Script saved!", 2)
                 else
-                    FW.showAlert("Error", "Failed to save script!", 3)
+                    FW.showAlert("Error", "Failed to save!", 3)
                 end
             end)
         end)
-
-        local prevF = FW.cF(contentF, {
-            BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-            Size = UDim2.new(0.9, 0, 0.45, 0),
-            Position = UDim2.new(0.05, 0, 0.48, 0),
-            Name = "PreviewFrame"
-        })
-        FW.cC(prevF, 0.12)
-        FW.cS(prevF, 1, Color3.fromRGB(50, 60, 80))
-
-        local prevLbl = FW.cT(prevF, {
-            Text = "📄 Script Preview",
-            TextSize = 16,
-            TextColor3 = Color3.fromRGB(180, 190, 210),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0.9, 0, 0.12, 0),
-            Position = UDim2.new(0.05, 0, 0.05, 0),
-            TextScaled = true,
-            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-        })
-        FW.cTC(prevLbl, 16)
-
-        local prevTxt = FW.cT(prevF, {
-            Text = data.script and string.sub(data.script, 1, 400) .. "..." or "Loading preview...",
-            TextSize = 12,
-            TextColor3 = Color3.fromRGB(200, 210, 225),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0.9, 0, 0.8, 0),
-            Position = UDim2.new(0.05, 0, 0.18, 0),
-            TextScaled = false,
-            TextWrapped = true,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextYAlignment = Enum.TextYAlignment.Top,
-            FontFace = Font.new("rbxasset://fonts/families/Inconsolata.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
-        })
-        FW.cTC(prevTxt, 12)
     end
 
     local function searchScripts(query, maxResults)
@@ -563,20 +521,20 @@ spawn(function()
 
     local function displayScripts(scripts, scrollFrame)
         for _, child in pairs(scrollFrame:GetChildren()) do
-            if child.Name == "ScriptBtn" then
+            if child.Name == "CloudCard" then
                 child:Destroy()
             end
         end
         for i, script in pairs(scripts) do
-            createBtn(scrollFrame, script, i)
+            createCloudBtn(scrollFrame, script, i)
         end
-        local totalHeight = #scripts * 140 + 20
+        local totalHeight = #scripts * 120 + 20
         scrollFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
     end
 
     local scriptsPage = FW.cI(FW.getUI()["11"], {
         ImageTransparency = 1,
-        ImageColor3 = Color3.fromRGB(20, 25, 35),
+        ImageColor3 = Color3.fromRGB(42, 47, 56),
         Image = "rbxassetid://76734110237026",
         Size = UDim2.new(1.001, 0, 1, 0),
         Visible = false,
@@ -586,294 +544,226 @@ spawn(function()
         Position = UDim2.new(-0.001, 0, 0, 0)
     })
 
-    local title = FW.cT(scriptsPage, {
-        Text = "Scripts Hub",
-        TextSize = 32,
-        TextColor3 = Color3.fromRGB(220, 230, 245),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0.08, 0),
-        Position = UDim2.new(0, 0, 0.02, 0),
-        TextScaled = true,
-        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-    })
-    FW.cTC(title, 32)
-
-    local mainF = FW.cF(scriptsPage, {
-        BackgroundColor3 = Color3.fromRGB(30, 35, 50),
-        Size = UDim2.new(0.95, 0, 0.85, 0),
-        Position = UDim2.new(0.025, 0, 0.12, 0),
-        Name = "MainFrame"
-    })
-    FW.cC(mainF, 0.12)
-    FW.cS(mainF, 2, Color3.fromRGB(50, 60, 80))
-
-    local tabF = FW.cF(mainF, {
-        BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(0.95, 0, 0.08, 0),
+    local headerPanel = FW.cF(scriptsPage, {
+        BackgroundColor3 = Color3.fromRGB(52, 58, 70),
+        Size = UDim2.new(0.95, 0, 0.12, 0),
         Position = UDim2.new(0.025, 0, 0.02, 0),
-        Name = "TabFrame"
+        Name = "HeaderPanel"
     })
-    FW.cC(tabF, 0.12)
-    FW.cS(tabF, 1, Color3.fromRGB(45, 55, 75))
+    FW.cC(headerPanel, 0.4)
 
-    local localTab = FW.cF(tabF, {
-        BackgroundColor3 = Color3.fromRGB(70, 120, 200),
-        Size = UDim2.new(0.45, 0, 0.75, 0),
-        Position = UDim2.new(0.05, 0, 0.125, 0),
-        Name = "LocalTab"
-    })
-    FW.cC(localTab, 0.2)
-
-    local localLbl = FW.cT(localTab, {
-        Text = "💻 Local Scripts",
-        TextSize = 18,
+    local title = FW.cT(headerPanel, {
+        Text = "Scripts Hub",
+        TextSize = 28,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         BackgroundTransparency = 1,
-        Size = UDim2.new(0.9, 0, 0.8, 0),
+        Size = UDim2.new(0.4, 0, 0.5, 0),
         Position = UDim2.new(0.05, 0, 0.1, 0),
+        TextScaled = true,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    })
+    FW.cTC(title, 28)
+
+    local localTabBtn = FW.cB(headerPanel, {
+        BackgroundColor3 = Color3.fromRGB(91, 110, 225),
+        Size = UDim2.new(0.2, 0, 0.4, 0),
+        Position = UDim2.new(0.5, 0, 0.3, 0),
+        Text = "Local Scripts",
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 16,
         TextScaled = true,
         FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
     })
-    FW.cTC(localLbl, 18)
+    FW.cC(localTabBtn, 0.5)
+    FW.cTC(localTabBtn, 16)
 
-    local localClick = FW.cB(localTab, {
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0),
-        Text = "",
-        ZIndex = 5
-    })
-
-    local cloudTab = FW.cF(tabF, {
-        BackgroundColor3 = Color3.fromRGB(60, 70, 90),
-        Size = UDim2.new(0.45, 0, 0.75, 0),
-        Position = UDim2.new(0.52, 0, 0.125, 0),
-        Name = "CloudTab"
-    })
-    FW.cC(cloudTab, 0.2)
-
-    local cloudLbl = FW.cT(cloudTab, {
-        Text = "☁️ Cloud Scripts",
-        TextSize = 18,
-        TextColor3 = Color3.fromRGB(200, 210, 225),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0.9, 0, 0.8, 0),
-        Position = UDim2.new(0.05, 0, 0.1, 0),
+    local cloudTabBtn = FW.cB(headerPanel, {
+        BackgroundColor3 = Color3.fromRGB(66, 73, 88),
+        Size = UDim2.new(0.2, 0, 0.4, 0),
+        Position = UDim2.new(0.72, 0, 0.3, 0),
+        Text = "Cloud Scripts",
+        TextColor3 = Color3.fromRGB(200, 200, 200),
+        TextSize = 16,
         TextScaled = true,
         FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
     })
-    FW.cTC(cloudLbl, 18)
+    FW.cC(cloudTabBtn, 0.5)
+    FW.cTC(cloudTabBtn, 16)
 
-    local cloudClick = FW.cB(cloudTab, {
+    localF = FW.cF(scriptsPage, {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0),
-        Text = "",
-        ZIndex = 5
-    })
-
-    localF = FW.cF(mainF, {
-        BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(0.95, 0, 0.87, 0),
-        Position = UDim2.new(0.025, 0, 0.11, 0),
+        Size = UDim2.new(0.95, 0, 0.83, 0),
+        Position = UDim2.new(0.025, 0, 0.15, 0),
         Name = "LocalFrame",
         Visible = true
     })
-    FW.cC(localF, 0.12)
-    FW.cS(localF, 1, Color3.fromRGB(45, 55, 75))
 
-    cloudF = FW.cF(mainF, {
-        BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(0.95, 0, 0.87, 0),
-        Position = UDim2.new(0.025, 0, 0.11, 0),
+    cloudF = FW.cF(scriptsPage, {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0.95, 0, 0.83, 0),
+        Position = UDim2.new(0.025, 0, 0.15, 0),
         Name = "CloudFrame",
         Visible = false
     })
-    FW.cC(cloudF, 0.12)
-    FW.cS(cloudF, 1, Color3.fromRGB(45, 55, 75))
 
-    local inputF = FW.cF(localF, {
-        BackgroundColor3 = Color3.fromRGB(35, 40, 55),
-        Size = UDim2.new(0.95, 0, 0.22, 0),
-        Position = UDim2.new(0.025, 0, 0.02, 0),
-        Name = "InputFrame"
+    local inputPanel = FW.cF(localF, {
+        BackgroundColor3 = Color3.fromRGB(52, 58, 70),
+        Size = UDim2.new(1, 0, 0.25, 0),
+        Position = UDim2.new(0, 0, 0, 0),
+        Name = "InputPanel"
     })
-    FW.cC(inputF, 0.12)
-    FW.cS(inputF, 1, Color3.fromRGB(55, 65, 85))
+    FW.cC(inputPanel, 0.4)
 
-    local nameBox = FW.cTB(inputF, {
-        BackgroundColor3 = Color3.fromRGB(45, 50, 70),
-        Size = UDim2.new(0.4, 0, 0.25, 0),
-        Position = UDim2.new(0.03, 0, 0.08, 0),
+    local nameInput = FW.cTB(inputPanel, {
+        BackgroundColor3 = Color3.fromRGB(66, 73, 88),
+        Size = UDim2.new(0.45, -10, 0.25, 0),
+        Position = UDim2.new(0.025, 0, 0.15, 0),
         Text = "",
         PlaceholderText = "Script Name",
-        TextColor3 = Color3.fromRGB(220, 230, 245),
-        PlaceholderColor3 = Color3.fromRGB(150, 160, 180),
-        TextSize = 16,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        PlaceholderColor3 = Color3.fromRGB(180, 180, 180),
+        TextSize = 14,
         TextScaled = true,
         FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
-        Name = "NameBox"
+        Name = "NameInput"
     })
-    FW.cC(nameBox, 0.15)
-    FW.cS(nameBox, 1, Color3.fromRGB(65, 75, 95))
-    FW.cTC(nameBox, 16)
+    FW.cC(nameInput, 0.5)
+    FW.cTC(nameInput, 14)
 
-    local contentBox = FW.cTB(inputF, {
-        BackgroundColor3 = Color3.fromRGB(45, 50, 70),
-        Size = UDim2.new(0.4, 0, 0.25, 0),
-        Position = UDim2.new(0.45, 0, 0.08, 0),
+    local contentInput = FW.cTB(inputPanel, {
+        BackgroundColor3 = Color3.fromRGB(66, 73, 88),
+        Size = UDim2.new(0.45, -10, 0.25, 0),
+        Position = UDim2.new(0.525, 0, 0.15, 0),
         Text = "",
         PlaceholderText = "Paste script content here",
-        TextColor3 = Color3.fromRGB(220, 230, 245),
-        PlaceholderColor3 = Color3.fromRGB(150, 160, 180),
-        TextSize = 14,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        PlaceholderColor3 = Color3.fromRGB(180, 180, 180),
+        TextSize = 12,
         TextScaled = false,
         TextWrapped = true,
         FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
-        Name = "ContentBox"
+        Name = "ContentInput"
     })
-    FW.cC(contentBox, 0.15)
-    FW.cS(contentBox, 1, Color3.fromRGB(65, 75, 95))
-    FW.cTC(contentBox, 14)
+    FW.cC(contentInput, 0.5)
+    FW.cTC(contentInput, 12)
 
-    local saveFromEditorBtn = FW.cB(inputF, {
-        BackgroundColor3 = Color3.fromRGB(70, 120, 200),
-        Size = UDim2.new(0.25, 0, 0.25, 0),
-        Position = UDim2.new(0.03, 0, 0.38, 0),
+    local saveEditorBtn = FW.cB(inputPanel, {
+        BackgroundColor3 = Color3.fromRGB(91, 110, 225),
+        Size = UDim2.new(0.3, -5, 0.25, 0),
+        Position = UDim2.new(0.025, 0, 0.5, 0),
         Text = "Save From Editor",
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 16,
+        TextSize = 14,
         TextScaled = true,
         FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
     })
-    FW.cC(saveFromEditorBtn, 0.2)
-    FW.cTC(saveFromEditorBtn, 16)
+    FW.cC(saveEditorBtn, 0.5)
+    FW.cTC(saveEditorBtn, 14)
 
-    local saveFromBoxBtn = FW.cB(inputF, {
-        BackgroundColor3 = Color3.fromRGB(70, 120, 200),
-        Size = UDim2.new(0.25, 0, 0.25, 0),
-        Position = UDim2.new(0.3, 0, 0.38, 0),
+    local saveBoxBtn = FW.cB(inputPanel, {
+        BackgroundColor3 = Color3.fromRGB(91, 110, 225),
+        Size = UDim2.new(0.3, -5, 0.25, 0),
+        Position = UDim2.new(0.35, 0, 0.5, 0),
         Text = "Save From Box",
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 16,
+        TextSize = 14,
         TextScaled = true,
         FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
     })
-    FW.cC(saveFromBoxBtn, 0.2)
-    FW.cTC(saveFromBoxBtn, 16)
+    FW.cC(saveBoxBtn, 0.5)
+    FW.cTC(saveBoxBtn, 14)
 
-    local pasteBtn = FW.cB(inputF, {
-        BackgroundColor3 = Color3.fromRGB(100, 150, 100),
-        Size = UDim2.new(0.25, 0, 0.25, 0),
-        Position = UDim2.new(0.57, 0, 0.38, 0),
+    local pasteBtn = FW.cB(inputPanel, {
+        BackgroundColor3 = Color3.fromRGB(91, 110, 225),
+        Size = UDim2.new(0.3, -5, 0.25, 0),
+        Position = UDim2.new(0.675, 0, 0.5, 0),
         Text = "Paste Clipboard",
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 16,
+        TextSize = 14,
         TextScaled = true,
         FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
     })
-    FW.cC(pasteBtn, 0.2)
-    FW.cTC(pasteBtn, 16)
+    FW.cC(pasteBtn, 0.5)
+    FW.cTC(pasteBtn, 14)
 
-    local instrTxt = FW.cT(inputF, {
-        Text = "Enter name and paste/type script content, then save. Or save current editor content.",
-        TextSize = 14,
-        TextColor3 = Color3.fromRGB(180, 190, 210),
+    local scriptsPanel = FW.cF(localF, {
+        BackgroundColor3 = Color3.fromRGB(52, 58, 70),
+        Size = UDim2.new(1, 0, 0.72, 0),
+        Position = UDim2.new(0, 0, 0.28, 0),
+        Name = "ScriptsPanel"
+    })
+    FW.cC(scriptsPanel, 0.4)
+
+    local scriptsScroll = FW.cSF(scriptsPanel, {
         BackgroundTransparency = 1,
-        Size = UDim2.new(0.94, 0, 0.25, 0),
-        Position = UDim2.new(0.03, 0, 0.7, 0),
-        TextScaled = true,
-        TextWrapped = true,
-        FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
-    })
-    FW.cTC(instrTxt, 14)
-
-    local scriptsF = FW.cF(localF, {
-        BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(0.95, 0, 0.73, 0),
-        Position = UDim2.new(0.025, 0, 0.25, 0),
-        Name = "ScriptsFrame"
-    })
-    FW.cC(scriptsF, 0.12)
-    FW.cS(scriptsF, 1, Color3.fromRGB(45, 55, 75))
-
-    local scriptsScroll = FW.cSF(scriptsF, {
-        BackgroundColor3 = Color3.fromRGB(15, 20, 30),
         Size = UDim2.new(1, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
-        ScrollBarThickness = 8,
+        ScrollBarThickness = 6,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         Name = "ScriptsScroll"
     })
-    FW.cC(scriptsScroll, 0.12)
     scriptsScrollRef = scriptsScroll
 
-    local searchF = FW.cF(cloudF, {
-        BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(0.95, 0, 0.12, 0),
-        Position = UDim2.new(0.025, 0, 0.02, 0),
-        Name = "SearchFrame"
+    local searchPanel = FW.cF(cloudF, {
+        BackgroundColor3 = Color3.fromRGB(52, 58, 70),
+        Size = UDim2.new(1, 0, 0.12, 0),
+        Position = UDim2.new(0, 0, 0, 0),
+        Name = "SearchPanel"
     })
-    FW.cC(searchF, 0.12)
-    FW.cS(searchF, 1, Color3.fromRGB(45, 55, 75))
+    FW.cC(searchPanel, 0.4)
 
-    local searchBox = FW.cTB(searchF, {
-        BackgroundColor3 = Color3.fromRGB(200, 210, 225),
-        Size = UDim2.new(0.7, 0, 0.6, 0),
+    local searchInput = FW.cTB(searchPanel, {
+        BackgroundColor3 = Color3.fromRGB(66, 73, 88),
+        Size = UDim2.new(0.7, -10, 0.6, 0),
         Position = UDim2.new(0.05, 0, 0.2, 0),
         PlaceholderText = "Search for scripts...",
-        PlaceholderColor3 = Color3.fromRGB(100, 110, 130),
+        PlaceholderColor3 = Color3.fromRGB(180, 180, 180),
         Text = "",
-        TextSize = 16,
-        TextColor3 = Color3.fromRGB(25, 30, 40),
+        TextSize = 14,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
         FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
     })
-    FW.cC(searchBox, 0.15)
-    FW.cTC(searchBox, 16)
+    FW.cC(searchInput, 0.5)
+    FW.cTC(searchInput, 14)
 
-    local searchBtn = FW.cF(searchF, {
-        BackgroundColor3 = Color3.fromRGB(70, 120, 200),
+    local searchBtn = FW.cB(searchPanel, {
+        BackgroundColor3 = Color3.fromRGB(91, 110, 225),
         Size = UDim2.new(0.2, 0, 0.6, 0),
         Position = UDim2.new(0.77, 0, 0.2, 0),
-        Name = "SearchBtn"
-    })
-    FW.cC(searchBtn, 0.2)
-
-    local searchLbl = FW.cT(searchBtn, {
         Text = "Search",
-        TextSize = 16,
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0.9, 0, 0.8, 0),
-        Position = UDim2.new(0.05, 0, 0.1, 0),
+        TextSize = 14,
         TextScaled = true,
         FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
     })
-    FW.cTC(searchLbl, 16)
+    FW.cC(searchBtn, 0.5)
+    FW.cTC(searchBtn, 14)
 
-    local searchClick = FW.cB(searchBtn, {
+    local cloudScrollPanel = FW.cF(cloudF, {
+        BackgroundColor3 = Color3.fromRGB(52, 58, 70),
+        Size = UDim2.new(1, 0, 0.85, 0),
+        Position = UDim2.new(0, 0, 0.15, 0),
+        Name = "CloudScrollPanel"
+    })
+    FW.cC(cloudScrollPanel, 0.4)
+
+    local cloudScroll = FW.cSF(cloudScrollPanel, {
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, 0),
-        Text = "",
-        ZIndex = 5
-    })
-
-    local scrollF = FW.cSF(cloudF, {
-        BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(0.95, 0, 0.83, 0),
-        Position = UDim2.new(0.025, 0, 0.15, 0),
+        Position = UDim2.new(0, 0, 0, 0),
         CanvasSize = UDim2.new(0, 0, 0, 0),
-        ScrollBarThickness = 8,
-        Name = "ScrollFrame"
+        ScrollBarThickness = 6,
+        Name = "CloudScroll"
     })
-    FW.cC(scrollF, 0.12)
-    FW.cS(scrollF, 1, Color3.fromRGB(45, 55, 75))
 
-    saveFromEditorBtn.MouseButton1Click:Connect(function()
-        local name = nameBox.Text
+    saveEditorBtn.MouseButton1Click:Connect(function()
+        local name = nameInput.Text
         if name and name ~= "" then
             local srcRef = FW.getUI()["11"]:FindFirstChild("EditorPage"):FindFirstChild("EditorPage"):FindFirstChild("TxtBox"):FindFirstChild("EditorFrame"):FindFirstChild("Source")
             if srcRef then
                 saveScript(name, srcRef.Text)
-                nameBox.Text = ""
+                nameInput.Text = ""
                 FW.showAlert("Success", "Script saved: " .. name, 2)
             end
         else
@@ -881,13 +771,13 @@ spawn(function()
         end
     end)
 
-    saveFromBoxBtn.MouseButton1Click:Connect(function()
-        local name = nameBox.Text
-        local content = contentBox.Text
+    saveBoxBtn.MouseButton1Click:Connect(function()
+        local name = nameInput.Text
+        local content = contentInput.Text
         if name and name ~= "" and content and content ~= "" then
             saveScript(name, content)
-            nameBox.Text = ""
-            contentBox.Text = ""
+            nameInput.Text = ""
+            contentInput.Text = ""
             FW.showAlert("Success", "Script saved: " .. name, 2)
         else
             FW.showAlert("Error", "Please enter name and content!", 2)
@@ -897,22 +787,22 @@ spawn(function()
     pasteBtn.MouseButton1Click:Connect(function()
         local clipboard = getclipboard and getclipboard() or ""
         if clipboard ~= "" then
-            contentBox.Text = clipboard
+            contentInput.Text = clipboard
             FW.showAlert("Success", "Content pasted!", 2)
         else
             FW.showAlert("Error", "Clipboard is empty!", 2)
         end
     end)
 
-    searchClick.MouseButton1Click:Connect(function()
-        local query = searchBox.Text
+    searchBtn.MouseButton1Click:Connect(function()
+        local query = searchInput.Text
         if query and query ~= "" then
             FW.showAlert("Info", "Searching scripts...", 1)
             spawn(function()
                 local scripts = searchScripts(query, 50)
                 if #scripts > 0 then
                     curScripts = scripts
-                    displayScripts(scripts, scrollF)
+                    displayScripts(scripts, cloudScroll)
                     FW.showAlert("Success", "Found " .. #scripts .. " scripts!", 2)
                 else
                     FW.showAlert("Error", "No scripts found!", 2)
@@ -923,26 +813,26 @@ spawn(function()
         end
     end)
 
-    searchBox.FocusLost:Connect(function(enterPressed)
+    searchInput.FocusLost:Connect(function(enterPressed)
         if enterPressed then
-            searchClick.MouseButton1Click:Fire()
+            searchBtn.MouseButton1Click:Fire()
         end
     end)
 
-    localClick.MouseButton1Click:Connect(function()
+    localTabBtn.MouseButton1Click:Connect(function()
         switchSec("Local")
-        localTab.BackgroundColor3 = Color3.fromRGB(70, 120, 200)
-        cloudTab.BackgroundColor3 = Color3.fromRGB(60, 70, 90)
-        localLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-        cloudLbl.TextColor3 = Color3.fromRGB(200, 210, 225)
+        localTabBtn.BackgroundColor3 = Color3.fromRGB(91, 110, 225)
+        localTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        cloudTabBtn.BackgroundColor3 = Color3.fromRGB(66, 73, 88)
+        cloudTabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
     end)
 
-    cloudClick.MouseButton1Click:Connect(function()
+    cloudTabBtn.MouseButton1Click:Connect(function()
         switchSec("Cloud")
-        cloudTab.BackgroundColor3 = Color3.fromRGB(70, 120, 200)
-        localTab.BackgroundColor3 = Color3.fromRGB(60, 70, 90)
-        cloudLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-        localLbl.TextColor3 = Color3.fromRGB(200, 210, 225)
+        cloudTabBtn.BackgroundColor3 = Color3.fromRGB(91, 110, 225)
+        cloudTabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        localTabBtn.BackgroundColor3 = Color3.fromRGB(66, 73, 88)
+        localTabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
     end)
 
     local sidebar = FW.getUI()["6"]:FindFirstChild("Sidebar")
@@ -966,7 +856,7 @@ spawn(function()
             FW.cC(box, 0.24)
             FW.cAR(box, 0.982)
             if sel then
-                FW.cG(box, Color3.fromRGB(70, 120, 200), Color3.fromRGB(100, 150, 220))
+                FW.cG(box, Color3.fromRGB(91, 110, 225), Color3.fromRGB(111, 130, 245))
             else
                 FW.cG(box, Color3.fromRGB(66, 79, 113), Color3.fromRGB(36, 44, 63))
             end
@@ -1021,7 +911,7 @@ spawn(function()
         local popularScripts = searchScripts("popular", 30)
         if #popularScripts > 0 then
             curScripts = popularScripts
-            displayScripts(popularScripts, scrollF)
+            displayScripts(popularScripts, cloudScroll)
         end
     end)
 end)
