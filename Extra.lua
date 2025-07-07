@@ -324,7 +324,7 @@ spawn(function()
     
     for i, moduleUrl in pairs(modules) do
         spawn(function()
-            print("Loading module " .. i .. ": " .. moduleUrl)
+            
             
             local success, moduleCode = pcall(function()
                 return game:HttpGet(moduleUrl)
