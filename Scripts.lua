@@ -141,8 +141,9 @@ function updateList()
             end)
             
             execBtn.MouseButton1Click:Connect(function()
+                            FW.showAlert("Success", name .. " Loading!", 2)
                 local success, result = pcall(function()
-                FW.showAlert("Success", name .. " Loading!", 2)
+                
                     return loadstring(content)
                 end)
                 if success and result then
@@ -580,7 +581,7 @@ local scriptsPage = FW.cI(FW.getUI()["11"], {
 })
 
 local title = FW.cT(scriptsPage, {
-    Text = "📜 Scripts Hub",
+    Text = " Scripts Hub",
     TextSize = 32,
     TextColor3 = Color3.fromRGB(255, 150, 100),
     BackgroundTransparency = 1,
