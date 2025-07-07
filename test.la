@@ -653,7 +653,7 @@ logService.MessageOut:Connect(function(message, messageType)
             FW.addConsoleLog(message, "info")
         end
     end
-end
+end)
 
 local function initializeFrostWare()    
     local ui, openClk = FW.cBaseUI()    
