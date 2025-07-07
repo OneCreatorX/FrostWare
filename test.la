@@ -11,7 +11,24 @@ _e.pr=function(...)print(...)end
 _e.w=function(t)wait(t)end
 getgenv()._frostw="https://system.heatherx.site"
 ft=_e.fn(function(s)h=math.floor(s/3600)m=math.floor((s%3600)/60)s=s%60 return h,m,s end)
-gvt=_e.fn(function()    epath="frost_ttl_time.txt"    now=os.time()    saved=isfile and isfile(epath)and tonumber(readfile(epath))or nil    if not saved or saved-now<=0 then        if gethwid and game.HttpGet then            success,ttl_seconds=pcall(function()return tonumber(game:HttpGet(getgenv()._frostw.."/status/"..gethwid()))end)            if success and ttl_seconds and ttl_seconds>0 then                expire_time=now+ttl_seconds                if writefile then writefile(epath,tostring(expire_time))end                return ft(ttl_seconds)            else return 0,0,0 end        else return 0,0,0 end    else        left=saved-now        return ft(left)    endend)
+gvt=_e.fn(function()    
+    epath="frost_ttl_time.txt"    
+    now=os.time()    
+    saved=isfile and isfile(epath)and tonumber(readfile(epath))or nil    
+    if not saved or saved-now<=0 then        
+        if gethwid and game.HttpGet then            
+            success,ttl_seconds=pcall(function()return tonumber(game:HttpGet(getgenv()._frostw.."/status/"..gethwid()))end)            
+            if success and ttl_seconds and ttl_seconds>0 then                
+                expire_time=now+ttl_seconds                
+                if writefile then writefile(epath,tostring(expire_time))end                
+                return ft(ttl_seconds)            
+            else return 0,0,0 end        
+        else return 0,0,0 end    
+    else        
+        left=saved-now        
+        return ft(left)    
+    end
+end)
 local rs,lp,ws,ts,ms,cs,uis,ls=_e.sref("RunService"),_e.sref("Players").LocalPlayer,workspace,_e.sref("TweenService"),_e.sref("MarketplaceService"),_e.sref("CoreGui"),_e.sref("UserInputService"),_e.sref("LogService")
 local g={}
 local n=_e.s
@@ -43,176 +60,198 @@ local sessionStart = tick()
 local timeBarRef = nil
 local timeStatusRef = nil
 
-local cStdBtn=_e.fn(function(p,nm,txt,ico,pos,sz)    local btn=cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})    cC(btn,0.2)    cG(btn,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))    local lbl=cT(btn,{TextWrapped=true,TextSize=28,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(29,29,38),BackgroundTransparency=1,Size=UDim2.new(0.617,0,0.337,0),Text=txt,Name="Lbl",Position=UDim2.new(0.276,0,0.348,0)})    cTC(lbl,28)    cI(btn,{ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.098,0,0.36,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.101,0,0.326,0)})    local clk=cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  "})    cC(clk,0)    cTC(clk,14)    return clkend)
-local cRndBtn=_e.fn(function(p,nm,ico,pos,sz)    local btn=cF(p,{ZIndex=2,BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})    cC(btn,1)    cI(btn,{ZIndex=2,ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.296,0,0.361,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.352,0,0.315,0)})    cG(btn,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))    local clk=cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,ZIndex=3,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  "})    cC(clk,0)    cTC(clk,14)    cAR(btn,1)    return clkend)
+local cStdBtn=_e.fn(function(p,nm,txt,ico,pos,sz)    
+    local btn=cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})    
+    cC(btn,0.2)    
+    cG(btn,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))    
+    local lbl=cT(btn,{TextWrapped=true,TextSize=28,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(29,29,38),BackgroundTransparency=1,Size=UDim2.new(0.617,0,0.337,0),Text=txt,Name="Lbl",Position=UDim2.new(0.276,0,0.348,0)})    
+    cTC(lbl,28)    
+    cI(btn,{ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.098,0,0.36,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.101,0,0.326,0)})    
+    local clk=cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  "})    
+    cC(clk,0)    
+    cTC(clk,14)    
+    return clk
+end)
 
-function FW.updateTimeBar()
-    if timeBarRef and timeStatusRef then
-        local elapsed = tick() - sessionStart
-        local hours = math.floor(elapsed / 3600)
-        local minutes = math.floor((elapsed % 3600) / 60)
-        local seconds = math.floor(elapsed % 60)
-        timeBarRef.Text = string.format("Session: %02d:%02d:%02d", hours, minutes, seconds)
-        local h,m,s = gvt()
-        if h > 0 or m > 0 or s > 0 then
-            timeStatusRef.Text = string.format("Remaining: %02d:%02d:%02d", h, m, s)
-            timeStatusRef.TextColor3 = Color3.fromRGB(100, 255, 100)
-        else
-            timeStatusRef.Text = "Status: Expired"
-            timeStatusRef.TextColor3 = Color3.fromRGB(255, 100, 100)
-        end
+local cRndBtn=_e.fn(function(p,nm,ico,pos,sz)    
+    local btn=cF(p,{ZIndex=2,BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})    
+    cC(btn,1)    
+    cI(btn,{ZIndex=2,ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.296,0,0.361,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.352,0,0.315,0)})    
+    cG(btn,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))    
+    local clk=cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,ZIndex=3,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  "})    
+    cC(clk,0)    
+    cTC(clk,14)    
+    cAR(btn,1)    
+    return clk
+end)
+
+function FW.updateTimeBar()    
+    if timeBarRef and timeStatusRef then        
+        local elapsed = tick() - sessionStart        
+        local hours = math.floor(elapsed / 3600)        
+        local minutes = math.floor((elapsed % 3600) / 60)        
+        local seconds = math.floor(elapsed % 60)        
+        timeBarRef.Text = string.format("Session: %02d:%02d:%02d", hours, minutes, seconds)                
+        local h,m,s = gvt()        
+        if h > 0 or m > 0 or s > 0 then            
+            timeStatusRef.Text = string.format("Remaining: %02d:%02d:%02d", h, m, s)            
+            timeStatusRef.TextColor3 = Color3.fromRGB(100, 255, 100)        
+        else            
+            timeStatusRef.Text = "Status: Expired"            
+            timeStatusRef.TextColor3 = Color3.fromRGB(255, 100, 100)        
+        end    
     end
 end
 
-function FW.saveTabs()
-    if not isfolder(tabsDir) then makefolder(tabsDir) end
-    local tabData = {}
-    for id, tab in pairs(tabs) do
-        tabData[tostring(id)] = {
-            name = tab.name,
-            content = tab.content,
-            id = tab.id
-        }
-    end
-    tabData.currentTab = curTab
-    tabData.tabCounter = tabCnt
+function FW.saveTabs()    
+    if not isfolder(tabsDir) then makefolder(tabsDir) end    
+    local tabData = {}    
+    for id, tab in pairs(tabs) do        
+        tabData[tostring(id)] = {            
+            name = tab.name,            
+            content = tab.content,            
+            id = tab.id        
+        }    
+    end    
+    tabData.currentTab = curTab    
+    tabData.tabCounter = tabCnt    
     writefile(tabsDir .. "tabs.json", game:GetService("HttpService"):JSONEncode(tabData))
 end
 
-function FW.loadTabs()
-    if isfile(tabsDir .. "tabs.json") then
-        local success, data = pcall(function()
-            return game:GetService("HttpService"):JSONDecode(readfile(tabsDir .. "tabs.json"))
-        end)
-        if success and data then
-            curTab = data.currentTab or 1
-            tabCnt = data.tabCounter or 1
-            for id, tabInfo in pairs(data) do
-                if type(tabInfo) == "table" and tabInfo.name then
-                    tabs[tonumber(id)] = {
-                        name = tabInfo.name,
-                        content = tabInfo.content,
-                        id = tabInfo.id,
-                        button = nil,
-                        closeButton = nil
-                    }
-                end
-            end
-            return true
-        end
-    end
+function FW.loadTabs()    
+    if isfile(tabsDir .. "tabs.json") then        
+        local success, data = pcall(function()            
+            return game:GetService("HttpService"):JSONDecode(readfile(tabsDir .. "tabs.json"))        
+        end)        
+        if success and data then            
+            curTab = data.currentTab or 1            
+            tabCnt = data.tabCounter or 1            
+            for id, tabInfo in pairs(data) do                
+                if type(tabInfo) == "table" and tabInfo.name then                    
+                    tabs[tonumber(id)] = {                        
+                        name = tabInfo.name,                        
+                        content = tabInfo.content,                        
+                        id = tabInfo.id,                        
+                        button = nil,                        
+                        closeButton = nil                    
+                    }                
+                end            
+            end            
+            return true        
+        end    
+    end    
     return false
 end
 
-function FW.addConsoleLog(msg, msgType, canCopy)
-    if not consoleEnabled then return end
-    local timestamp = os.date("[%H:%M:%S]")
-    local color = Color3.fromRGB(255, 255, 255)
-    local prefix = ""
-    if msgType == "error" then
-        color = Color3.fromRGB(255, 100, 100)
-        prefix = "[ERROR] "
-    elseif msgType == "warn" then
-        color = Color3.fromRGB(255, 200, 100)
-        prefix = "[WARN] "
-    elseif msgType == "info" then
-        color = Color3.fromRGB(100, 200, 255)
-        prefix = "[INFO] "
-    end
-    local logEntry = {
-        text = timestamp .. " " .. prefix .. tostring(msg),
-        color = color,
-        canCopy = canCopy ~= false,
-        fullText = tostring(msg),
-        type = msgType or "info"
-    }
-    table.insert(consoleOutput, logEntry)
-    if #consoleOutput > 200 then
-        table.remove(consoleOutput, 1)
-    end
+function FW.addConsoleLog(msg, msgType, canCopy)    
+    if not consoleEnabled then return end        
+    local timestamp = os.date("[%H:%M:%S]")    
+    local color = Color3.fromRGB(255, 255, 255)    
+    local prefix = ""        
+    if msgType == "error" then        
+        color = Color3.fromRGB(255, 100, 100)        
+        prefix = "[ERROR] "    
+    elseif msgType == "warn" then        
+        color = Color3.fromRGB(255, 200, 100)        
+        prefix = "[WARN] "    
+    elseif msgType == "info" then        
+        color = Color3.fromRGB(100, 200, 255)        
+        prefix = "[INFO] "    
+    end        
+    local logEntry = {        
+        text = timestamp .. " " .. prefix .. tostring(msg),        
+        color = color,        
+        canCopy = canCopy ~= false,        
+        fullText = tostring(msg),        
+        type = msgType or "info"    
+    }        
+    table.insert(consoleOutput, logEntry)        
+    if #consoleOutput > 200 then        
+        table.remove(consoleOutput, 1)    
+    end        
     FW.updateConsole()
 end
 
-function FW.updateConsole()
-    if consoleScrollRef then
-        for _, child in pairs(consoleScrollRef:GetChildren()) do
-            if child:IsA("Frame") then
-                child:Destroy()
-            end
-        end
-        local yPos = 0
-        for i, log in ipairs(consoleOutput) do
-            local logFrame = cF(consoleScrollRef, {
-                BackgroundColor3 = Color3.fromRGB(16, 19, 27),
-                Size = UDim2.new(1, 0, 0, 25),
-                Position = UDim2.new(0, 0, 0, yPos),
-                Name = "LogEntry" .. i
-            })
-            if i % 2 == 0 then
-                logFrame.BackgroundColor3 = Color3.fromRGB(20, 23, 30)
-            end
-            local logText = cT(logFrame, {
-                Text = log.text,
-                TextSize = 14,
-                TextColor3 = log.color,
-                BackgroundTransparency = 1,
-                Size = UDim2.new(0.85, 0, 1, 0),
-                TextXAlignment = Enum.TextXAlignment.Left,
-                FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
-                TextWrapped = false,
-                TextTruncate = Enum.TextTruncate.AtEnd
-            })
-            cTC(logText, 14)
-            if log.canCopy then
-                local copyBtn = cB(logFrame, {
-                    BackgroundColor3 = Color3.fromRGB(100, 150, 255),
-                    Size = UDim2.new(0.12, 0, 0.8, 0),
-                    Position = UDim2.new(0.86, 0, 0.1, 0),
-                    Text = "Copy",
-                    TextColor3 = Color3.fromRGB(255, 255, 255),
-                    TextSize = 12,
-                    TextScaled = true
-                })
-                cC(copyBtn, 0.02)
-                cTC(copyBtn, 12)
-                copyBtn.MouseButton1Click:Connect(function()
-                    if setclipboard then
-                        setclipboard(log.fullText)
-                        FW.showAlert("Success", "Copied to clipboard!", 1)
-                    end
-                end)
-            end
-            yPos = yPos + 25
-        end
-        consoleScrollRef.CanvasSize = UDim2.new(0, 0, 0, yPos)
-        consoleScrollRef.CanvasPosition = Vector2.new(0, yPos)
+function FW.updateConsole()    
+    if consoleScrollRef then        
+        for _, child in pairs(consoleScrollRef:GetChildren()) do            
+            if child:IsA("Frame") then                
+                child:Destroy()            
+            end        
+        end                
+        local yPos = 0        
+        for i, log in ipairs(consoleOutput) do            
+            local logFrame = cF(consoleScrollRef, {                
+                BackgroundColor3 = Color3.fromRGB(16, 19, 27),                
+                Size = UDim2.new(1, 0, 0, 25),                
+                Position = UDim2.new(0, 0, 0, yPos),                
+                Name = "LogEntry" .. i            
+            })                        
+            if i % 2 == 0 then                
+                logFrame.BackgroundColor3 = Color3.fromRGB(20, 23, 30)            
+            end                        
+            local logText = cT(logFrame, {                
+                Text = log.text,                
+                TextSize = 14,                
+                TextColor3 = log.color,                
+                BackgroundTransparency = 1,                
+                Size = UDim2.new(0.85, 0, 1, 0),                
+                TextXAlignment = Enum.TextXAlignment.Left,                
+                FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Medium, Enum.FontStyle.Normal),                
+                TextWrapped = false,                
+                TextTruncate = Enum.TextTruncate.AtEnd            
+            })            
+            cTC(logText, 14)                        
+            if log.canCopy then                
+                local copyBtn = cB(logFrame, {                    
+                    BackgroundColor3 = Color3.fromRGB(100, 150, 255),                    
+                    Size = UDim2.new(0.12, 0, 0.8, 0),                    
+                    Position = UDim2.new(0.86, 0, 0.1, 0),                    
+                    Text = "Copy",                    
+                    TextColor3 = Color3.fromRGB(255, 255, 255),                    
+                    TextSize = 12,                    
+                    TextScaled = true                
+                })                
+                cC(copyBtn, 0.02)                
+                cTC(copyBtn, 12)                                
+                copyBtn.MouseButton1Click:Connect(function()                    
+                    if setclipboard then                        
+                        setclipboard(log.fullText)                        
+                        FW.showAlert("Success", "Copied to clipboard!", 1)                    
+                    end                
+                end)            
+            end                        
+            yPos = yPos + 25        
+        end                
+        consoleScrollRef.CanvasSize = UDim2.new(0, 0, 0, yPos)        
+        consoleScrollRef.CanvasPosition = Vector2.new(0, yPos)    
     end
 end
 
-function FW.clearConsole()
-    consoleOutput = {}
+function FW.clearConsole()    
+    consoleOutput = {}    
     FW.updateConsole()
 end
 
-function FW.toggleConsole()
-    consoleEnabled = not consoleEnabled
-    if consoleEnabled then
-        FW.addConsoleLog("Console enabled", "info")
-    end
+function FW.toggleConsole()    
+    consoleEnabled = not consoleEnabled    
+    if consoleEnabled then        
+        FW.addConsoleLog("Console enabled", "info")    
+    end    
     return consoleEnabled
 end
 
-function FW.copyAllConsole()
-    local allText = ""
-    for i, log in ipairs(consoleOutput) do
-        allText = allText .. log.text
-        if i < #consoleOutput then
-            allText = allText .. "\n"
-        end
-    end
-    if setclipboard then
-        setclipboard(allText)
-        FW.showAlert("Success", "All console output copied!", 2)
+function FW.copyAllConsole()    
+    local allText = ""    
+    for i, log in ipairs(consoleOutput) do        
+        allText = allText .. log.text        
+        if i < #consoleOutput then            
+            allText = allText .. "\n"        
+        end    
+    end    
+    if setclipboard then        
+        setclipboard(allText)        
+        FW.showAlert("Success", "All console output copied!", 2)    
     end
 end
 
@@ -280,22 +319,22 @@ cI(ub,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://110667923648139",Size=UD
 local ubClk=cB(ub,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="UpClk",Text=""})
 cC(ubClk,0)
 cTC(ubClk,14)
-ubClk.MouseButton1Click:Connect(function()
+ubClk.MouseButton1Click:Connect(function()    
     setclipboard("https://discord.gg/getfrost")
 end)
-local function cSBtn(nm,txt,ico,pos,sel)
-    local btn=cF(sb,{BackgroundColor3=sel and Color3.fromRGB(30,36,51)or Color3.fromRGB(31,34,50),Size=UDim2.new(0.714,0,0.088,0),Position=pos,Name=nm,BackgroundTransparency=sel and 0 or 1})
-    cC(btn,0.18)
-    local box=cF(btn,{ZIndex=sel and 2 or 0,BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.167,0,0.629,0),Position=UDim2.new(0.093,0,0.2,0),Name="Box"})
-    cC(box,0.24)
-    cAR(box,0.982)
-    if sel then cG(box,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))else cG(box,Color3.fromRGB(66,79,113),Color3.fromRGB(36,44,63))end
-    cI(box,{ZIndex=sel and 2 or 0,ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.527,0,sel and 0.571 or 0.5,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.236,0,sel and 0.232 or 0.25,0)})
-    local lbl=cT(btn,{TextWrapped=true,TextSize=32,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(sel and 0.248 or 0.359,0,0.36,0),Text=txt,Name="Lbl",Position=UDim2.new(0.379,0,0.348,0)})
-    cTC(lbl,32)
-    local clk=cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  ",ZIndex=5})
-    cC(clk,0)
-    cTC(clk,14)
+local function cSBtn(nm,txt,ico,pos,sel)    
+    local btn=cF(sb,{BackgroundColor3=sel and Color3.fromRGB(30,36,51)or Color3.fromRGB(31,34,50),Size=UDim2.new(0.714,0,0.088,0),Position=pos,Name=nm,BackgroundTransparency=sel and 0 or 1})    
+    cC(btn,0.18)    
+    local box=cF(btn,{ZIndex=sel and 2 or 0,BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.167,0,0.629,0),Position=UDim2.new(0.093,0,0.2,0),Name="Box"})    
+    cC(box,0.24)    
+    cAR(box,0.982)    
+    if sel then cG(box,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))else cG(box,Color3.fromRGB(66,79,113),Color3.fromRGB(36,44,63))end    
+    cI(box,{ZIndex=sel and 2 or 0,ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.527,0,sel and 0.571 or 0.5,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.236,0,sel and 0.232 or 0.25,0)})    
+    local lbl=cT(btn,{TextWrapped=true,TextSize=32,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(sel and 0.248 or 0.359,0,0.36,0),Text=txt,Name="Lbl",Position=UDim2.new(0.379,0,0.348,0)})    
+    cTC(lbl,32)    
+    local clk=cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  ",ZIndex=5})    
+    cC(clk,0)    
+    cTC(clk,14)    
     return btn,clk
 end
 local ed,edClk=cSBtn("Editor","Editor","rbxassetid://94595204123047",UDim2.new(0.088,0,0.186,0),true)
@@ -348,15 +387,15 @@ local clearConsoleBtn=cStdBtn(btnFrame,"ClearConsole","Clear Console","rbxasseti
 local copyAllBtn=cStdBtn(btnFrame,"CopyAll","Copy All","rbxassetid://133018045821797",UDim2.new(0.22,0,0.2,0),UDim2.new(0.18,0,0.6,0))
 local toggleBtn=cStdBtn(btnFrame,"Toggle","Toggle Console","rbxassetid://94595204123047",UDim2.new(0.42,0,0.2,0),UDim2.new(0.18,0,0.6,0))
 consoleScrollRef = consoleScroll
-clearConsoleBtn.MouseButton1Click:Connect(function()
-    FW.clearConsole()
+clearConsoleBtn.MouseButton1Click:Connect(function()    
+    FW.clearConsole()    
     FW.showAlert("Success","Console cleared!",2)
 end)
-copyAllBtn.MouseButton1Click:Connect(function()
+copyAllBtn.MouseButton1Click:Connect(function()    
     FW.copyAllConsole()
 end)
-toggleBtn.MouseButton1Click:Connect(function()
-    local enabled = FW.toggleConsole()
+toggleBtn.MouseButton1Click:Connect(function()    
+    local enabled = FW.toggleConsole()    
     FW.showAlert("Info", enabled and "Console enabled!" or "Console disabled!", 2)
 end)
 return cop
@@ -523,172 +562,164 @@ end
 oldPrint = print
 oldWarn = warn
 oldError = error
-print = function(...)
-    local args = {...}
-    local msg = ""
-    for i, v in ipairs(args) do
-        msg = msg .. tostring(v)
-        if i < #args then msg = msg .. " " end
-    end
-    FW.addConsoleLog(msg, "info")
+print = function(...)    
+    local args = {...}    
+    local msg = ""    
+    for i, v in ipairs(args) do        
+        msg = msg .. tostring(v)        
+        if i < #args then msg = msg .. " " end    
+    end    
+    FW.addConsoleLog(msg, "info")    
     oldPrint(...)
 end
-warn = function(...)
-    local args = {...}
-    local msg = ""
-    for i, v in ipairs(args) do
-        msg = msg .. tostring(v)
-        if i < #args then msg = msg .. " " end
-    end
-    FW.addConsoleLog(msg, "warn")
+warn = function(...)    
+    local args = {...}    
+    local msg = ""    
+    for i, v in ipairs(args) do        
+        msg = msg .. tostring(v)        
+        if i < #args then msg = msg .. " " end    
+    end    
+    FW.addConsoleLog(msg, "warn")    
     oldWarn(...)
 end
-error = function(...)
-    local args = {...}
-    local msg = ""
-    for i, v in ipairs(args) do
-        msg = msg .. tostring(v)
-        if i < #args then msg = msg .. " " end
-    end
-    FW.addConsoleLog(msg, "error")
+error = function(...)    
+    local args = {...}    
+    local msg = ""    
+    for i, v in ipairs(args) do        
+        msg = msg .. tostring(v)        
+        if i < #args then msg = msg .. " " end    
+    end    
+    FW.addConsoleLog(msg, "error")    
     oldError(...)
 end
 
-local function initializeFrostWare()
-    local ui, openClk = FW.cBaseUI()
-    local sb, upClk, edClk, coClk, exClk, slide = FW.cSidebar()
-    local ed, src, ln, ts, addTab, execBtn, clrBtn, pstBtn, execClpBtn = FW.cEditor()
-    local cop = FW.cConsolePage()
-    local exp = FW.cExtraPage()
-    
-    local function setupEditor()
-        local tabsRestored = FW.restoreTabs(ts)
-        if not tabsRestored then
-            local mainTab = FW.cTab(ts, "Main", "-- FrostWare V2 Editor\nprint('Hello World!')")
-            FW.switchTab(mainTab)
-        else
-            local curTab = FW.getCurTab()
-            FW.switchTab(curTab)
-        end
-        FW.updLines(src, ln)
-        src:GetPropertyChangedSignal("Text"):Connect(function()
-            FW.updLines(src, ln)
-            local curTab = FW.getCurTab()
-            local tabs = FW.getTabs()
-            if tabs[curTab] then
-                tabs[curTab].content = src.Text
-                spawn(function()
-                    wait(0.5)
-                    FW.saveTabs()
-                end)
-            end
-        end)
-        addTab.MouseButton1Click:Connect(function()
-            local newId, tabBtn, closeBtn = FW.cTab(ts, "New Tab", "-- New Tab\nprint('Hello!')")
-            FW.switchTab(newId)
-        end)
-    end
-    
-    local function setupButtons()
-        execBtn.MouseButton1Click:Connect(function()
-            local code = src.Text
-            if code and code ~= "" then
-                local success, result = pcall(function()
-                    return loadstring(code)
-                end)
-                if success and result then
-                    local execSuccess, execErr = pcall(result)
-                    if execSuccess then
-                        FW.showAlert("Success", "Script executed!", 2)
-                    else
-                        FW.showAlert("Error", "Execution error: " .. tostring(execErr), 4)
-                    end
-                else
-                    FW.showAlert("Error", "Compilation error: " .. tostring(result), 4)
-                end
-            end
-        end)
-        clrBtn.MouseButton1Click:Connect(function()
-            src.Text = ""
-            local curTab = FW.getCurTab()
-            local tabs = FW.getTabs()
-            if tabs[curTab] then
-                tabs[curTab].content = ""
-            end
-            FW.updLines(src, ln)
-            FW.saveTabs()
-        end)
-        pstBtn.MouseButton1Click:Connect(function()
-            local clipboard = getclipboard and getclipboard() or ""
-            if clipboard ~= "" then
-                src.Text = clipboard
-                local curTab = FW.getCurTab()
-                local tabs = FW.getTabs()
-                if tabs[curTab] then
-                    tabs[curTab].content = clipboard
-                end
-                FW.updLines(src, ln)
-                FW.saveTabs()
-            end
-        end)
-        execClpBtn.MouseButton1Click:Connect(function()
-            local clipboard = getclipboard and getclipboard() or ""
-            if clipboard ~= "" then
-                local success, result = pcall(function()
-                    return loadstring(clipboard)
-                end)
-                if success and result then
-                    local execSuccess, execErr = pcall(result)
-                    if execSuccess then
-                        FW.showAlert("Success", "Clipboard executed!", 2)
-                    else
-                        FW.showAlert("Error", "Execution error: " .. tostring(execErr), 4)
-                    end
-                else
-                    FW.showAlert("Error", "Compilation error: " .. tostring(result), 4)
-                end
-            end
-        end)
-    end
-    
-    local function setupNavigation()
-        edClk.MouseButton1Click:Connect(function()
-            FW.switchPage("Editor", sb)
-        end)
-        coClk.MouseButton1Click:Connect(function()
-            FW.switchPage("Console", sb)
-        end)
-        exClk.MouseButton1Click:Connect(function()
-            FW.switchPage("Extra", sb)
-        end)
-        slide.MouseButton1Click:Connect(function()
-            FW.hide()
-        end)
-        openClk.MouseButton1Click:Connect(function()
-            FW.show()
-        end)
-    end
-    
-    setupEditor()
-    setupButtons()
-    setupNavigation()
-    
-    spawn(function()
-        while wait(1) do
-            FW.updateTimeBar()
-        end
-    end)
-    
-    FW.switchPage("Editor", sb)
-    FW.show()
-    
-    spawn(function()
-        wait(1)
-        FW.addConsoleLog("FrostWare Console initialized", "info")
-        FW.addConsoleLog("Console captures print(), warn(), and error() automatically", "info")
-        print("FrostWare V2 loaded successfully!")
+local function initializeFrostWare()    
+    local ui, openClk = FW.cBaseUI()    
+    local sb, upClk, edClk, coClk, exClk, slide = FW.cSidebar()    
+    local ed, src, ln, ts, addTab, execBtn, clrBtn, pstBtn, execClpBtn = FW.cEditor()    
+    local cop = FW.cConsolePage()    
+    local exp = FW.cExtraPage()        
+    local function setupEditor()        
+        local tabsRestored = FW.restoreTabs(ts)                
+        if not tabsRestored then            
+            local mainTab = FW.cTab(ts, "Main", "-- FrostWare V2 Editor\nprint('Hello World!')")            
+            FW.switchTab(mainTab)        
+        else            
+            local curTab = FW.getCurTab()            
+            FW.switchTab(curTab)        
+        end                
+        FW.updLines(src, ln)                
+        src:GetPropertyChangedSignal("Text"):Connect(function()            
+            FW.updLines(src, ln)            
+            local curTab = FW.getCurTab()            
+            local tabs = FW.getTabs()            
+            if tabs[curTab] then                
+                tabs[curTab].content = src.Text                
+                spawn(function()                    
+                    wait(0.5)                    
+                    FW.saveTabs()                
+                end)            
+            end        
+        end)                
+        addTab.MouseButton1Click:Connect(function()            
+            local newId, tabBtn, closeBtn = FW.cTab(ts, "New Tab", "-- New Tab\nprint('Hello!')")            
+            FW.switchTab(newId)        
+        end)    
+    end        
+    local function setupButtons()        
+        execBtn.MouseButton1Click:Connect(function()            
+            local code = src.Text            
+            if code and code ~= "" then                
+                local success, result = pcall(function()                    
+                    return loadstring(code)                
+                end)                
+                if success and result then                    
+                    local execSuccess, execErr = pcall(result)                    
+                    if execSuccess then                        
+                        FW.showAlert("Success", "Script executed!", 2)                    
+                    else                        
+                        FW.showAlert("Error", "Execution error: " .. tostring(execErr), 4)                    
+                    end                
+                else                    
+                    FW.showAlert("Error", "Compilation error: " .. tostring(result), 4)                
+                end            
+            end        
+        end)                
+        clrBtn.MouseButton1Click:Connect(function()            
+            src.Text = ""            
+            local curTab = FW.getCurTab()            
+            local tabs = FW.getTabs()            
+            if tabs[curTab] then                
+                tabs[curTab].content = ""            
+            end            
+            FW.updLines(src, ln)            
+            FW.saveTabs()        
+        end)                
+        pstBtn.MouseButton1Click:Connect(function()            
+            local clipboard = getclipboard and getclipboard() or ""            
+            if clipboard ~= "" then                
+                src.Text = clipboard                
+                local curTab = FW.getCurTab()                
+                local tabs = FW.getTabs()                
+                if tabs[curTab] then                    
+                    tabs[curTab].content = clipboard                
+                end                
+                FW.updLines(src, ln)                
+                FW.saveTabs()            
+            end        
+        end)                
+        execClpBtn.MouseButton1Click:Connect(function()            
+            local clipboard = getclipboard and getclipboard() or ""            
+            if clipboard ~= "" then                
+                local success, result = pcall(function()                    
+                    return loadstring(clipboard)                
+                end)                
+                if success and result then                    
+                    local execSuccess, execErr = pcall(result)                    
+                    if execSuccess then                        
+                        FW.showAlert("Success", "Clipboard executed!", 2)                    
+                    else                        
+                        FW.showAlert("Error", "Execution error: " .. tostring(execErr), 4)                    
+                    end                
+                else                    
+                    FW.showAlert("Error", "Compilation error: " .. tostring(result), 4)                
+                end            
+            end        
+        end)    
+    end        
+    local function setupNavigation()        
+        edClk.MouseButton1Click:Connect(function()            
+            FW.switchPage("Editor", sb)        
+        end)                
+        coClk.MouseButton1Click:Connect(function()            
+            FW.switchPage("Console", sb)        
+        end)                
+        exClk.MouseButton1Click:Connect(function()            
+            FW.switchPage("Extra", sb)        
+        end)                
+        slide.MouseButton1Click:Connect(function()            
+            FW.hide()        
+        end)                
+        openClk.MouseButton1Click:Connect(function()            
+            FW.show()        
+        end)    
+    end        
+    setupEditor()    
+    setupButtons()    
+    setupNavigation()        
+    spawn(function()        
+        while wait(1) do            
+            FW.updateTimeBar()        
+        end    
+    end)        
+    FW.switchPage("Editor", sb)    
+    FW.show()        
+    spawn(function()        
+        wait(1)        
+        FW.addConsoleLog("FrostWare Console initialized", "info")        
+        FW.addConsoleLog("Console captures print(), warn(), and error() automatically", "info")        
+        print("FrostWare V2 loaded successfully!")    
     end)
 end
-
 initializeFrostWare()
 return FW
