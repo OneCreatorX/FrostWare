@@ -4,7 +4,7 @@ local HttpService = game:GetService("HttpService")
 local playerCountLabel = nil
 
 spawn(function()
-    wait(2)
+    wait(1)
     
     local function updateExtraPage()
         local extraPage = _G.FW.getUI()["11"]:FindFirstChild("ExtraPage")
