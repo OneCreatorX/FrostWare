@@ -59,6 +59,8 @@ local oldPrint, oldWarn, oldError
 local sessionStart = tick()
 local timeBarRef = nil
 local timeStatusRef = nil
+local progressBarRef = nil
+local editorExecuting = false
 
 local cStdBtn=_e.fn(function(p,nm,txt,ico,pos,sz)    
     local btn=cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})    
@@ -86,19 +88,32 @@ local cRndBtn=_e.fn(function(p,nm,ico,pos,sz)
 end)
 
 function FW.updateTimeBar()    
-    if timeBarRef and timeStatusRef then        
+    if timeBarRef and timeStatusRef and progressBarRef then        
         local elapsed = tick() - sessionStart        
         local hours = math.floor(elapsed / 3600)        
         local minutes = math.floor((elapsed % 3600) / 60)        
         local seconds = math.floor(elapsed % 60)        
         timeBarRef.Text = string.format("Session: %02d:%02d:%02d", hours, minutes, seconds)                
-        local h,m,s = gvt()        
-        if h > 0 or m > 0 or s > 0 then            
+        local h,m,s = gvt()
+        local totalSeconds = h * 3600 + m * 60 + s
+        local maxSeconds = 50 * 3600
+        local percentage = math.min(totalSeconds / maxSeconds, 1)
+        
+        if totalSeconds > 0 then            
             timeStatusRef.Text = string.format("Remaining: %02d:%02d:%02d", h, m, s)            
-            timeStatusRef.TextColor3 = Color3.fromRGB(100, 255, 100)        
+            timeStatusRef.TextColor3 = Color3.fromRGB(255, 255, 255)
+            progressBarRef.Size = UDim2.new(percentage, 0, 1, 0)
+            if percentage > 0.5 then
+                cG(progressBarRef, Color3.fromRGB(100, 255, 100), Color3.fromRGB(50, 200, 50))
+            elseif percentage > 0.2 then
+                cG(progressBarRef, Color3.fromRGB(255, 200, 100), Color3.fromRGB(200, 150, 50))
+            else
+                cG(progressBarRef, Color3.fromRGB(255, 100, 100), Color3.fromRGB(200, 50, 50))
+            end
         else            
-            timeStatusRef.Text = "Status: Expired"            
-            timeStatusRef.TextColor3 = Color3.fromRGB(255, 100, 100)        
+            timeStatusRef.Text = "Status: EXPIRED"            
+            timeStatusRef.TextColor3 = Color3.fromRGB(255, 100, 100)
+            progressBarRef.Size = UDim2.new(0, 0, 1, 0)
         end    
     end
 end
@@ -143,7 +158,7 @@ function FW.loadTabs()
     return false
 end
 
-function FW.addConsoleLog(msg, msgType, canCopy)    
+function FW.addConsoleLog(msg, msgType, canCopy, fromEditor)    
     if not consoleEnabled then return end        
     local timestamp = os.date("[%H:%M:%S]")    
     local color = Color3.fromRGB(255, 255, 255)    
@@ -156,14 +171,18 @@ function FW.addConsoleLog(msg, msgType, canCopy)
         prefix = "[WARN] "    
     elseif msgType == "info" then        
         color = Color3.fromRGB(100, 200, 255)        
-        prefix = "[INFO] "    
+        prefix = "[INFO] "
+    elseif msgType == "editor" then
+        color = Color3.fromRGB(255, 150, 255)
+        prefix = "[EDITOR] "
     end        
     local logEntry = {        
         text = timestamp .. " " .. prefix .. tostring(msg),        
         color = color,        
         canCopy = canCopy ~= false,        
         fullText = tostring(msg),        
-        type = msgType or "info"    
+        type = msgType or "info",
+        fromEditor = fromEditor or false
     }        
     table.insert(consoleOutput, logEntry)        
     if #consoleOutput > 200 then        
@@ -175,54 +194,35 @@ end
 function FW.updateConsole()    
     if consoleScrollRef then        
         for _, child in pairs(consoleScrollRef:GetChildren()) do            
-            if child:IsA("Frame") then                
+            if child:IsA("TextButton") then                
                 child:Destroy()            
             end        
         end                
         local yPos = 0        
         for i, log in ipairs(consoleOutput) do            
-            local logFrame = cF(consoleScrollRef, {                
-                BackgroundColor3 = Color3.fromRGB(16, 19, 27),                
-                Size = UDim2.new(1, 0, 0, 30),                
+            local logBtn = cB(consoleScrollRef, {                
+                BackgroundColor3 = i % 2 == 0 and Color3.fromRGB(20, 23, 30) or Color3.fromRGB(16, 19, 27),                
+                Size = UDim2.new(1, 0, 0, 35),                
                 Position = UDim2.new(0, 0, 0, yPos),                
-                Name = "LogEntry" .. i            
-            })                        
-            if i % 2 == 0 then                
-                logFrame.BackgroundColor3 = Color3.fromRGB(20, 23, 30)            
-            end                        
-            local logText = cT(logFrame, {                
-                Text = log.text,                
-                TextSize = 16,                
-                TextColor3 = log.color,                
-                BackgroundTransparency = 1,                
-                Size = UDim2.new(0.82, 0, 1, 0),                
-                Position = UDim2.new(0.01, 0, 0, 0),
-                TextXAlignment = Enum.TextXAlignment.Left,                
-                FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Medium, Enum.FontStyle.Normal),                
-                TextWrapped = false,                
-                TextTruncate = Enum.TextTruncate.AtEnd            
-            })            
-            cTC(logText, 16)                        
-            if log.canCopy then                
-                local copyBtn = cB(logFrame, {                    
-                    BackgroundColor3 = Color3.fromRGB(100, 150, 255),                    
-                    Size = UDim2.new(0.15, 0, 0.7, 0),                    
-                    Position = UDim2.new(0.84, 0, 0.15, 0),                    
-                    Text = "Copy",                    
-                    TextColor3 = Color3.fromRGB(255, 255, 255),                    
-                    TextSize = 14,                    
-                    TextScaled = true                
-                })                
-                cC(copyBtn, 0.02)                
-                cTC(copyBtn, 14)                                
-                copyBtn.MouseButton1Click:Connect(function()                    
-                    if setclipboard then                        
-                        setclipboard(log.fullText)                        
-                        FW.showAlert("Success", "Copied to clipboard!", 1)                    
-                    end                
-                end)            
-            end                        
-            yPos = yPos + 30        
+                Name = "LogEntry" .. i,
+                Text = log.text,
+                TextSize = 16,
+                TextColor3 = log.color,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                FontFace = Font.new("rbxassetid://11702779409", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
+                TextWrapped = true,
+                TextScaled = false
+            })
+            cTC(logBtn, 16)
+            
+            logBtn.MouseButton1Click:Connect(function()
+                if setclipboard and log.canCopy then
+                    setclipboard(log.fullText)
+                    FW.showAlert("Success", "Copied to clipboard!", 1)
+                end
+            end)
+            
+            yPos = yPos + 35        
         end                
         consoleScrollRef.CanvasSize = UDim2.new(0, 0, 0, yPos)        
         consoleScrollRef.CanvasPosition = Vector2.new(0, yPos)    
@@ -299,24 +299,36 @@ end
 
 function FW.cSidebar()
 local sb=cI(g["6"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://133862668499122",Size=UDim2.new(0.25,0,1,0),BackgroundTransparency=1,Name="Sidebar"})
-local timeBar=cF(sb,{BackgroundColor3=Color3.fromRGB(20,25,32),Size=UDim2.new(0.714,0,0.05,0),Position=UDim2.new(0.088,0,0.08,0),Name="TimeBarFrame"})
-cC(timeBar,0.18)
-cS(timeBar,1,Color3.fromRGB(35,39,54))
-local timeText=cT(timeBar,{Text="Session: 00:00:00",TextSize=16,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
+
+local progressFrame=cF(sb,{BackgroundColor3=Color3.fromRGB(20,25,32),Size=UDim2.new(0.85,0,0.12,0),Position=UDim2.new(0.075,0,0.75,0),Name="ProgressFrame"})
+cC(progressFrame,0.15)
+cS(progressFrame,2,Color3.fromRGB(35,39,54))
+
+local sessionLabel=cT(progressFrame,{Text="Session Time",TextSize=14,TextColor3=Color3.fromRGB(200,200,200),BackgroundTransparency=1,Size=UDim2.new(0.9,0,0.2,0),Position=UDim2.new(0.05,0,0.05,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+cTC(sessionLabel,14)
+
+local timeText=cT(progressFrame,{Text="00:00:00",TextSize=16,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(0.9,0,0.25,0),Position=UDim2.new(0.05,0,0.25,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
 cTC(timeText,16)
 timeBarRef = timeText
-local statusBar=cF(sb,{BackgroundColor3=Color3.fromRGB(20,25,32),Size=UDim2.new(0.714,0,0.05,0),Position=UDim2.new(0.088,0,0.135,0),Name="StatusBarFrame"})
-cC(statusBar,0.18)
-cS(statusBar,1,Color3.fromRGB(35,39,54))
-local statusText=cT(statusBar,{Text="Status: Checking...",TextSize=16,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
-cTC(statusText,16)
+
+local progressBg=cF(progressFrame,{BackgroundColor3=Color3.fromRGB(30,35,45),Size=UDim2.new(0.9,0,0.15,0),Position=UDim2.new(0.05,0,0.55,0),Name="ProgressBg"})
+cC(progressBg,0.1)
+
+local progressBar=cF(progressBg,{BackgroundColor3=Color3.fromRGB(100,255,100),Size=UDim2.new(1,0,1,0),Position=UDim2.new(0,0,0,0),Name="ProgressBar"})
+cC(progressBar,0.1)
+cG(progressBar,Color3.fromRGB(100,255,100),Color3.fromRGB(50,200,50))
+progressBarRef = progressBar
+
+local statusText=cT(progressFrame,{Text="Checking...",TextSize=12,TextColor3=Color3.fromRGB(180,180,180),BackgroundTransparency=1,Size=UDim2.new(0.9,0,0.2,0),Position=UDim2.new(0.05,0,0.75,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Regular,Enum.FontStyle.Normal)})
+cTC(statusText,12)
 timeStatusRef = statusText
-local ub=cF(sb,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.61,0,0.088,0),Position=UDim2.new(0.192,0,0.826,0),Name="UpBtn"})
-cC(ub,0.18)
+
+local ub=cF(sb,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.85,0,0.08,0),Position=UDim2.new(0.075,0,0.9,0),Name="UpBtn"})
+cC(ub,0.15)
 cG(ub,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
-local ubl=cT(ub,{TextWrapped=true,TextSize=22,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(29,29,38),BackgroundTransparency=1,Size=UDim2.new(0.65,0,0.4,0),Text="Upgrade Plan",Name="UpLbl",Position=UDim2.new(0.25,0,0.3,0)})
-cTC(ubl,22)
-cI(ub,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://110667923648139",Size=UDim2.new(0.15,0,0.4,0),BackgroundTransparency=1,Name="UpIco",Position=UDim2.new(0.05,0,0.3,0)})
+local ubl=cT(ub,{TextWrapped=true,TextSize=18,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(29,29,38),BackgroundTransparency=1,Size=UDim2.new(0.7,0,0.6,0),Text="Upgrade Plan",Name="UpLbl",Position=UDim2.new(0.25,0,0.2,0)})
+cTC(ubl,18)
+cI(ub,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://110667923648139",Size=UDim2.new(0.15,0,0.6,0),BackgroundTransparency=1,Name="UpIco",Position=UDim2.new(0.05,0,0.2,0)})
 local ubClk=cB(ub,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="UpClk",Text=""})
 cC(ubClk,0)
 cTC(ubClk,14)
@@ -324,24 +336,24 @@ ubClk.MouseButton1Click:Connect(function()
     setclipboard("https://discord.gg/getfrost")
 end)
 local function cSBtn(nm,txt,ico,pos,sel)    
-    local btn=cF(sb,{BackgroundColor3=sel and Color3.fromRGB(30,36,51)or Color3.fromRGB(31,34,50),Size=UDim2.new(0.714,0,0.088,0),Position=pos,Name=nm,BackgroundTransparency=sel and 0 or 1})    
-    cC(btn,0.18)    
-    local box=cF(btn,{ZIndex=sel and 2 or 0,BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.167,0,0.629,0),Position=UDim2.new(0.093,0,0.2,0),Name="Box"})    
-    cC(box,0.24)    
-    cAR(box,0.982)    
+    local btn=cF(sb,{BackgroundColor3=sel and Color3.fromRGB(30,36,51)or Color3.fromRGB(31,34,50),Size=UDim2.new(0.85,0,0.08,0),Position=pos,Name=nm,BackgroundTransparency=sel and 0 or 1})    
+    cC(btn,0.15)    
+    local box=cF(btn,{ZIndex=sel and 2 or 0,BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.15,0,0.6,0),Position=UDim2.new(0.08,0,0.2,0),Name="Box"})    
+    cC(box,0.2)    
+    cAR(box,1)    
     if sel then cG(box,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))else cG(box,Color3.fromRGB(66,79,113),Color3.fromRGB(36,44,63))end    
-    cI(box,{ZIndex=sel and 2 or 0,ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.527,0,sel and 0.571 or 0.5,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.236,0,sel and 0.232 or 0.25,0)})    
-    local lbl=cT(btn,{TextWrapped=true,TextSize=24,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(sel and 0.248 or 0.359,0,0.36,0),Text=txt,Name="Lbl",Position=UDim2.new(0.379,0,0.348,0)})    
-    cTC(lbl,24)    
+    cI(box,{ZIndex=sel and 2 or 0,ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.6,0,0.6,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.2,0,0.2,0)})    
+    local lbl=cT(btn,{TextWrapped=true,TextSize=20,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(0.6,0,0.6,0),Text=txt,Name="Lbl",Position=UDim2.new(0.3,0,0.2,0)})    
+    cTC(lbl,20)    
     local clk=cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  ",ZIndex=5})    
     cC(clk,0)    
     cTC(clk,14)    
     return btn,clk
 end
-local ed,edClk=cSBtn("Editor","Editor","rbxassetid://94595204123047",UDim2.new(0.088,0,0.2,0),true)
-local co,coClk=cSBtn("Console","Console","rbxassetid://107390243416427",UDim2.new(0.088,0,0.3,0),false)
-local ex,exClk=cSBtn("Extra","Extra","rbxassetid://128679881757557",UDim2.new(0.088,0,0.4,0),false)
-local logo=cI(sb,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://102761807757832",Size=UDim2.new(0.145,0,0.069,0),BackgroundTransparency=1,Name="Logo",Position=UDim2.new(0.141,0,0.067,0)})
+local ed,edClk=cSBtn("Editor","Editor","rbxassetid://94595204123047",UDim2.new(0.075,0,0.2,0),true)
+local co,coClk=cSBtn("Console","Console","rbxassetid://107390243416427",UDim2.new(0.075,0,0.3,0),false)
+local ex,exClk=cSBtn("Extra","Extra","rbxassetid://128679881757557",UDim2.new(0.075,0,0.4,0),false)
+local logo=cI(sb,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://102761807757832",Size=UDim2.new(0.2,0,0.08,0),BackgroundTransparency=1,Name="Logo",Position=UDim2.new(0.4,0,0.05,0)})
 cC(logo,0)
 local close=cI(sb,{ZIndex=2,ImageColor3=Color3.fromRGB(34,41,58),Image="rbxassetid://124705542662472",Size=UDim2.new(0.13,0,1,0),BackgroundTransparency=1,Name="Close",Position=UDim2.new(0.891,0,0,0)})
 local slide=cB(close,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,0.189,0),Name="Slide",Text="  ",Position=UDim2.new(0,0,0.43,0)})
@@ -427,12 +439,13 @@ local tabFrame=cF(ts,{BackgroundColor3=Color3.fromRGB(20,25,32),Size=UDim2.new(0
 cC(tabFrame,0.2)
 cS(tabFrame,1,Color3.fromRGB(35,39,54))
 cG(tabFrame,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
-local tb=cB(tabFrame,{BackgroundTransparency=1,Size=UDim2.new(0.75,0,1,0),Position=UDim2.new(0,0,0,0),Text=td.name,TextColor3=Color3.fromRGB(29,29,38),TextSize=16,Name="TabBtn"..td.id,TextScaled=true,ZIndex=2,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+local tb=cB(tabFrame,{BackgroundTransparency=1,Size=UDim2.new(0.8,0,1,0),Position=UDim2.new(0,0,0,0),Text=td.name,TextColor3=Color3.fromRGB(29,29,38),TextSize=16,Name="TabBtn"..td.id,TextScaled=true,ZIndex=2,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
 cTC(tb,16)
-local cb=cF(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,24,0,24),Position=UDim2.new(1,-28,0,8),Name="CloseFrame",ZIndex=3})
-cC(cb,0.5)
-local closeBtn=cB(cb,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=18,Name="CloseBtn",ZIndex=4,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-cTC(closeBtn,18)
+local cb=cF(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,18,0,18),Position=UDim2.new(1,-22,0,4),Name="CloseFrame",ZIndex=3})
+cC(cb,0.4)
+cG(cb,Color3.fromRGB(200,100,100),Color3.fromRGB(150,50,50))
+local closeBtn=cB(cb,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=14,Name="CloseBtn",ZIndex=4,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+cTC(closeBtn,14)
 td.button=tb
 td.closeButton=closeBtn
 td.frame=tabFrame
@@ -456,12 +469,18 @@ for _,tab in pairs(tabs)do
     if tab.frame then 
         tab.frame.BackgroundColor3=Color3.fromRGB(20,25,32)
         cG(tab.frame,Color3.fromRGB(66,79,113),Color3.fromRGB(36,44,63))
+        if tab.button then
+            tab.button.TextColor3=Color3.fromRGB(255,255,255)
+        end
     end 
 end
 curTab=tid
 if tabs[tid].frame then 
     tabs[tid].frame.BackgroundColor3=Color3.fromRGB(30,36,51)
     cG(tabs[tid].frame,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
+    if tabs[tid].button then
+        tabs[tid].button.TextColor3=Color3.fromRGB(29,29,38)
+    end
 end
 if srcRef then srcRef.Text=tabs[tid].content
 FW.updLines(srcRef,lnRef)
@@ -512,7 +531,7 @@ end
 function FW.switchPage(pn,sb)
 for _,pg in pairs(g["11"]:GetChildren())do if pg:IsA("ImageLabel")then pg.Visible=false end end
 for _,btn in pairs(sb:GetChildren())do
-if btn:IsA("Frame")and btn.Name~="UpBtn"and btn.Name~="TimeBarFrame"and btn.Name~="StatusBarFrame"then
+if btn:IsA("Frame")and btn.Name~="UpBtn"and btn.Name~="ProgressFrame"then
 btn.BackgroundTransparency=1
 local box=btn:FindFirstChild("Box")
 if box then box.UIGradient.Color=ColorSequence.new{ColorSequenceKeypoint.new(0,Color3.fromRGB(66,79,113)),ColorSequenceKeypoint.new(1,Color3.fromRGB(36,44,63))}end
@@ -538,12 +557,13 @@ local tabFrame=cF(ts,{BackgroundColor3=Color3.fromRGB(20,25,32),Size=UDim2.new(0
 cC(tabFrame,0.2)
 cS(tabFrame,1,Color3.fromRGB(35,39,54))
 cG(tabFrame,Color3.fromRGB(66,79,113),Color3.fromRGB(36,44,63))
-local tb=cB(tabFrame,{BackgroundTransparency=1,Size=UDim2.new(0.75,0,1,0),Position=UDim2.new(0,0,0,0),Text=tab.name,TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="TabBtn"..id,TextScaled=true,ZIndex=2,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+local tb=cB(tabFrame,{BackgroundTransparency=1,Size=UDim2.new(0.8,0,1,0),Position=UDim2.new(0,0,0,0),Text=tab.name,TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="TabBtn"..id,TextScaled=true,ZIndex=2,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
 cTC(tb,16)
-local cb=cF(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,24,0,24),Position=UDim2.new(1,-28,0,8),Name="CloseFrame",ZIndex=3})
-cC(cb,0.5)
-local closeBtn=cB(cb,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=18,Name="CloseBtn",ZIndex=4,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-cTC(closeBtn,18)
+local cb=cF(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,18,0,18),Position=UDim2.new(1,-22,0,4),Name="CloseFrame",ZIndex=3})
+cC(cb,0.4)
+cG(cb,Color3.fromRGB(200,100,100),Color3.fromRGB(150,50,50))
+local closeBtn=cB(cb,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=14,Name="CloseBtn",ZIndex=4,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+cTC(closeBtn,14)
 tabs[id].button=tb
 tabs[id].closeButton=closeBtn
 tabs[id].frame=tabFrame
@@ -589,7 +609,9 @@ print = function(...)
         msg = msg .. tostring(v)        
         if i < #args then msg = msg .. " " end    
     end    
-    FW.addConsoleLog(msg, "info")    
+    if not editorExecuting then
+        FW.addConsoleLog(msg, "info")    
+    end
     oldPrint(...)
 end
 
@@ -600,7 +622,9 @@ warn = function(...)
         msg = msg .. tostring(v)        
         if i < #args then msg = msg .. " " end    
     end    
-    FW.addConsoleLog(msg, "warn")    
+    if not editorExecuting then
+        FW.addConsoleLog(msg, "warn")    
+    end
     oldWarn(...)
 end
 
@@ -611,21 +635,25 @@ error = function(...)
         msg = msg .. tostring(v)        
         if i < #args then msg = msg .. " " end    
     end    
-    FW.addConsoleLog(msg, "error")    
+    if not editorExecuting then
+        FW.addConsoleLog(msg, "error")    
+    end
     oldError(...)
 end
 
 logService.MessageOut:Connect(function(message, messageType)
-    if messageType == Enum.MessageType.MessageError then
-        FW.addConsoleLog(message, "error")
-    elseif messageType == Enum.MessageType.MessageWarning then
-        FW.addConsoleLog(message, "warn")
-    elseif messageType == Enum.MessageType.MessageInfo then
-        FW.addConsoleLog(message, "info")
-    else
-        FW.addConsoleLog(message, "info")
+    if not editorExecuting then
+        if messageType == Enum.MessageType.MessageError then
+            FW.addConsoleLog(message, "error")
+        elseif messageType == Enum.MessageType.MessageWarning then
+            FW.addConsoleLog(message, "warn")
+        elseif messageType == Enum.MessageType.MessageInfo then
+            FW.addConsoleLog(message, "info")
+        else
+            FW.addConsoleLog(message, "info")
+        end
     end
-end)
+end
 
 local function initializeFrostWare()    
     local ui, openClk = FW.cBaseUI()    
@@ -663,20 +691,22 @@ local function initializeFrostWare()
     local function setupButtons()        
         execBtn.MouseButton1Click:Connect(function()            
             local code = src.Text            
-            if code and code ~= "" then                
+            if code and code ~= "" then
+                editorExecuting = true
                 local success, result = pcall(function()                    
                     return loadstring(code)                
                 end)                
                 if success and result then                    
                     local execSuccess, execErr = pcall(result)                    
                     if execSuccess then                        
-                        FW.showAlert("Success", "Script executed!", 2)                    
+                        FW.addConsoleLog("Script executed successfully", "editor", true, true)                    
                     else                        
-                        FW.showAlert("Error", "Execution error: " .. tostring(execErr), 4)                    
+                        FW.addConsoleLog("Execution error: " .. tostring(execErr), "error", true, true)                    
                     end                
                 else                    
-                    FW.showAlert("Error", "Compilation error: " .. tostring(result), 4)                
-                end            
+                    FW.addConsoleLog("Compilation error: " .. tostring(result), "error", true, true)                
+                end
+                editorExecuting = false            
             end        
         end)                
         clrBtn.MouseButton1Click:Connect(function()            
@@ -704,20 +734,22 @@ local function initializeFrostWare()
         end)                
         execClpBtn.MouseButton1Click:Connect(function()            
             local clipboard = getclipboard and getclipboard() or ""            
-            if clipboard ~= "" then                
+            if clipboard ~= "" then
+                editorExecuting = true
                 local success, result = pcall(function()                    
                     return loadstring(clipboard)                
                 end)                
                 if success and result then                    
                     local execSuccess, execErr = pcall(result)                    
                     if execSuccess then                        
-                        FW.showAlert("Success", "Clipboard executed!", 2)                    
+                        FW.addConsoleLog("Clipboard script executed successfully", "editor", true, true)                    
                     else                        
-                        FW.showAlert("Error", "Execution error: " .. tostring(execErr), 4)                    
+                        FW.addConsoleLog("Clipboard execution error: " .. tostring(execErr), "error", true, true)                    
                     end                
                 else                    
-                    FW.showAlert("Error", "Compilation error: " .. tostring(result), 4)                
-                end            
+                    FW.addConsoleLog("Clipboard compilation error: " .. tostring(result), "error", true, true)                
+                end
+                editorExecuting = false            
             end        
         end)    
     end        
