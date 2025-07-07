@@ -1,27 +1,14 @@
-print("Cloud module starting...")
-
 spawn(function()
-    wait(3)
-    
-    print("Creating cloud page...")
+    wait(1)
     
     local FW = _G.FW
-    if not FW then
-        warn("FW not found in global scope")
-        return
-    end
+    if not FW then return end
     
     local ui = FW.getUI()
-    if not ui then
-        warn("FW.getUI() returned nil")
-        return
-    end
+    if not ui then return end
     
     local mainUI = ui["11"]
-    if not mainUI then
-        warn("Main UI container not found")
-        return
-    end
+    if not mainUI then return end
     
     local cloudPage = FW.cI(mainUI, {
         ImageTransparency = 1,
@@ -34,8 +21,6 @@ spawn(function()
         Name = "CloudPage",
         Position = UDim2.new(-0.001, 0, 0, 0)
     })
-    
-    print("Cloud page created")
     
     local title = FW.cT(cloudPage, {
         Text = "Cloud Storage",
@@ -74,12 +59,8 @@ spawn(function()
         FW.showAlert("Info", "Delete functionality coming soon!", 2)
     end)
     
-    print("Cloud UI elements created")
-    
     local sidebar = FW.getUI()["6"]:FindFirstChild("Sidebar")
     if sidebar then
-        print("Adding cloud button to sidebar...")
-        
         local cloudBtn = FW.cF(sidebar, {
             BackgroundColor3 = Color3.fromRGB(31, 34, 50),
             Size = UDim2.new(0.714, 0, 0.088, 0),
@@ -141,14 +122,7 @@ spawn(function()
         FW.cTC(clk, 14)
         
         clk.MouseButton1Click:Connect(function()
-            print("Cloud button clicked!")
             FW.switchPage("Cloud", sidebar)
         end)
-        
-        print("Cloud button added successfully")
-    else
-        warn("Sidebar not found")
     end
-    
-    print("Cloud module loaded completely")
 end)
