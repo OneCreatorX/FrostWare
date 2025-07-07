@@ -500,6 +500,10 @@ local ubClk=cB(ub,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14
 cC(ubClk,0)
 cTC(ubClk,14)
 
+ubClk.MouseButton1Click:Connect(function()
+    setclipboard("https://discord.gg/getfrost")
+end)
+
 local function cSBtn(nm,txt,ico,pos,sel)
     local btn=cF(sb,{BackgroundColor3=sel and Color3.fromRGB(30,36,51)or Color3.fromRGB(31,34,50),Size=UDim2.new(0.714,0,0.088,0),Position=pos,Name=nm,BackgroundTransparency=sel and 0 or 1})
     cC(btn,0.18)
