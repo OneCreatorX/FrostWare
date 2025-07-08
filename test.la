@@ -27,7 +27,7 @@ e.db = cloneref(game:GetService("Debris"))
 e.gh = gethui or function() return e.cs end
 e.gc = getclipboard or function() return "" end
 e.sc = setclipboard or function() end
-e.if = isfile or function() return false end
+e.iff = isfile or function() return false end
 e.rf = readfile or function() return "" end
 e.wf = writefile or function() end
 e.mf = makefolder or function() end
@@ -63,7 +63,7 @@ end
 local gvt = function()
     local ep = "fw_ttl.txt"
     local now = os.time()
-    local saved = e.if(ep) and tonumber(e.rf(ep)) or nil
+    local saved = e.iff(ep) and tonumber(e.rf(ep)) or nil
     if not saved or saved-now<=0 then
         if e.ghi and game.HttpGet then
             local success,ttl = pcall(function()
@@ -131,7 +131,7 @@ local ga = function(url, fn)
     local fd = "FW/Img/"
     local pt = fd .. fn
     if not e.isf(fd) then e.mf(fd) end
-    if not e.if(pt) then
+    if not e.iff(pt) then
         local success, data = pcall(function()
             return game:HttpGet(url)
         end)
@@ -192,7 +192,7 @@ local st = function()
 end
 
 local lt = function()
-    if e.if(td .. "tabs.json") then
+    if e.iff(td .. "tabs.json") then
         local success, data = pcall(function()
             return e.hs:JSONDecode(e.rf(td .. "tabs.json"))
         end)
