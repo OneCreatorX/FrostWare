@@ -713,25 +713,52 @@ function FW.switchPage(pn,sb)
          end
      end
     
+    -- Reset all sidebar buttons (including external ones)
     for _,btn in pairs(sb:GetChildren()) do
         if btn:IsA("Frame") and btn.Name~="UpBtn" and btn.Name~="ProgressFrame" then
             btn.BackgroundTransparency = 1
             local box = btn:FindFirstChild("Box")
             if box then
-                 box.UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0,Color3.fromRGB(66,79,113)),ColorSequenceKeypoint.new(1,Color3.fromRGB(36,44,63))}
+                local gradient = box:FindFirstChild("UIGradient")
+                if gradient then
+                    gradient.Color = ColorSequence.new{
+                        ColorSequenceKeypoint.new(0,Color3.fromRGB(66,79,113)),
+                        ColorSequenceKeypoint.new(1,Color3.fromRGB(36,44,63))
+                    }
+                end
+            end
+            -- Update text color for external buttons
+            local lbl = btn:FindFirstChild("Lbl")
+            if lbl then
+                lbl.TextColor3 = Color3.fromRGB(255,255,255)
             end
         end
     end
     
+    -- Show the requested page
     local po = g["11"]:FindFirstChild(pn.."Page")
     if po then
         po.Visible = true
+        
+        -- Find and highlight the corresponding sidebar button
         local sbb = sb:FindFirstChild(pn)
         if sbb then
             sbb.BackgroundTransparency = 0
+            sbb.BackgroundColor3 = Color3.fromRGB(30,36,51)
             local box = sbb:FindFirstChild("Box")
             if box then
-                 box.UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0,Color3.fromRGB(166,190,255)),ColorSequenceKeypoint.new(1,Color3.fromRGB(93,117,160))}
+                local gradient = box:FindFirstChild("UIGradient")
+                if gradient then
+                    gradient.Color = ColorSequence.new{
+                        ColorSequenceKeypoint.new(0,Color3.fromRGB(166,190,255)),
+                        ColorSequenceKeypoint.new(1,Color3.fromRGB(93,117,160))
+                    }
+                end
+            end
+            -- Update text color for selected button
+            local lbl = sbb:FindFirstChild("Lbl")
+            if lbl then
+                lbl.TextColor3 = Color3.fromRGB(29,29,38)
             end
         end
     end
@@ -815,8 +842,7 @@ end
 
 function FW.initializeWithAccess()
     hasAccess = true
-getgenv()._FW_ACCESS_GRANTED = true
-
+    
     local sb, upClk, edClk, coClk, exClk, slide = FW.cSidebar()
     
     spawn(function()
