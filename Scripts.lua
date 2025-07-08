@@ -40,6 +40,23 @@ spawn(function()
         return getcustomasset(path)
     end
 
+    local function createStyledText(parent, props)
+        local text = FW.cT(parent, {
+            Text = props.Text,
+            TextSize = props.TextSize or 14,
+            TextColor3 = props.TextColor3 or Color3.fromRGB(220, 230, 250),
+            BackgroundTransparency = props.BackgroundTransparency or 1,
+            Size = props.Size,
+            Position = props.Position,
+            TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Center,
+            TextYAlignment = props.TextYAlignment or Enum.TextYAlignment.Center,
+            FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
+            Name = props.Name or "StyledText"
+        })
+        FW.cTC(text, props.TextSize or 14)
+        return text
+    end
+
     local function createStyledButton(parent, props)
         local outerFrame = FW.cF(parent, {
             BackgroundColor3 = Color3.fromRGB(15, 20, 30),
@@ -56,7 +73,7 @@ spawn(function()
             Text = props.Text,
             TextColor3 = props.TextColor3,
             TextSize = props.TextSize,
-            FontFace = props.FontFace or Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+            FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
             Name = props.Name
         })
         FW.cC(innerButton, 0.12)
@@ -64,6 +81,81 @@ spawn(function()
         
         return innerButton, outerFrame
     end
+
+    local function createStyledInput(parent, props)
+        local outerFrame = FW.cF(parent, {
+            BackgroundColor3 = Color3.fromRGB(20, 25, 35),
+            Size = props.Size,
+            Position = props.Position,
+            Name = props.Name .. "_Outer"
+        })
+        FW.cC(outerFrame, 0.15)
+
+        local input = FW.cTB(outerFrame, {
+            BackgroundColor3 = Color3.fromRGB(35, 40, 50),
+            Size = UDim2.new(1, -8, 1, -8),
+            Position = UDim2.new(0, 4, 0, 4),
+            PlaceholderText = props.PlaceholderText,
+            PlaceholderColor3 = Color3.fromRGB(120, 130, 150),
+            Text = props.Text or "",
+            TextSize = props.TextSize,
+            TextColor3 = Color3.fromRGB(220, 230, 250),
+            FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+            Name = props.Name
+        })
+        FW.cC(input, 0.12)
+        FW.cTC(input, props.TextSize)
+        
+        return input, outerFrame
+    end
+
+    local function createStyledContainer(parent, props)
+        local outerFrame = FW.cF(parent, {
+            BackgroundColor3 = Color3.fromRGB(10, 15, 25),
+            Size = props.Size,
+            Position = props.Position,
+            Name = props.Name .. "_Outer"
+        })
+        FW.cC(outerFrame, 0.15)
+
+        local innerFrame = FW.cF(outerFrame, {
+            BackgroundColor3 = props.BackgroundColor3 or Color3.fromRGB(20, 25, 35),
+            Size = UDim2.new(1, -8, 1, -8),
+            Position = UDim2.new(0, 4, 0, 4),
+            Name = props.Name
+        })
+        FW.cC(innerFrame, 0.12)
+        
+        return innerFrame, outerFrame
+    end
+
+    local function createVerifiedBadge(parent, position)
+        local verifiedOuter = FW.cF(parent, {
+            BackgroundColor3 = Color3.fromRGB(25, 70, 120),
+            Size = UDim2.new(0, 84, 0, 24),
+            Position = position
+        })
+        FW.cC(verifiedOuter, 0.15)
+        
+        local verifiedBadge = FW.cF(verifiedOuter, {
+            BackgroundColor3 = Color3.fromRGB(45, 120, 200),
+            Size = UDim2.new(1, -4, 1, -4),
+            Position = UDim2.new(0, 2, 0, 2)
+        })
+        FW.cC(verifiedBadge, 0.12)
+        
+        createStyledText(verifiedBadge, {
+            Text = "VERIFIED",
+            TextSize = 10,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            Size = UDim2.new(1, 0, 1, 0),
+            Name = "VerifiedText"
+        })
+        
+        return verifiedBadge
+    end
+
+    local scriptIconAsset = getOrDownloadImageAsset("https://cdn-icons-png.flaticon.com/512/1126/1126012.png", "script_icon.png")
 
     local function switchSec(sec)
         curSec = sec
@@ -174,43 +266,17 @@ spawn(function()
                 })
                 FW.cC(scriptCard, 0.12)
 
-                local scriptTitle = FW.cT(scriptCard, {
+                createStyledText(scriptCard, {
                     Text = script.name,
                     TextSize = 16,
-                    TextColor3 = Color3.fromRGB(220, 230, 250),
-                    BackgroundTransparency = 1,
                     Size = UDim2.new(0.4, 0, 0.6, 0),
                     Position = UDim2.new(0, 15, 0, 5),
                     TextXAlignment = Enum.TextXAlignment.Left,
-                    FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+                    Name = "ScriptTitle"
                 })
-                FW.cTC(scriptTitle, 16)
 
-                local verifiedBadge = nil
                 if defScripts[script.name] then
-                    local verifiedOuter = FW.cF(scriptCard, {
-                        BackgroundColor3 = Color3.fromRGB(25, 70, 120),
-                        Size = UDim2.new(0, 84, 0, 24),
-                        Position = UDim2.new(0, 13, 0, 28)
-                    })
-                    FW.cC(verifiedOuter, 0.15)
-                    
-                    verifiedBadge = FW.cF(verifiedOuter, {
-                        BackgroundColor3 = Color3.fromRGB(45, 120, 200),
-                        Size = UDim2.new(1, -4, 1, -4),
-                        Position = UDim2.new(0, 2, 0, 2)
-                    })
-                    FW.cC(verifiedBadge, 0.12)
-                    
-                    local verifiedText = FW.cT(verifiedBadge, {
-                        Text = "VERIFIED",
-                        TextSize = 10,
-                        TextColor3 = Color3.fromRGB(255, 255, 255),
-                        BackgroundTransparency = 1,
-                        Size = UDim2.new(1, 0, 1, 0),
-                        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-                    })
-                    FW.cTC(verifiedText, 10)
+                    createVerifiedBadge(scriptCard, UDim2.new(0, 13, 0, 28))
                 end
 
                 local autoExecBtn, autoExecOuter = createStyledButton(scriptCard, {
@@ -303,21 +369,12 @@ spawn(function()
             ZIndex = 10
         })
 
-        local optionsPanelOuter = FW.cF(scriptF, {
-            BackgroundColor3 = Color3.fromRGB(10, 15, 25),
-            Size = UDim2.new(0, 408, 0, 358),
-            Position = UDim2.new(0.5, -204, 0.5, -179),
-            Name = "OptionsPanelOuter"
-        })
-        FW.cC(optionsPanelOuter, 0.15)
-
-        local optionsPanel = FW.cF(optionsPanelOuter, {
+        local optionsPanel, optionsPanelOuter = createStyledContainer(scriptF, {
             BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-            Size = UDim2.new(1, -8, 1, -8),
-            Position = UDim2.new(0, 4, 0, 4),
+            Size = UDim2.new(0, 400, 0, 350),
+            Position = UDim2.new(0.5, -200, 0.5, -175),
             Name = "OptionsPanel"
         })
-        FW.cC(optionsPanel, 0.12)
 
         local titleBar = FW.cF(optionsPanel, {
             BackgroundColor3 = Color3.fromRGB(30, 35, 45),
@@ -326,24 +383,22 @@ spawn(function()
             Name = "TitleBar"
         })
 
-        local title = FW.cT(titleBar, {
+        createStyledText(titleBar, {
             Text = "Select Your Option",
             TextSize = 18,
             TextColor3 = Color3.fromRGB(255, 255, 255),
-            BackgroundTransparency = 1,
             Size = UDim2.new(0.8, 0, 1, 0),
             Position = UDim2.new(0.1, 0, 0, 0),
-            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+            Name = "Title"
         })
-        FW.cTC(title, 18)
 
         local closeBtn, closeBtnOuter = createStyledButton(titleBar, {
             BackgroundColor3 = Color3.fromRGB(180, 55, 55),
             Size = UDim2.new(0, 30, 0, 30),
             Position = UDim2.new(1, -40, 0, 10),
-            Text = "✕",
+            Text = "×",
             TextColor3 = Color3.fromRGB(255, 255, 255),
-            TextSize = 14,
+            TextSize = 16,
             Name = "CloseBtn"
         })
 
@@ -354,17 +409,15 @@ spawn(function()
             end
         end)
 
-        local subtitle = FW.cT(optionsPanel, {
+        createStyledText(optionsPanel, {
             Text = "Choose whether to execute,\nopen in a new tab, etc...",
             TextSize = 12,
             TextColor3 = Color3.fromRGB(180, 190, 210),
-            BackgroundTransparency = 1,
             Size = UDim2.new(0.8, 0, 0, 40),
             Position = UDim2.new(0.1, 0, 0, 60),
             TextYAlignment = Enum.TextYAlignment.Top,
-            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+            Name = "Subtitle"
         })
-        FW.cTC(subtitle, 12)
 
         local buttons = {
             {text = "EXECUTE SELECTED SCRIPT", color = Color3.fromRGB(45, 120, 200), pos = UDim2.new(0.1, 0, 0, 120)},
@@ -456,53 +509,26 @@ spawn(function()
         })
         FW.cC(cloudCard, 0.12)
 
-        local scriptTitle = FW.cT(cloudCard, {
+        createStyledText(cloudCard, {
             Text = data.title or "Unknown Script",
             TextSize = 16,
-            TextColor3 = Color3.fromRGB(220, 230, 250),
-            BackgroundTransparency = 1,
             Size = UDim2.new(0.35, 0, 0.6, 0),
             Position = UDim2.new(0, 15, 0, 5),
             TextXAlignment = Enum.TextXAlignment.Left,
-            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+            Name = "ScriptTitle"
         })
-        FW.cTC(scriptTitle, 16)
 
-        local verifiedOuter = FW.cF(cloudCard, {
-            BackgroundColor3 = Color3.fromRGB(25, 70, 120),
-            Size = UDim2.new(0, 84, 0, 24),
-            Position = UDim2.new(0, 13, 0, 28)
-        })
-        FW.cC(verifiedOuter, 0.15)
-        
-        local verifiedBadge = FW.cF(verifiedOuter, {
-            BackgroundColor3 = Color3.fromRGB(45, 120, 200),
-            Size = UDim2.new(1, -4, 1, -4),
-            Position = UDim2.new(0, 2, 0, 2)
-        })
-        FW.cC(verifiedBadge, 0.12)
-        
-        local verifiedText = FW.cT(verifiedBadge, {
-            Text = "VERIFIED",
-            TextSize = 10,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, 0),
-            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-        })
-        FW.cTC(verifiedText, 10)
+        createVerifiedBadge(cloudCard, UDim2.new(0, 13, 0, 28))
 
-        local viewsLabel = FW.cT(cloudCard, {
+        createStyledText(cloudCard, {
             Text = (data.views or "0") .. " Views",
             TextSize = 12,
             TextColor3 = Color3.fromRGB(150, 160, 180),
-            BackgroundTransparency = 1,
             Size = UDim2.new(0.2, 0, 0.6, 0),
             Position = UDim2.new(0.4, 0, 0, 5),
             TextXAlignment = Enum.TextXAlignment.Left,
-            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+            Name = "ViewsLabel"
         })
-        FW.cTC(viewsLabel, 12)
 
         local selectBtn, selectOuter = createStyledButton(cloudCard, {
             BackgroundColor3 = Color3.fromRGB(45, 120, 200),
@@ -545,21 +571,12 @@ spawn(function()
             ZIndex = 10
         })
 
-        local optionsPanelOuter = FW.cF(scriptF, {
-            BackgroundColor3 = Color3.fromRGB(10, 15, 25),
-            Size = UDim2.new(0, 408, 0, 358),
-            Position = UDim2.new(0.5, -204, 0.5, -179),
-            Name = "OptionsPanelOuter"
-        })
-        FW.cC(optionsPanelOuter, 0.15)
-
-        local optionsPanel = FW.cF(optionsPanelOuter, {
+        local optionsPanel, optionsPanelOuter = createStyledContainer(scriptF, {
             BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-            Size = UDim2.new(1, -8, 1, -8),
-            Position = UDim2.new(0, 4, 0, 4),
+            Size = UDim2.new(0, 400, 0, 350),
+            Position = UDim2.new(0.5, -200, 0.5, -175),
             Name = "OptionsPanel"
         })
-        FW.cC(optionsPanel, 0.12)
 
         local titleBar = FW.cF(optionsPanel, {
             BackgroundColor3 = Color3.fromRGB(30, 35, 45),
@@ -568,24 +585,22 @@ spawn(function()
             Name = "TitleBar"
         })
 
-        local title = FW.cT(titleBar, {
+        createStyledText(titleBar, {
             Text = "Select Your Option",
             TextSize = 18,
             TextColor3 = Color3.fromRGB(255, 255, 255),
-            BackgroundTransparency = 1,
             Size = UDim2.new(0.8, 0, 1, 0),
             Position = UDim2.new(0.1, 0, 0, 0),
-            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+            Name = "Title"
         })
-        FW.cTC(title, 18)
 
         local closeBtn, closeBtnOuter = createStyledButton(titleBar, {
             BackgroundColor3 = Color3.fromRGB(180, 55, 55),
             Size = UDim2.new(0, 30, 0, 30),
             Position = UDim2.new(1, -40, 0, 10),
-            Text = "✕",
+            Text = "×",
             TextColor3 = Color3.fromRGB(255, 255, 255),
-            TextSize = 14,
+            TextSize = 16,
             Name = "CloseBtn"
         })
 
@@ -596,17 +611,15 @@ spawn(function()
             end
         end)
 
-        local subtitle = FW.cT(optionsPanel, {
+        createStyledText(optionsPanel, {
             Text = "Choose whether to execute,\nopen in a new tab, etc...",
             TextSize = 12,
             TextColor3 = Color3.fromRGB(180, 190, 210),
-            BackgroundTransparency = 1,
             Size = UDim2.new(0.8, 0, 0, 40),
             Position = UDim2.new(0.1, 0, 0, 60),
             TextYAlignment = Enum.TextYAlignment.Top,
-            FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+            Name = "Subtitle"
         })
-        FW.cTC(subtitle, 12)
 
         local buttons = {
             {text = "EXECUTE SELECTED SCRIPT", color = Color3.fromRGB(45, 120, 200), pos = UDim2.new(0.1, 0, 0, 120)},
@@ -801,44 +814,20 @@ spawn(function()
         Position = UDim2.new(-0.001, 0, 0, 0)
     })
 
-    local topBarOuter = FW.cF(scriptsPage, {
-        BackgroundColor3 = Color3.fromRGB(15, 20, 30),
-        Size = UDim2.new(1, -16, 0, 64),
-        Position = UDim2.new(0, 8, 0, 8),
-        Name = "TopBarOuter"
-    })
-    FW.cC(topBarOuter, 0.15)
-
-    local topBar = FW.cF(topBarOuter, {
+    local topBar, topBarOuter = createStyledContainer(scriptsPage, {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(1, -8, 1, -8),
-        Position = UDim2.new(0, 4, 0, 4),
+        Size = UDim2.new(1, -20, 0, 60),
+        Position = UDim2.new(0, 10, 0, 10),
         Name = "TopBar"
     })
-    FW.cC(topBar, 0.12)
 
-    local searchBoxOuter = FW.cF(topBar, {
-        BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(0.5, -6, 0, 39),
-        Position = UDim2.new(0, 11, 0, 10),
-        Name = "SearchBoxOuter"
-    })
-    FW.cC(searchBoxOuter, 0.15)
-
-    local searchBox = FW.cTB(searchBoxOuter, {
-        BackgroundColor3 = Color3.fromRGB(35, 40, 50),
-        Size = UDim2.new(1, -8, 1, -8),
-        Position = UDim2.new(0, 4, 0, 4),
+    local searchBox, searchBoxOuter = createStyledInput(topBar, {
+        Size = UDim2.new(0.5, -10, 0, 35),
+        Position = UDim2.new(0, 15, 0, 12),
         PlaceholderText = "Search for scripts...",
-        PlaceholderColor3 = Color3.fromRGB(120, 130, 150),
-        Text = "",
         TextSize = 14,
-        TextColor3 = Color3.fromRGB(220, 230, 250),
-        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
         Name = "SearchBox"
     })
-    FW.cC(searchBox, 0.12)
-    FW.cTC(searchBox, 14)
 
     local localTab, localTabOuter = createStyledButton(topBar, {
         BackgroundColor3 = Color3.fromRGB(45, 120, 200),
@@ -876,72 +865,33 @@ spawn(function()
         Visible = false
     })
 
-    local addPanelOuter = FW.cF(localF, {
-        BackgroundColor3 = Color3.fromRGB(15, 20, 30),
-        Size = UDim2.new(1, -16, 0, 84),
-        Position = UDim2.new(0, 8, 0, 8),
-        Name = "AddPanelOuter"
-    })
-    FW.cC(addPanelOuter, 0.15)
-
-    local addPanel = FW.cF(addPanelOuter, {
+    local addPanel, addPanelOuter = createStyledContainer(localF, {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(1, -8, 1, -8),
-        Position = UDim2.new(0, 4, 0, 4),
+        Size = UDim2.new(1, -20, 0, 80),
+        Position = UDim2.new(0, 10, 0, 10),
         Name = "AddPanel"
     })
-    FW.cC(addPanel, 0.12)
 
-    local nameInputOuter = FW.cF(addPanel, {
-        BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(0.25, -1, 0, 34),
-        Position = UDim2.new(0, 8, 0, 8),
-        Name = "NameInputOuter"
-    })
-    FW.cC(nameInputOuter, 0.15)
-
-    local nameInput = FW.cTB(nameInputOuter, {
-        BackgroundColor3 = Color3.fromRGB(35, 40, 50),
-        Size = UDim2.new(1, -8, 1, -8),
-        Position = UDim2.new(0, 4, 0, 4),
+    local nameInput, nameInputOuter = createStyledInput(addPanel, {
+        Size = UDim2.new(0.25, -5, 0, 30),
+        Position = UDim2.new(0, 10, 0, 10),
         PlaceholderText = "Script Name",
-        PlaceholderColor3 = Color3.fromRGB(120, 130, 150),
-        Text = "",
         TextSize = 12,
-        TextColor3 = Color3.fromRGB(220, 230, 250),
-        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
         Name = "NameInput"
     })
-    FW.cC(nameInput, 0.12)
-    FW.cTC(nameInput, 12)
 
-    local contentInputOuter = FW.cF(addPanel, {
-        BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(0.45, -1, 0, 34),
-        Position = UDim2.new(0.27, 3, 0, 8),
-        Name = "ContentInputOuter"
-    })
-    FW.cC(contentInputOuter, 0.15)
-
-    local contentInput = FW.cTB(contentInputOuter, {
-        BackgroundColor3 = Color3.fromRGB(35, 40, 50),
-        Size = UDim2.new(1, -8, 1, -8),
-        Position = UDim2.new(0, 4, 0, 4),
+    local contentInput, contentInputOuter = createStyledInput(addPanel, {
+        Size = UDim2.new(0.45, -5, 0, 30),
+        Position = UDim2.new(0.27, 5, 0, 10),
         PlaceholderText = "Paste script content here",
-        PlaceholderColor3 = Color3.fromRGB(120, 130, 150),
-        Text = "",
         TextSize = 12,
-        TextColor3 = Color3.fromRGB(220, 230, 250),
-        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
         Name = "ContentInput"
     })
-    FW.cC(contentInput, 0.12)
-    FW.cTC(contentInput, 12)
 
     local saveBtn, saveBtnOuter = createStyledButton(addPanel, {
         BackgroundColor3 = Color3.fromRGB(45, 160, 85),
-        Size = UDim2.new(0.12, -1, 0, 30),
-        Position = UDim2.new(0.74, 3, 0, 10),
+        Size = UDim2.new(0.12, -5, 0, 30),
+        Position = UDim2.new(0.74, 5, 0, 10),
         Text = "SAVE",
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 12,
@@ -950,29 +900,20 @@ spawn(function()
 
     local pasteBtn, pasteBtnOuter = createStyledButton(addPanel, {
         BackgroundColor3 = Color3.fromRGB(45, 120, 200),
-        Size = UDim2.new(0.12, -1, 0, 30),
-        Position = UDim2.new(0.88, 3, 0, 10),
+        Size = UDim2.new(0.12, -5, 0, 30),
+        Position = UDim2.new(0.88, 5, 0, 10),
         Text = "PASTE",
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 12,
         Name = "PasteBtn"
     })
 
-    local scriptsContainerOuter = FW.cF(localF, {
-        BackgroundColor3 = Color3.fromRGB(10, 15, 25),
-        Size = UDim2.new(1, -16, 1, -114),
-        Position = UDim2.new(0, 8, 0, 106),
-        Name = "ScriptsContainerOuter"
-    })
-    FW.cC(scriptsContainerOuter, 0.15)
-
-    local scriptsContainer = FW.cF(scriptsContainerOuter, {
+    local scriptsContainer, scriptsContainerOuter = createStyledContainer(localF, {
         BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(1, -8, 1, -8),
-        Position = UDim2.new(0, 4, 0, 4),
+        Size = UDim2.new(1, -20, 1, -110),
+        Position = UDim2.new(0, 10, 0, 100),
         Name = "ScriptsContainer"
     })
-    FW.cC(scriptsContainer, 0.12)
 
     local scriptsScroll = FW.cSF(scriptsContainer, {
         BackgroundTransparency = 1,
@@ -985,21 +926,12 @@ spawn(function()
     })
     scriptsScrollRef = scriptsScroll
 
-    local cloudContainerOuter = FW.cF(cloudF, {
-        BackgroundColor3 = Color3.fromRGB(10, 15, 25),
-        Size = UDim2.new(1, -16, 1, -24),
-        Position = UDim2.new(0, 8, 0, 8),
-        Name = "CloudContainerOuter"
-    })
-    FW.cC(cloudContainerOuter, 0.15)
-
-    local cloudContainer = FW.cF(cloudContainerOuter, {
+    local cloudContainer, cloudContainerOuter = createStyledContainer(cloudF, {
         BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(1, -8, 1, -8),
-        Position = UDim2.new(0, 4, 0, 4),
+        Size = UDim2.new(1, -20, 1, -20),
+        Position = UDim2.new(0, 10, 0, 10),
         Name = "CloudContainer"
     })
-    FW.cC(cloudContainer, 0.12)
 
     local cloudScroll = FW.cSF(cloudContainer, {
         BackgroundTransparency = 1,
@@ -1105,10 +1037,10 @@ spawn(function()
             })
             local lbl = FW.cT(btn, {
                 TextWrapped = true,
-                TextSize = 28,
+                TextSize = 24,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 TextYAlignment = Enum.TextYAlignment.Top,
-                FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+                FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
                 TextColor3 = Color3.fromRGB(210, 220, 240),
                 BackgroundTransparency = 1,
                 Size = UDim2.new(sel and 0.248 or 0.359, 0, 0.36, 0),
@@ -1116,7 +1048,7 @@ spawn(function()
                 Name = "Lbl",
                 Position = UDim2.new(0.379, 0, 0.348, 0)
             })
-            FW.cTC(lbl, 28)
+            FW.cTC(lbl, 24)
             local clk = FW.cB(btn, {
                 TextWrapped = true,
                 TextColor3 = Color3.fromRGB(0, 0, 0),
@@ -1131,7 +1063,7 @@ spawn(function()
             FW.cTC(clk, 12)
             return btn, clk
         end
-        local scriptsBtn, scriptsClk = cSBtn("Scripts", "Scripts", "rbxassetid://6034229496", UDim2.new(0.088, 0, 0.483, 0), false)
+        local scriptsBtn, scriptsClk = cSBtn("Scripts", "Scripts", scriptIconAsset or "rbxassetid://7733779610", UDim2.new(0.088, 0, 0.483, 0), false)
         scriptsClk.MouseButton1Click:Connect(function()
             FW.switchPage("Scripts", sidebar)
         end)
