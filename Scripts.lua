@@ -206,6 +206,35 @@ spawn(function()
         upL()
     end
     
+    local function dlS(nm)
+        if ds[nm] then
+            FW.showAlert("Error", "Cannot delete default script!", 2)
+            return false
+        end
+        
+        if ls[nm] then
+            if aes[nm] then
+                aes[nm] = nil
+                svAE()
+            end
+            
+            ls[nm] = nil
+            
+            if isfile(sd .. nm .. ".lua") then
+                pcall(function() delfile(sd .. nm .. ".lua") end)
+            end
+            
+            local dt = {}
+            for n, c in pairs(ls) do dt[n] = c end
+            writefile(sd .. "scripts.json", hs:JSONEncode(dt))
+            
+            upL()
+            FW.showAlert("Success", "Script deleted: " .. nm, 2)
+            return true
+        end
+        return false
+    end
+    
     local function ldS()
         if not isfolder(sd) then makefolder(sd) end
         for nm, cont in pairs(ds) do ls[nm] = cont end
@@ -327,8 +356,8 @@ spawn(function()
         
         local op, opo = cSC(sf, {
             BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-            Size = UDim2.new(0, 400, 0, 350),
-            Position = UDim2.new(0.5, -200, 0.5, -175),
+            Size = UDim2.new(0, 400, 0, ds[nm] and 350 or 400),
+            Position = UDim2.new(0.5, -200, 0.5, ds[nm] and -175 or -200),
             Name = "OptionsPanel"
         })
         
@@ -340,7 +369,7 @@ spawn(function()
         })
         
         cST(tb, {
-            Text = "Select Your Option",
+            Text = "Script Options",
             TextSize = 18,
             TextColor3 = Color3.fromRGB(255, 255, 255),
             Size = UDim2.new(0.8, 0, 1, 0),
@@ -363,7 +392,7 @@ spawn(function()
         end)
         
         cST(op, {
-            Text = "Choose whether to execute,\nopen in a new tab, etc...",
+            Text = "Choose an action for: " .. nm,
             TextSize = 12,
             TextColor3 = Color3.fromRGB(190, 200, 220),
             Size = UDim2.new(0.8, 0, 0, 40),
@@ -373,11 +402,15 @@ spawn(function()
         })
         
         local btns = {
-            {text = "EXECUTE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 120)},
-            {text = "OPEN SCRIPT IN EDITOR", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 170)},
-            {text = "SAVE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 220)},
-            {text = "COPY TO CLIPBOARD", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 270)}
+            {text = "EXECUTE SCRIPT", color = Color3.fromRGB(50, 170, 90), pos = UDim2.new(0.1, 0, 0, 120)},
+            {text = "OPEN IN EDITOR", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 170)},
+            {text = "SAVE TO FILE", color = Color3.fromRGB(150, 100, 200), pos = UDim2.new(0.1, 0, 0, 220)},
+            {text = "COPY TO CLIPBOARD", color = Color3.fromRGB(100, 150, 200), pos = UDim2.new(0.1, 0, 0, 270)}
         }
+        
+        if not ds[nm] then
+            table.insert(btns, {text = "DELETE SCRIPT", color = Color3.fromRGB(200, 100, 100), pos = UDim2.new(0.1, 0, 0, 320)})
+        end
         
         for i, bd in pairs(btns) do
             local btn, bo = cSB(op, {
@@ -390,10 +423,16 @@ spawn(function()
                 Name = "OptionBtn" .. i
             })
             
-            btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(60, 140, 220) end)
+            btn.MouseEnter:Connect(function() 
+                if bd.text == "DELETE SCRIPT" then
+                    btn.BackgroundColor3 = Color3.fromRGB(220, 120, 120)
+                else
+                    btn.BackgroundColor3 = Color3.fromRGB(bd.color.R * 255 + 20, bd.color.G * 255 + 20, bd.color.B * 255 + 20)
+                end
+            end)
             btn.MouseLeave:Connect(function() btn.BackgroundColor3 = bd.color end)
             
-            if i == 1 then
+            if bd.text == "EXECUTE SCRIPT" then
                 btn.MouseButton1Click:Connect(function()
                     FW.showAlert("Success", nm .. " executing...", 2)
                     local ok, res = pcall(function() return loadstring(cont) end)
@@ -410,7 +449,7 @@ spawn(function()
                     sf:Destroy()
                     sf = nil
                 end)
-            elseif i == 2 then
+            elseif bd.text == "OPEN IN EDITOR" then
                 btn.MouseButton1Click:Connect(function()
                     local sr = FW.getUI()["11"]:FindFirstChild("EditorPage"):FindFirstChild("EditorPage"):FindFirstChild("TxtBox"):FindFirstChild("EditorFrame"):FindFirstChild("Source")
                     if sr then
@@ -421,7 +460,7 @@ spawn(function()
                         sf = nil
                     end
                 end)
-            elseif i == 3 then
+            elseif bd.text == "SAVE TO FILE" then
                 btn.MouseButton1Click:Connect(function()
                     if not isfolder("FrostWare/Exports") then makefolder("FrostWare/Exports") end
                     writefile("FrostWare/Exports/" .. nm .. ".lua", cont)
@@ -429,7 +468,7 @@ spawn(function()
                     sf:Destroy()
                     sf = nil
                 end)
-            elseif i == 4 then
+            elseif bd.text == "COPY TO CLIPBOARD" then
                 btn.MouseButton1Click:Connect(function()
                     if setclipboard then
                         setclipboard(cont)
@@ -437,6 +476,12 @@ spawn(function()
                     else
                         FW.showAlert("Error", "Clipboard not supported!", 3)
                     end
+                    sf:Destroy()
+                    sf = nil
+                end)
+            elseif bd.text == "DELETE SCRIPT" then
+                btn.MouseButton1Click:Connect(function()
+                    dlS(nm)
                     sf:Destroy()
                     sf = nil
                 end)
@@ -525,7 +570,7 @@ spawn(function()
         })
         
         cST(tb, {
-            Text = "Select Your Option",
+            Text = "Cloud Script Options",
             TextSize = 18,
             TextColor3 = Color3.fromRGB(255, 255, 255),
             Size = UDim2.new(0.8, 0, 1, 0),
@@ -548,7 +593,7 @@ spawn(function()
         end)
         
         cST(op, {
-            Text = "Choose whether to execute,\nopen in a new tab, etc...",
+            Text = "Choose an action for: " .. (dt.title or "Unknown Script"),
             TextSize = 12,
             TextColor3 = Color3.fromRGB(190, 200, 220),
             Size = UDim2.new(0.8, 0, 0, 40),
@@ -558,10 +603,10 @@ spawn(function()
         })
         
         local btns = {
-            {text = "EXECUTE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 120)},
-            {text = "OPEN SCRIPT IN EDITOR", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 170)},
-            {text = "SAVE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 220)},
-            {text = "COPY TO CLIPBOARD", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 270)}
+            {text = "EXECUTE SCRIPT", color = Color3.fromRGB(50, 170, 90), pos = UDim2.new(0.1, 0, 0, 120)},
+            {text = "OPEN IN EDITOR", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 170)},
+            {text = "SAVE TO LOCAL", color = Color3.fromRGB(150, 100, 200), pos = UDim2.new(0.1, 0, 0, 220)},
+            {text = "COPY TO CLIPBOARD", color = Color3.fromRGB(100, 150, 200), pos = UDim2.new(0.1, 0, 0, 270)}
         }
         
         for i, bd in pairs(btns) do
@@ -575,7 +620,7 @@ spawn(function()
                 Name = "CloudOptionBtn" .. i
             })
             
-            btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(60, 140, 220) end)
+            btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(bd.color.R * 255 + 20, bd.color.G * 255 + 20, bd.color.B * 255 + 20) end)
             btn.MouseLeave:Connect(function() btn.BackgroundColor3 = bd.color end)
             
             if i == 1 then
