@@ -1,3 +1,7 @@
+while not getgenv()._FW_ACCESS_GRANTED do
+    wait(0.5)
+end
+
 spawn(function()
     wait(1)
     local FW = getgenv()._FW or {}
