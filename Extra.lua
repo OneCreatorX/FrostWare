@@ -319,8 +319,7 @@ spawn(function()
     wait(1)
     
     local modules = {
-        "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Scripts.lua",
-            "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/ai.lua"
+        "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Scripts.lua"
     }
     
     for i, moduleUrl in pairs(modules) do
