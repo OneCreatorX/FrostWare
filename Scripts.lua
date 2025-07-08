@@ -44,13 +44,13 @@ spawn(function()
         local text = FW.cT(parent, {
             Text = props.Text,
             TextSize = props.TextSize or 14,
-            TextColor3 = props.TextColor3 or Color3.fromRGB(220, 230, 250),
+            TextColor3 = props.TextColor3 or Color3.fromRGB(240, 245, 255),
             BackgroundTransparency = props.BackgroundTransparency or 1,
             Size = props.Size,
             Position = props.Position,
             TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Center,
             TextYAlignment = props.TextYAlignment or Enum.TextYAlignment.Center,
-            FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
+            FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
             Name = props.Name or "StyledText"
         })
         FW.cTC(text, props.TextSize or 14)
@@ -59,12 +59,12 @@ spawn(function()
 
     local function createStyledButton(parent, props)
         local outerFrame = FW.cF(parent, {
-            BackgroundColor3 = Color3.fromRGB(15, 20, 30),
+            BackgroundColor3 = Color3.fromRGB(12, 16, 24),
             Size = props.Size,
             Position = props.Position,
             Name = props.Name .. "_Outer"
         })
-        FW.cC(outerFrame, 0.15)
+        FW.cC(outerFrame, 0.18)
         
         local innerButton = FW.cB(outerFrame, {
             BackgroundColor3 = props.BackgroundColor3,
@@ -73,10 +73,10 @@ spawn(function()
             Text = props.Text,
             TextColor3 = props.TextColor3,
             TextSize = props.TextSize,
-            FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
+            FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
             Name = props.Name
         })
-        FW.cC(innerButton, 0.12)
+        FW.cC(innerButton, 0.15)
         FW.cTC(innerButton, props.TextSize)
         
         return innerButton, outerFrame
@@ -84,12 +84,12 @@ spawn(function()
 
     local function createStyledInput(parent, props)
         local outerFrame = FW.cF(parent, {
-            BackgroundColor3 = Color3.fromRGB(20, 25, 35),
+            BackgroundColor3 = Color3.fromRGB(18, 22, 32),
             Size = props.Size,
             Position = props.Position,
             Name = props.Name .. "_Outer"
         })
-        FW.cC(outerFrame, 0.15)
+        FW.cC(outerFrame, 0.18)
 
         local input = FW.cTB(outerFrame, {
             BackgroundColor3 = Color3.fromRGB(35, 40, 50),
@@ -99,11 +99,11 @@ spawn(function()
             PlaceholderColor3 = Color3.fromRGB(120, 130, 150),
             Text = props.Text or "",
             TextSize = props.TextSize,
-            TextColor3 = Color3.fromRGB(220, 230, 250),
+            TextColor3 = Color3.fromRGB(240, 245, 255),
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
             Name = props.Name
         })
-        FW.cC(input, 0.12)
+        FW.cC(input, 0.15)
         FW.cTC(input, props.TextSize)
         
         return input, outerFrame
@@ -111,12 +111,12 @@ spawn(function()
 
     local function createStyledContainer(parent, props)
         local outerFrame = FW.cF(parent, {
-            BackgroundColor3 = Color3.fromRGB(10, 15, 25),
+            BackgroundColor3 = Color3.fromRGB(8, 12, 20),
             Size = props.Size,
             Position = props.Position,
             Name = props.Name .. "_Outer"
         })
-        FW.cC(outerFrame, 0.15)
+        FW.cC(outerFrame, 0.18)
 
         local innerFrame = FW.cF(outerFrame, {
             BackgroundColor3 = props.BackgroundColor3 or Color3.fromRGB(20, 25, 35),
@@ -124,25 +124,25 @@ spawn(function()
             Position = UDim2.new(0, 4, 0, 4),
             Name = props.Name
         })
-        FW.cC(innerFrame, 0.12)
+        FW.cC(innerFrame, 0.15)
         
         return innerFrame, outerFrame
     end
 
     local function createVerifiedBadge(parent, position)
         local verifiedOuter = FW.cF(parent, {
-            BackgroundColor3 = Color3.fromRGB(25, 70, 120),
+            BackgroundColor3 = Color3.fromRGB(20, 60, 110),
             Size = UDim2.new(0, 84, 0, 24),
             Position = position
         })
-        FW.cC(verifiedOuter, 0.15)
+        FW.cC(verifiedOuter, 0.18)
         
         local verifiedBadge = FW.cF(verifiedOuter, {
-            BackgroundColor3 = Color3.fromRGB(45, 120, 200),
+            BackgroundColor3 = Color3.fromRGB(50, 130, 210),
             Size = UDim2.new(1, -4, 1, -4),
             Position = UDim2.new(0, 2, 0, 2)
         })
-        FW.cC(verifiedBadge, 0.12)
+        FW.cC(verifiedBadge, 0.15)
         
         createStyledText(verifiedBadge, {
             Text = "VERIFIED",
@@ -264,7 +264,7 @@ spawn(function()
                     Position = UDim2.new(0, 10, 0, yPos),
                     Name = "ScriptCard_" .. script.name
                 })
-                FW.cC(scriptCard, 0.12)
+                FW.cC(scriptCard, 0.15)
 
                 createStyledText(scriptCard, {
                     Text = script.name,
@@ -280,7 +280,7 @@ spawn(function()
                 end
 
                 local autoExecBtn, autoExecOuter = createStyledButton(scriptCard, {
-                    BackgroundColor3 = autoExecScripts[script.name] and Color3.fromRGB(45, 160, 85) or Color3.fromRGB(60, 70, 85),
+                    BackgroundColor3 = autoExecScripts[script.name] and Color3.fromRGB(50, 170, 90) or Color3.fromRGB(65, 75, 90),
                     Size = UDim2.new(0, 80, 0, 25),
                     Position = UDim2.new(0.45, 0, 0, 15),
                     Text = autoExecScripts[script.name] and "AUTO: ON" or "AUTO: OFF",
@@ -290,7 +290,7 @@ spawn(function()
                 })
 
                 local executeBtn, executeOuter = createStyledButton(scriptCard, {
-                    BackgroundColor3 = Color3.fromRGB(45, 160, 85),
+                    BackgroundColor3 = Color3.fromRGB(50, 170, 90),
                     Size = UDim2.new(0, 80, 0, 25),
                     Position = UDim2.new(0.65, 0, 0, 15),
                     Text = "EXECUTE",
@@ -300,7 +300,7 @@ spawn(function()
                 })
 
                 local moreBtn, moreOuter = createStyledButton(scriptCard, {
-                    BackgroundColor3 = Color3.fromRGB(45, 120, 200),
+                    BackgroundColor3 = Color3.fromRGB(50, 130, 210),
                     Size = UDim2.new(0, 60, 0, 25),
                     Position = UDim2.new(0.85, 0, 0, 15),
                     Text = "MORE",
@@ -310,17 +310,17 @@ spawn(function()
                 })
 
                 executeBtn.MouseEnter:Connect(function()
-                    executeBtn.BackgroundColor3 = Color3.fromRGB(55, 170, 95)
+                    executeBtn.BackgroundColor3 = Color3.fromRGB(60, 180, 100)
                 end)
                 executeBtn.MouseLeave:Connect(function()
-                    executeBtn.BackgroundColor3 = Color3.fromRGB(45, 160, 85)
+                    executeBtn.BackgroundColor3 = Color3.fromRGB(50, 170, 90)
                 end)
 
                 moreBtn.MouseEnter:Connect(function()
-                    moreBtn.BackgroundColor3 = Color3.fromRGB(55, 130, 210)
+                    moreBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 220)
                 end)
                 moreBtn.MouseLeave:Connect(function()
-                    moreBtn.BackgroundColor3 = Color3.fromRGB(45, 120, 200)
+                    moreBtn.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
                 end)
 
                 executeBtn.MouseButton1Click:Connect(function()
@@ -393,7 +393,7 @@ spawn(function()
         })
 
         local closeBtn, closeBtnOuter = createStyledButton(titleBar, {
-            BackgroundColor3 = Color3.fromRGB(180, 55, 55),
+            BackgroundColor3 = Color3.fromRGB(190, 60, 60),
             Size = UDim2.new(0, 30, 0, 30),
             Position = UDim2.new(1, -40, 0, 10),
             Text = "×",
@@ -412,7 +412,7 @@ spawn(function()
         createStyledText(optionsPanel, {
             Text = "Choose whether to execute,\nopen in a new tab, etc...",
             TextSize = 12,
-            TextColor3 = Color3.fromRGB(180, 190, 210),
+            TextColor3 = Color3.fromRGB(190, 200, 220),
             Size = UDim2.new(0.8, 0, 0, 40),
             Position = UDim2.new(0.1, 0, 0, 60),
             TextYAlignment = Enum.TextYAlignment.Top,
@@ -420,10 +420,10 @@ spawn(function()
         })
 
         local buttons = {
-            {text = "EXECUTE SELECTED SCRIPT", color = Color3.fromRGB(45, 120, 200), pos = UDim2.new(0.1, 0, 0, 120)},
-            {text = "OPEN SCRIPT IN EDITOR", color = Color3.fromRGB(45, 120, 200), pos = UDim2.new(0.1, 0, 0, 170)},
-            {text = "SAVE SELECTED SCRIPT", color = Color3.fromRGB(45, 120, 200), pos = UDim2.new(0.1, 0, 0, 220)},
-            {text = "COPY TO CLIPBOARD", color = Color3.fromRGB(45, 120, 200), pos = UDim2.new(0.1, 0, 0, 270)}
+            {text = "EXECUTE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 120)},
+            {text = "OPEN SCRIPT IN EDITOR", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 170)},
+            {text = "SAVE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 220)},
+            {text = "COPY TO CLIPBOARD", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 270)}
         }
 
         for i, btnData in pairs(buttons) do
@@ -438,7 +438,7 @@ spawn(function()
             })
 
             btn.MouseEnter:Connect(function()
-                btn.BackgroundColor3 = Color3.fromRGB(55, 130, 210)
+                btn.BackgroundColor3 = Color3.fromRGB(60, 140, 220)
             end)
 
             btn.MouseLeave:Connect(function()
@@ -507,7 +507,7 @@ spawn(function()
             Position = UDim2.new(0, 10, 0, yPos),
             Name = "CloudCard"
         })
-        FW.cC(cloudCard, 0.12)
+        FW.cC(cloudCard, 0.15)
 
         createStyledText(cloudCard, {
             Text = data.title or "Unknown Script",
@@ -523,7 +523,7 @@ spawn(function()
         createStyledText(cloudCard, {
             Text = (data.views or "0") .. " Views",
             TextSize = 12,
-            TextColor3 = Color3.fromRGB(150, 160, 180),
+            TextColor3 = Color3.fromRGB(160, 170, 190),
             Size = UDim2.new(0.2, 0, 0.6, 0),
             Position = UDim2.new(0.4, 0, 0, 5),
             TextXAlignment = Enum.TextXAlignment.Left,
@@ -531,7 +531,7 @@ spawn(function()
         })
 
         local selectBtn, selectOuter = createStyledButton(cloudCard, {
-            BackgroundColor3 = Color3.fromRGB(45, 120, 200),
+            BackgroundColor3 = Color3.fromRGB(50, 130, 210),
             Size = UDim2.new(0, 100, 0, 35),
             Position = UDim2.new(1, -110, 0, 10),
             Text = "SELECT",
@@ -541,10 +541,10 @@ spawn(function()
         })
 
         selectBtn.MouseEnter:Connect(function()
-            selectBtn.BackgroundColor3 = Color3.fromRGB(55, 130, 210)
+            selectBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 220)
         end)
         selectBtn.MouseLeave:Connect(function()
-            selectBtn.BackgroundColor3 = Color3.fromRGB(45, 120, 200)
+            selectBtn.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
         end)
 
         selectBtn.MouseButton1Click:Connect(function()
@@ -595,7 +595,7 @@ spawn(function()
         })
 
         local closeBtn, closeBtnOuter = createStyledButton(titleBar, {
-            BackgroundColor3 = Color3.fromRGB(180, 55, 55),
+            BackgroundColor3 = Color3.fromRGB(190, 60, 60),
             Size = UDim2.new(0, 30, 0, 30),
             Position = UDim2.new(1, -40, 0, 10),
             Text = "×",
@@ -614,7 +614,7 @@ spawn(function()
         createStyledText(optionsPanel, {
             Text = "Choose whether to execute,\nopen in a new tab, etc...",
             TextSize = 12,
-            TextColor3 = Color3.fromRGB(180, 190, 210),
+            TextColor3 = Color3.fromRGB(190, 200, 220),
             Size = UDim2.new(0.8, 0, 0, 40),
             Position = UDim2.new(0.1, 0, 0, 60),
             TextYAlignment = Enum.TextYAlignment.Top,
@@ -622,10 +622,10 @@ spawn(function()
         })
 
         local buttons = {
-            {text = "EXECUTE SELECTED SCRIPT", color = Color3.fromRGB(45, 120, 200), pos = UDim2.new(0.1, 0, 0, 120)},
-            {text = "OPEN SCRIPT IN EDITOR", color = Color3.fromRGB(45, 120, 200), pos = UDim2.new(0.1, 0, 0, 170)},
-            {text = "SAVE SELECTED SCRIPT", color = Color3.fromRGB(45, 120, 200), pos = UDim2.new(0.1, 0, 0, 220)},
-            {text = "COPY TO CLIPBOARD", color = Color3.fromRGB(45, 120, 200), pos = UDim2.new(0.1, 0, 0, 270)}
+            {text = "EXECUTE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 120)},
+            {text = "OPEN SCRIPT IN EDITOR", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 170)},
+            {text = "SAVE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 220)},
+            {text = "COPY TO CLIPBOARD", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 270)}
         }
 
         for i, btnData in pairs(buttons) do
@@ -640,7 +640,7 @@ spawn(function()
             })
 
             btn.MouseEnter:Connect(function()
-                btn.BackgroundColor3 = Color3.fromRGB(55, 130, 210)
+                btn.BackgroundColor3 = Color3.fromRGB(60, 140, 220)
             end)
 
             btn.MouseLeave:Connect(function()
@@ -830,7 +830,7 @@ spawn(function()
     })
 
     local localTab, localTabOuter = createStyledButton(topBar, {
-        BackgroundColor3 = Color3.fromRGB(45, 120, 200),
+        BackgroundColor3 = Color3.fromRGB(50, 130, 210),
         Size = UDim2.new(0.2, -5, 0, 35),
         Position = UDim2.new(0.55, 5, 0, 12),
         Text = "LOCAL",
@@ -840,11 +840,11 @@ spawn(function()
     })
 
     local cloudTab, cloudTabOuter = createStyledButton(topBar, {
-        BackgroundColor3 = Color3.fromRGB(60, 70, 85),
+        BackgroundColor3 = Color3.fromRGB(65, 75, 90),
         Size = UDim2.new(0.2, -5, 0, 35),
         Position = UDim2.new(0.78, 5, 0, 12),
         Text = "CLOUD",
-        TextColor3 = Color3.fromRGB(180, 190, 210),
+        TextColor3 = Color3.fromRGB(190, 200, 220),
         TextSize = 14,
         Name = "CloudTab"
     })
@@ -889,7 +889,7 @@ spawn(function()
     })
 
     local saveBtn, saveBtnOuter = createStyledButton(addPanel, {
-        BackgroundColor3 = Color3.fromRGB(45, 160, 85),
+        BackgroundColor3 = Color3.fromRGB(50, 170, 90),
         Size = UDim2.new(0.12, -5, 0, 30),
         Position = UDim2.new(0.74, 5, 0, 10),
         Text = "SAVE",
@@ -899,7 +899,7 @@ spawn(function()
     })
 
     local pasteBtn, pasteBtnOuter = createStyledButton(addPanel, {
-        BackgroundColor3 = Color3.fromRGB(45, 120, 200),
+        BackgroundColor3 = Color3.fromRGB(50, 130, 210),
         Size = UDim2.new(0.12, -5, 0, 30),
         Position = UDim2.new(0.88, 5, 0, 10),
         Text = "PASTE",
@@ -922,7 +922,7 @@ spawn(function()
         ScrollBarThickness = 8,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         Name = "ScriptsScroll",
-        ScrollBarImageColor3 = Color3.fromRGB(45, 120, 200)
+        ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210)
     })
     scriptsScrollRef = scriptsScroll
 
@@ -940,7 +940,7 @@ spawn(function()
         CanvasSize = UDim2.new(0, 0, 0, 0),
         ScrollBarThickness = 8,
         Name = "CloudScroll",
-        ScrollBarImageColor3 = Color3.fromRGB(45, 120, 200)
+        ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210)
     })
 
     saveBtn.MouseButton1Click:Connect(function()
@@ -987,72 +987,79 @@ spawn(function()
 
     localTab.MouseButton1Click:Connect(function()
         switchSec("Local")
-        localTab.BackgroundColor3 = Color3.fromRGB(45, 120, 200)
+        localTab.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
         localTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-        cloudTab.BackgroundColor3 = Color3.fromRGB(60, 70, 85)
-        cloudTab.TextColor3 = Color3.fromRGB(180, 190, 210)
+        cloudTab.BackgroundColor3 = Color3.fromRGB(65, 75, 90)
+        cloudTab.TextColor3 = Color3.fromRGB(190, 200, 220)
     end)
 
     cloudTab.MouseButton1Click:Connect(function()
         switchSec("Cloud")
-        cloudTab.BackgroundColor3 = Color3.fromRGB(45, 120, 200)
+        cloudTab.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
         cloudTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-        localTab.BackgroundColor3 = Color3.fromRGB(60, 70, 85)
-        localTab.TextColor3 = Color3.fromRGB(180, 190, 210)
+        localTab.BackgroundColor3 = Color3.fromRGB(65, 75, 90)
+        localTab.TextColor3 = Color3.fromRGB(190, 200, 220)
     end)
 
     local sidebar = FW.getUI()["6"]:FindFirstChild("Sidebar")
     if sidebar then
         local function cSBtn(nm, txt, ico, pos, sel)
             local btn = FW.cF(sidebar, {
-                BackgroundColor3 = sel and Color3.fromRGB(32, 37, 52) or Color3.fromRGB(24, 29, 40),
-                Size = UDim2.new(0.714, 0, 0.088, 0),
+                BackgroundColor3 = sel and Color3.fromRGB(30, 36, 51) or Color3.fromRGB(31, 34, 50),
+                Size = UDim2.new(0.85, 0, 0.08, 0),
                 Position = pos,
                 Name = nm,
                 BackgroundTransparency = sel and 0 or 1
             })
-            FW.cC(btn, 0.18)
+            FW.cC(btn, 0.15)
+            
             local box = FW.cF(btn, {
                 ZIndex = sel and 2 or 0,
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                Size = UDim2.new(0.167, 0, 0.629, 0),
-                Position = UDim2.new(0.093, 0, 0.2, 0),
+                Size = UDim2.new(0.15, 0, 0.6, 0),
+                Position = UDim2.new(0.08, 0, 0.2, 0),
                 Name = "Box"
             })
-            FW.cC(box, 0.24)
-            FW.cAR(box, 0.982)
+            FW.cC(box, 0.2)
+            FW.cAR(box, 1)
+            
             if sel then
-                FW.cG(box, Color3.fromRGB(45, 120, 200), Color3.fromRGB(45, 160, 85))
+                FW.cG(box, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
             else
-                FW.cG(box, Color3.fromRGB(55, 60, 75), Color3.fromRGB(40, 46, 62))
+                FW.cG(box, Color3.fromRGB(66, 79, 113), Color3.fromRGB(36, 44, 63))
             end
+            
             FW.cI(box, {
                 ZIndex = sel and 2 or 0,
                 ScaleType = Enum.ScaleType.Fit,
                 Image = ico,
-                Size = UDim2.new(0.527, 0, sel and 0.571 or 0.5, 0),
+                Size = UDim2.new(0.6, 0, 0.6, 0),
                 BackgroundTransparency = 1,
                 Name = "Ico",
-                Position = UDim2.new(0.236, 0, sel and 0.232 or 0.25, 0)
+                Position = UDim2.new(0.2, 0, 0.2, 0)
             })
+            
             local lbl = FW.cT(btn, {
                 TextWrapped = true,
-                TextSize = 24,
+                TextSize = 20,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 TextYAlignment = Enum.TextYAlignment.Top,
-                FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
-                TextColor3 = Color3.fromRGB(210, 220, 240),
+                TextScaled = true,
+                FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+                TextColor3 = Color3.fromRGB(255, 255, 255),
                 BackgroundTransparency = 1,
-                Size = UDim2.new(sel and 0.248 or 0.359, 0, 0.36, 0),
+                Size = UDim2.new(0.6, 0, 0.6, 0),
                 Text = txt,
                 Name = "Lbl",
-                Position = UDim2.new(0.379, 0, 0.348, 0)
+                Position = UDim2.new(0.3, 0, 0.2, 0)
             })
-            FW.cTC(lbl, 24)
+            FW.cTC(lbl, 20)
+            
             local clk = FW.cB(btn, {
                 TextWrapped = true,
                 TextColor3 = Color3.fromRGB(0, 0, 0),
-                TextSize = 12,
+                TextSize = 14,
+                TextScaled = true,
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 1, 0),
                 Name = "Clk",
@@ -1060,9 +1067,11 @@ spawn(function()
                 ZIndex = 5
             })
             FW.cC(clk, 0)
-            FW.cTC(clk, 12)
+            FW.cTC(clk, 14)
+            
             return btn, clk
         end
+        
         local scriptsBtn, scriptsClk = cSBtn("Scripts", "Scripts", scriptIconAsset or "rbxassetid://7733779610", UDim2.new(0.088, 0, 0.483, 0), false)
         scriptsClk.MouseButton1Click:Connect(function()
             FW.switchPage("Scripts", sidebar)
