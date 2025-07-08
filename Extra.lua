@@ -80,7 +80,7 @@ local function hideUI()
 end
 
 local function extremeAntiLag()
-    local settings = UserSettings:GetService("UserGameSettings")
+    local settings = UserSettings():GetService("UserGameSettings")
     local lighting = game:GetService("Lighting")
     local workspace = game:GetService("Workspace")
     
