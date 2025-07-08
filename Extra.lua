@@ -239,7 +239,9 @@ local function clearWorkspace()
 end
 
 local function toggleSound()
-    local settings = UserSettings:GetService("UserGameSettings")
+local userSettings = typeof(UserSettings) == "function" and UserSettings()
+local settings = userSettings and userSettings:GetService("UserGameSettings")
+
     if settings.MasterVolume > 0 then
         settings.MasterVolume = 0
         FW.showAlert("Info", "Sound disabled!", 2)
