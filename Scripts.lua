@@ -1,6 +1,6 @@
 spawn(function()
     wait(1)
-    local FW = _G.FW
+    local FW = getgenv().__FW
     local HttpService = game:GetService("HttpService")
     local TweenService = game:GetService("TweenService")
     local curSec = "Local"
