@@ -1,9 +1,9 @@
-if not getgenv().__FW then
+if not getgenv()._FW then
     local ok, fw = pcall(function()
         return loadstring(game:HttpGet("https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/test.la"))()
     end)
     if ok and fw then
-        getgenv().__FW = fw
+        getgenv()._FW = fw
     end
 end
 
@@ -85,7 +85,7 @@ end
 
 local function extremeAntiLag()
     local userSettings = typeof(UserSettings) == "function" and UserSettings()
-local settings = userSettings and userSettings:GetService("UserGameSettings")
+    local settings = userSettings and userSettings:GetService("UserGameSettings")
     local lighting = game:GetService("Lighting")
     local workspace = game:GetService("Workspace")
     
@@ -132,7 +132,7 @@ local settings = userSettings and userSettings:GetService("UserGameSettings")
     
     for _, effect in pairs(lighting:GetChildren()) do
         pcall(function()
-            if effect:IsA("BloomEffect") or effect:IsA("BlurEffect") or
+            if effect:IsA("BloomEffect") or effect:IsA("BlurEffect") or 
                effect:IsA("ColorCorrectionEffect") or effect:IsA("SunRaysEffect") then
                 effect.Enabled = false
             end
@@ -233,9 +233,9 @@ local function clearWorkspace()
     local count = 0
     for _, obj in pairs(workspace:GetChildren()) do
         if not obj:IsA("Terrain") and not obj:IsA("Camera") and obj ~= workspace.CurrentCamera and not game.Players:GetPlayerFromCharacter(obj) then
-            pcall(function() 
-                obj:Destroy() 
-                count = count + 1
+            pcall(function()
+                 obj:Destroy()
+                 count = count + 1
             end)
         end
     end
@@ -243,9 +243,8 @@ local function clearWorkspace()
 end
 
 local function toggleSound()
-local userSettings = typeof(UserSettings) == "function" and UserSettings()
-local settings = userSettings and userSettings:GetService("UserGameSettings")
-
+    local userSettings = typeof(UserSettings) == "function" and UserSettings()
+    local settings = userSettings and userSettings:GetService("UserGameSettings")
     if settings.MasterVolume > 0 then
         settings.MasterVolume = 0
         FW.showAlert("Info", "Sound disabled!", 2)
@@ -459,19 +458,19 @@ spawn(function()
             end)
             
             if success then
-                FW.addConsoleLog("Module " .. i .. " downloaded successfully", "info")
+                FW.addLog("Module " .. i .. " downloaded successfully", "info")
                 
                 local success2, error = pcall(function()
                     loadstring(moduleCode)()
                 end)
                 
                 if success2 then
-                    FW.addConsoleLog("Module " .. i .. " executed successfully", "info")
+                    FW.addLog("Module " .. i .. " executed successfully", "info")
                 else
-                    FW.addConsoleLog("Error executing module " .. i .. ": " .. tostring(error), "error")
+                    FW.addLog("Error executing module " .. i .. ": " .. tostring(error), "error")
                 end
             else
-                FW.addConsoleLog("Error downloading module " .. i .. ": " .. tostring(moduleCode), "error")
+                FW.addLog("Error downloading module " .. i .. ": " .. tostring(moduleCode), "error")
             end
         end)
         
