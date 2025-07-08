@@ -5,150 +5,138 @@ end
 spawn(function()
     wait(1)
     local FW = getgenv()._FW or {}
-    local HttpService = game:GetService("HttpService")
-    local TweenService = game:GetService("TweenService")
-    local curSec = "Local"
-    local localF = nil
-    local cloudF = nil
-    local curScripts = {}
-    local selScript = nil
-    local scriptF = nil
-    local localScripts = {}
-    local autoExecScripts = {}
-    local scriptsScrollRef = nil
-    local scriptsDir = "FrostWare/Scripts/"
-    local autoExecFile = "FrostWare/AutoExec.json"
+    local hs = game:GetService("HttpService")
+    local ts = game:GetService("TweenService")
+    local cs = curSec or "Local"
+    local lf, cf, csc, ss, sf = nil, nil, {}, nil, nil
+    local ls, aes = {}, {}
+    local ssr = nil
+    local sd = "FrostWare/Scripts/"
+    local aef = "FrostWare/AutoExec.json"
     
-    local defScripts = {
+    local ds = {
         ["Infinite Yield"] = "loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()",
         ["Dark Dex"] = "loadstring(game:HttpGet('https://raw.githubusercontent.com/infyiff/backup/main/dex.lua'))()",
         ["Remote Spy"] = "loadstring(game:HttpGet('https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua'))()"
     }
-
-    local function getOrDownloadImageAsset(url, filename)
-        local folder = "Images/"
-        local path = folder .. filename
-        if not isfolder(folder) then
-            makefolder(folder)
+    
+    local function gImg(url, fn)
+        local fd = "Images/"
+        local pt = fd .. fn
+        if not isfolder(fd) then makefolder(fd) end
+        if not isfile(pt) then
+            local ok, dt = pcall(function() return game:HttpGet(url) end)
+            if not ok then warn("Error downloading image: " .. tostring(dt)) return nil end
+            writefile(pt, dt)
         end
-        if not isfile(path) then
-            local success, data = pcall(function()
-                return game:HttpGet(url)
-            end)
-            if not success then
-                warn("Error al descargar imagen: " .. tostring(data))
-                return nil
-            end
-            writefile(path, data)
-        end
-        return getcustomasset(path)
+        return getcustomasset(pt)
     end
-
-    local function createStyledText(parent, props)
-        local text = FW.cT(parent, {
-            Text = props.Text,
-            TextSize = props.TextSize or 14,
-            TextColor3 = props.TextColor3 or Color3.fromRGB(240, 245, 255),
-            BackgroundTransparency = props.BackgroundTransparency or 1,
-            Size = props.Size,
-            Position = props.Position,
-            TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Center,
-            TextYAlignment = props.TextYAlignment or Enum.TextYAlignment.Center,
+    
+    local function cST(p, pr)
+        local t = FW.cT(p, {
+            Text = pr.Text,
+            TextSize = pr.TextSize or 14,
+            TextColor3 = pr.TextColor3 or Color3.fromRGB(240, 245, 255),
+            BackgroundTransparency = pr.BackgroundTransparency or 1,
+            Size = pr.Size,
+            Position = pr.Position,
+            TextXAlignment = pr.TextXAlignment or Enum.TextXAlignment.Center,
+            TextYAlignment = pr.TextYAlignment or Enum.TextYAlignment.Center,
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
-            Name = props.Name or "StyledText"
+            Name = pr.Name or "StyledText"
         })
-        FW.cTC(text, props.TextSize or 14)
-        return text
+        FW.cTC(t, pr.TextSize or 14)
+        return t
     end
-
-    local function createStyledButton(parent, props)
-        local outerFrame = FW.cF(parent, {
+    
+    local function cSB(p, pr)
+        local of = FW.cF(p, {
             BackgroundColor3 = Color3.fromRGB(12, 16, 24),
-            Size = props.Size,
-            Position = props.Position,
-            Name = props.Name .. "_Outer"
+            Size = pr.Size,
+            Position = pr.Position,
+            Name = pr.Name .. "_Outer"
         })
-        FW.cC(outerFrame, 0.18)
+        FW.cC(of, 0.18)
         
-        local innerButton = FW.cB(outerFrame, {
-            BackgroundColor3 = props.BackgroundColor3,
+        local ib = FW.cB(of, {
+            BackgroundColor3 = pr.BackgroundColor3,
             Size = UDim2.new(1, -4, 1, -4),
             Position = UDim2.new(0, 2, 0, 2),
-            Text = props.Text,
-            TextColor3 = props.TextColor3,
-            TextSize = props.TextSize,
+            Text = pr.Text,
+            TextColor3 = pr.TextColor3,
+            TextSize = pr.TextSize,
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
-            Name = props.Name
+            Name = pr.Name
         })
-        FW.cC(innerButton, 0.15)
-        FW.cTC(innerButton, props.TextSize)
+        FW.cC(ib, 0.15)
+        FW.cTC(ib, pr.TextSize)
         
-        return innerButton, outerFrame
+        return ib, of
     end
-
-    local function createStyledInput(parent, props)
-        local outerFrame = FW.cF(parent, {
+    
+    local function cSI(p, pr)
+        local of = FW.cF(p, {
             BackgroundColor3 = Color3.fromRGB(18, 22, 32),
-            Size = props.Size,
-            Position = props.Position,
-            Name = props.Name .. "_Outer"
+            Size = pr.Size,
+            Position = pr.Position,
+            Name = pr.Name .. "_Outer"
         })
-        FW.cC(outerFrame, 0.18)
-
-        local input = FW.cTB(outerFrame, {
+        FW.cC(of, 0.18)
+        
+        local inp = FW.cTB(of, {
             BackgroundColor3 = Color3.fromRGB(35, 40, 50),
             Size = UDim2.new(1, -8, 1, -8),
             Position = UDim2.new(0, 4, 0, 4),
-            PlaceholderText = props.PlaceholderText,
+            PlaceholderText = pr.PlaceholderText,
             PlaceholderColor3 = Color3.fromRGB(120, 130, 150),
-            Text = props.Text or "",
-            TextSize = props.TextSize,
+            Text = pr.Text or "",
+            TextSize = pr.TextSize,
             TextColor3 = Color3.fromRGB(240, 245, 255),
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-            Name = props.Name
+            Name = pr.Name
         })
-        FW.cC(input, 0.15)
-        FW.cTC(input, props.TextSize)
+        FW.cC(inp, 0.15)
+        FW.cTC(inp, pr.TextSize)
         
-        return input, outerFrame
+        return inp, of
     end
-
-    local function createStyledContainer(parent, props)
-        local outerFrame = FW.cF(parent, {
+    
+    local function cSC(p, pr)
+        local of = FW.cF(p, {
             BackgroundColor3 = Color3.fromRGB(8, 12, 20),
-            Size = props.Size,
-            Position = props.Position,
-            Name = props.Name .. "_Outer"
+            Size = pr.Size,
+            Position = pr.Position,
+            Name = pr.Name .. "_Outer"
         })
-        FW.cC(outerFrame, 0.18)
-
-        local innerFrame = FW.cF(outerFrame, {
-            BackgroundColor3 = props.BackgroundColor3 or Color3.fromRGB(20, 25, 35),
+        FW.cC(of, 0.18)
+        
+        local inf = FW.cF(of, {
+            BackgroundColor3 = pr.BackgroundColor3 or Color3.fromRGB(20, 25, 35),
             Size = UDim2.new(1, -8, 1, -8),
             Position = UDim2.new(0, 4, 0, 4),
-            Name = props.Name
+            Name = pr.Name
         })
-        FW.cC(innerFrame, 0.15)
+        FW.cC(inf, 0.15)
         
-        return innerFrame, outerFrame
+        return inf, of
     end
-
-    local function createVerifiedBadge(parent, position)
-        local verifiedOuter = FW.cF(parent, {
+    
+    local function cVB(p, pos)
+        local vo = FW.cF(p, {
             BackgroundColor3 = Color3.fromRGB(20, 60, 110),
             Size = UDim2.new(0, 84, 0, 24),
-            Position = position
+            Position = pos
         })
-        FW.cC(verifiedOuter, 0.18)
+        FW.cC(vo, 0.18)
         
-        local verifiedBadge = FW.cF(verifiedOuter, {
+        local vb = FW.cF(vo, {
             BackgroundColor3 = Color3.fromRGB(50, 130, 210),
             Size = UDim2.new(1, -4, 1, -4),
             Position = UDim2.new(0, 2, 0, 2)
         })
-        FW.cC(verifiedBadge, 0.15)
+        FW.cC(vb, 0.15)
         
-        createStyledText(verifiedBadge, {
+        cST(vb, {
             Text = "VERIFIED",
             TextSize = 10,
             TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -156,144 +144,126 @@ spawn(function()
             Name = "VerifiedText"
         })
         
-        return verifiedBadge
+        return vb
     end
-
-    local scriptIconAsset = getOrDownloadImageAsset("https://cdn-icons-png.flaticon.com/512/1126/1126012.png", "script_icon.png")
-
-    local function switchSec(sec)
-        curSec = sec
-        if localF and cloudF then
+    
+    local sia = gImg("https://cdn-icons-png.flaticon.com/512/1126/1126012.png", "script_icon.png")
+    
+    local function swS(sec)
+        cs = sec
+        if lf and cf then
             if sec == "Local" then
-                localF.Visible = true
-                cloudF.Visible = false
+                lf.Visible = true
+                cf.Visible = false
             else
-                localF.Visible = false
-                cloudF.Visible = true
+                lf.Visible = false
+                cf.Visible = true
             end
         end
     end
-
-    local function saveAutoExec()
+    
+    local function svAE()
         if not isfolder("FrostWare") then makefolder("FrostWare") end
-        writefile(autoExecFile, HttpService:JSONEncode(autoExecScripts))
+        writefile(aef, hs:JSONEncode(aes))
     end
-
-    local function loadAutoExec()
-        if not isfolder("FrostWare") then makefolder("FrostWare") end
-        if isfile(autoExecFile) then
-            local success, data = pcall(function()
-                return HttpService:JSONDecode(readfile(autoExecFile))
-            end)
-            if success and data then
-                autoExecScripts = data
-            end
+    
+    local function ldAE()
+        if not isfolder("FrostWare") then makefolder(sd) end
+        if isfile(aef) then
+            local ok, dt = pcall(function() return hs:JSONDecode(readfile(aef)) end)
+            if ok and dt then aes = dt end
         end
     end
-
-    local function toggleAutoExec(name)
-        if autoExecScripts[name] then
-            autoExecScripts[name] = nil
+    
+    local function tgAE(nm)
+        if aes[nm] then
+            aes[nm] = nil
         else
-            autoExecScripts[name] = true
+            aes[nm] = true
         end
-        saveAutoExec()
-        updateList()
+        svAE()
+        upL()
     end
-
-    local function executeAutoScripts()
-        for name, _ in pairs(autoExecScripts) do
-            if localScripts[name] then
+    
+    local function exAS()
+        for nm, _ in pairs(aes) do
+            if ls[nm] then
                 spawn(function()
-                    local success, result = pcall(function()
-                        return loadstring(localScripts[name])
-                    end)
-                    if success and result then
-                        pcall(result)
-                    end
+                    local ok, res = pcall(function() return loadstring(ls[nm]) end)
+                    if ok and res then pcall(res) end
                 end)
             end
         end
     end
-
-    local function saveScript(name, content)
-        if not isfolder(scriptsDir) then makefolder(scriptsDir) end
-        localScripts[name] = content
-        writefile(scriptsDir .. name .. ".lua", content)
-        local data = {}
-        for n, c in pairs(localScripts) do
-            data[n] = c
-        end
-        writefile(scriptsDir .. "scripts.json", HttpService:JSONEncode(data))
-        updateList()
+    
+    local function svS(nm, cont)
+        if not isfolder(sd) then makefolder(sd) end
+        ls[nm] = cont
+        writefile(sd .. nm .. ".lua", cont)
+        local dt = {}
+        for n, c in pairs(ls) do dt[n] = c end
+        writefile(sd .. "scripts.json", hs:JSONEncode(dt))
+        upL()
     end
-
-    local function loadScripts()
-        if not isfolder(scriptsDir) then makefolder(scriptsDir) end
-        for name, content in pairs(defScripts) do
-            localScripts[name] = content
-        end
-        if isfile(scriptsDir .. "scripts.json") then
-            local success, data = pcall(function()
-                return HttpService:JSONDecode(readfile(scriptsDir .. "scripts.json"))
-            end)
-            if success and data then
-                for name, content in pairs(data) do
-                    localScripts[name] = content
-                end
+    
+    local function ldS()
+        if not isfolder(sd) then makefolder(sd) end
+        for nm, cont in pairs(ds) do ls[nm] = cont end
+        if isfile(sd .. "scripts.json") then
+            local ok, dt = pcall(function() return hs:JSONDecode(readfile(sd .. "scripts.json")) end)
+            if ok and dt then
+                for nm, cont in pairs(dt) do ls[nm] = cont end
             end
         end
-        updateList()
+        upL()
     end
-
-    function updateList()
-        if scriptsScrollRef then
-            for _, child in pairs(scriptsScrollRef:GetChildren()) do
-                if child:IsA("Frame") then
-                    child:Destroy()
-                end
+    
+    function upL()
+        if ssr then
+            for _, ch in pairs(ssr:GetChildren()) do
+                if ch:IsA("Frame") then ch:Destroy() end
             end
             
-            local scripts = {}
-            for name, content in pairs(localScripts) do
-                table.insert(scripts, {name = name, content = content})
+            local scs = {}
+            for nm, cont in pairs(ls) do
+                table.insert(scs, {name = nm, content = cont})
             end
             
-            for i, script in pairs(scripts) do
-                local yPos = (i - 1) * 65 + 10
+            for i, sc in pairs(scs) do
+                local yp = (i - 1) * 65 + 10
                 
-                local scriptCard = FW.cF(scriptsScrollRef, {
+                local scd = FW.cF(ssr, {
                     BackgroundColor3 = Color3.fromRGB(25, 30, 40),
                     Size = UDim2.new(1, -20, 0, 55),
-                    Position = UDim2.new(0, 10, 0, yPos),
-                    Name = "ScriptCard_" .. script.name
+                    Position = UDim2.new(0, 10, 0, yp),
+                    Name = "ScriptCard_" .. sc.name
                 })
-                FW.cC(scriptCard, 0.15)
-
-                createStyledText(scriptCard, {
-                    Text = script.name,
+                FW.cC(scd, 0.15)
+                
+                cST(scd, {
+                    Text = sc.name,
                     TextSize = 16,
                     Size = UDim2.new(0.4, 0, 0.6, 0),
                     Position = UDim2.new(0, 15, 0, 5),
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Name = "ScriptTitle"
                 })
-
-                if defScripts[script.name] then
-                    createVerifiedBadge(scriptCard, UDim2.new(0, 13, 0, 28))
+                
+                if ds[sc.name] then
+                    cVB(scd, UDim2.new(0, 13, 0, 28))
                 end
-
-                local autoExecBtn, autoExecOuter = createStyledButton(scriptCard, {
-                    BackgroundColor3 = autoExecScripts[script.name] and Color3.fromRGB(50, 170, 90) or Color3.fromRGB(65, 75, 90),
+                
+                local aeb, aeo = cSB(scd, {
+                    BackgroundColor3 = aes[sc.name] and Color3.fromRGB(50, 170, 90) or Color3.fromRGB(65, 75, 90),
                     Size = UDim2.new(0, 80, 0, 25),
                     Position = UDim2.new(0.45, 0, 0, 15),
-                    Text = autoExecScripts[script.name] and "AUTO: ON" or "AUTO: OFF",
+                    Text = aes[sc.name] and "AUTO: ON" or "AUTO: OFF",
                     TextColor3 = Color3.fromRGB(255, 255, 255),
                     TextSize = 10,
                     Name = "AutoExecBtn"
                 })
-
-                local executeBtn, executeOuter = createStyledButton(scriptCard, {
+                
+                local exb, exo = cSB(scd, {
                     BackgroundColor3 = Color3.fromRGB(50, 170, 90),
                     Size = UDim2.new(0, 80, 0, 25),
                     Position = UDim2.new(0.65, 0, 0, 15),
@@ -302,8 +272,8 @@ spawn(function()
                     TextSize = 11,
                     Name = "ExecuteBtn"
                 })
-
-                local moreBtn, moreOuter = createStyledButton(scriptCard, {
+                
+                local mrb, mro = cSB(scd, {
                     BackgroundColor3 = Color3.fromRGB(50, 130, 210),
                     Size = UDim2.new(0, 60, 0, 25),
                     Position = UDim2.new(0.85, 0, 0, 15),
@@ -312,30 +282,19 @@ spawn(function()
                     TextSize = 11,
                     Name = "MoreBtn"
                 })
-
-                executeBtn.MouseEnter:Connect(function()
-                    executeBtn.BackgroundColor3 = Color3.fromRGB(60, 180, 100)
-                end)
-                executeBtn.MouseLeave:Connect(function()
-                    executeBtn.BackgroundColor3 = Color3.fromRGB(50, 170, 90)
-                end)
-
-                moreBtn.MouseEnter:Connect(function()
-                    moreBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 220)
-                end)
-                moreBtn.MouseLeave:Connect(function()
-                    moreBtn.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
-                end)
-
-                executeBtn.MouseButton1Click:Connect(function()
-                    FW.showAlert("Success", script.name .. " executing...", 2)
-                    local success, result = pcall(function()
-                        return loadstring(script.content)
-                    end)
-                    if success and result then
-                        local execSuccess, execErr = pcall(result)
-                        if execSuccess then
-                            FW.showAlert("Success", script.name .. " executed!", 2)
+                
+                exb.MouseEnter:Connect(function() exb.BackgroundColor3 = Color3.fromRGB(60, 180, 100) end)
+                exb.MouseLeave:Connect(function() exb.BackgroundColor3 = Color3.fromRGB(50, 170, 90) end)
+                mrb.MouseEnter:Connect(function() mrb.BackgroundColor3 = Color3.fromRGB(60, 140, 220) end)
+                mrb.MouseLeave:Connect(function() mrb.BackgroundColor3 = Color3.fromRGB(50, 130, 210) end)
+                
+                exb.MouseButton1Click:Connect(function()
+                    FW.showAlert("Success", sc.name .. " executing...", 2)
+                    local ok, res = pcall(function() return loadstring(sc.content) end)
+                    if ok and res then
+                        local eok, err = pcall(res)
+                        if eok then
+                            FW.showAlert("Success", sc.name .. " executed!", 2)
                         else
                             FW.showAlert("Error", "Execution failed!", 3)
                         end
@@ -343,28 +302,21 @@ spawn(function()
                         FW.showAlert("Error", "Compilation failed!", 3)
                     end
                 end)
-
-                autoExecBtn.MouseButton1Click:Connect(function()
-                    toggleAutoExec(script.name)
-                end)
-
-                moreBtn.MouseButton1Click:Connect(function()
-                    showScriptOptions(script.name, script.content)
-                end)
+                
+                aeb.MouseButton1Click:Connect(function() tgAE(sc.name) end)
+                mrb.MouseButton1Click:Connect(function() shSO(sc.name, sc.content) end)
             end
             
-            scriptsScrollRef.CanvasSize = UDim2.new(0, 0, 0, #scripts * 65 + 20)
+            ssr.CanvasSize = UDim2.new(0, 0, 0, #scs * 65 + 20)
         end
     end
-
-    function showScriptOptions(name, content)
-        if scriptF then
-            scriptF:Destroy()
-        end
+    
+    function shSO(nm, cont)
+        if sf then sf:Destroy() end
         local ui = FW.getUI()
-        local mainUI = ui["11"]
+        local mui = ui["11"]
         
-        scriptF = FW.cF(mainUI, {
+        sf = FW.cF(mui, {
             BackgroundColor3 = Color3.fromRGB(0, 0, 0),
             BackgroundTransparency = 0.4,
             Size = UDim2.new(1, 0, 1, 0),
@@ -372,22 +324,22 @@ spawn(function()
             Name = "ScriptOptionsOverlay",
             ZIndex = 10
         })
-
-        local optionsPanel, optionsPanelOuter = createStyledContainer(scriptF, {
+        
+        local op, opo = cSC(sf, {
             BackgroundColor3 = Color3.fromRGB(20, 25, 35),
             Size = UDim2.new(0, 400, 0, 350),
             Position = UDim2.new(0.5, -200, 0.5, -175),
             Name = "OptionsPanel"
         })
-
-        local titleBar = FW.cF(optionsPanel, {
+        
+        local tb = FW.cF(op, {
             BackgroundColor3 = Color3.fromRGB(30, 35, 45),
             Size = UDim2.new(1, 0, 0, 50),
             Position = UDim2.new(0, 0, 0, 0),
             Name = "TitleBar"
         })
-
-        createStyledText(titleBar, {
+        
+        cST(tb, {
             Text = "Select Your Option",
             TextSize = 18,
             TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -395,8 +347,8 @@ spawn(function()
             Position = UDim2.new(0.1, 0, 0, 0),
             Name = "Title"
         })
-
-        local closeBtn, closeBtnOuter = createStyledButton(titleBar, {
+        
+        local cb, cbo = cSB(tb, {
             BackgroundColor3 = Color3.fromRGB(190, 60, 60),
             Size = UDim2.new(0, 30, 0, 30),
             Position = UDim2.new(1, -40, 0, 10),
@@ -405,15 +357,12 @@ spawn(function()
             TextSize = 16,
             Name = "CloseBtn"
         })
-
-        closeBtn.MouseButton1Click:Connect(function()
-            if scriptF then
-                scriptF:Destroy()
-                scriptF = nil
-            end
+        
+        cb.MouseButton1Click:Connect(function()
+            if sf then sf:Destroy() sf = nil end
         end)
-
-        createStyledText(optionsPanel, {
+        
+        cST(op, {
             Text = "Choose whether to execute,\nopen in a new tab, etc...",
             TextSize = 12,
             TextColor3 = Color3.fromRGB(190, 200, 220),
@@ -422,110 +371,103 @@ spawn(function()
             TextYAlignment = Enum.TextYAlignment.Top,
             Name = "Subtitle"
         })
-
-        local buttons = {
+        
+        local btns = {
             {text = "EXECUTE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 120)},
             {text = "OPEN SCRIPT IN EDITOR", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 170)},
             {text = "SAVE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 220)},
             {text = "COPY TO CLIPBOARD", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 270)}
         }
-
-        for i, btnData in pairs(buttons) do
-            local btn, btnOuter = createStyledButton(optionsPanel, {
-                BackgroundColor3 = btnData.color,
+        
+        for i, bd in pairs(btns) do
+            local btn, bo = cSB(op, {
+                BackgroundColor3 = bd.color,
                 Size = UDim2.new(0.8, 0, 0, 35),
-                Position = btnData.pos,
-                Text = btnData.text,
+                Position = bd.pos,
+                Text = bd.text,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 12,
                 Name = "OptionBtn" .. i
             })
-
-            btn.MouseEnter:Connect(function()
-                btn.BackgroundColor3 = Color3.fromRGB(60, 140, 220)
-            end)
-
-            btn.MouseLeave:Connect(function()
-                btn.BackgroundColor3 = btnData.color
-            end)
-
+            
+            btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(60, 140, 220) end)
+            btn.MouseLeave:Connect(function() btn.BackgroundColor3 = bd.color end)
+            
             if i == 1 then
                 btn.MouseButton1Click:Connect(function()
-                    FW.showAlert("Success", name .. " executing...", 2)
-                    local success, result = pcall(function()
-                        return loadstring(content)
-                    end)
-                    if success and result then
-                        local execSuccess, execErr = pcall(result)
-                        if execSuccess then
-                            FW.showAlert("Success", name .. " executed!", 2)
+                    FW.showAlert("Success", nm .. " executing...", 2)
+                    local ok, res = pcall(function() return loadstring(cont) end)
+                    if ok and res then
+                        local eok, err = pcall(res)
+                        if eok then
+                            FW.showAlert("Success", nm .. " executed!", 2)
                         else
                             FW.showAlert("Error", "Execution failed!", 3)
                         end
                     else
                         FW.showAlert("Error", "Compilation failed!", 3)
                     end
-                    scriptF:Destroy()
-                    scriptF = nil
+                    sf:Destroy()
+                    sf = nil
                 end)
             elseif i == 2 then
                 btn.MouseButton1Click:Connect(function()
-                    local srcRef = FW.getUI()["11"]:FindFirstChild("EditorPage"):FindFirstChild("EditorPage"):FindFirstChild("TxtBox"):FindFirstChild("EditorFrame"):FindFirstChild("Source")
-                    if srcRef then
-                        srcRef.Text = content
+                    local sr = FW.getUI()["11"]:FindFirstChild("EditorPage"):FindFirstChild("EditorPage"):FindFirstChild("TxtBox"):FindFirstChild("EditorFrame"):FindFirstChild("Source")
+                    if sr then
+                        sr.Text = cont
                         FW.switchPage("Editor", FW.getUI()["6"]:FindFirstChild("Sidebar"))
                         FW.showAlert("Success", "Script loaded to editor!", 2)
-                        scriptF:Destroy()
-                        scriptF = nil
+                        sf:Destroy()
+                        sf = nil
                     end
                 end)
             elseif i == 3 then
                 btn.MouseButton1Click:Connect(function()
                     if not isfolder("FrostWare/Exports") then makefolder("FrostWare/Exports") end
-                    writefile("FrostWare/Exports/" .. name .. ".lua", content)
+                    writefile("FrostWare/Exports/" .. nm .. ".lua", cont)
                     FW.showAlert("Success", "Script saved to file!", 2)
-                    scriptF:Destroy()
-                    scriptF = nil
+                    sf:Destroy()
+                    sf = nil
                 end)
             elseif i == 4 then
                 btn.MouseButton1Click:Connect(function()
                     if setclipboard then
-                        setclipboard(content)
+                        setclipboard(cont)
                         FW.showAlert("Success", "Script copied to clipboard!", 2)
                     else
                         FW.showAlert("Error", "Clipboard not supported!", 3)
                     end
-                    scriptF:Destroy()
-                    scriptF = nil
+                    sf:Destroy()
+                    sf = nil
                 end)
             end
         end
     end
-
-    local function createCloudCard(parent, data, index)
-        local yPos = (index - 1) * 65 + 10
+    
+    local function cCC(p, dt, idx)
+        local yp = (idx - 1) * 65 + 10
         
-        local cloudCard = FW.cF(parent, {
+        local cc = FW.cF(p, {
             BackgroundColor3 = Color3.fromRGB(25, 30, 40),
             Size = UDim2.new(1, -20, 0, 55),
-            Position = UDim2.new(0, 10, 0, yPos),
+            Position = UDim2.new(0, 10, 0, yp),
             Name = "CloudCard"
         })
-        FW.cC(cloudCard, 0.15)
-
-        createStyledText(cloudCard, {
-            Text = data.title or "Unknown Script",
+        FW.cC(cc, 0.15)
+        
+        cST(cc, {
+            Text = dt.title or "Unknown Script",
             TextSize = 16,
             Size = UDim2.new(0.35, 0, 0.6, 0),
             Position = UDim2.new(0, 15, 0, 5),
             TextXAlignment = Enum.TextXAlignment.Left,
             Name = "ScriptTitle"
         })
-
-        createVerifiedBadge(cloudCard, UDim2.new(0, 13, 0, 28))
-
-        createStyledText(cloudCard, {
-            Text = (data.views or "0") .. " Views",
+        
+        cVB(cc, UDim2.new(0, 13, 0, 28))
+        
+        cST(cc, {
+            Text = (dt.views or "0") .. " Views",
             TextSize = 12,
             TextColor3 = Color3.fromRGB(160, 170, 190),
             Size = UDim2.new(0.2, 0, 0.6, 0),
@@ -533,8 +475,8 @@ spawn(function()
             TextXAlignment = Enum.TextXAlignment.Left,
             Name = "ViewsLabel"
         })
-
-        local selectBtn, selectOuter = createStyledButton(cloudCard, {
+        
+        local sb, so = cSB(cc, {
             BackgroundColor3 = Color3.fromRGB(50, 130, 210),
             Size = UDim2.new(0, 100, 0, 35),
             Position = UDim2.new(1, -110, 0, 10),
@@ -543,30 +485,23 @@ spawn(function()
             TextSize = 12,
             Name = "SelectBtn"
         })
-
-        selectBtn.MouseEnter:Connect(function()
-            selectBtn.BackgroundColor3 = Color3.fromRGB(60, 140, 220)
-        end)
-        selectBtn.MouseLeave:Connect(function()
-            selectBtn.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
-        end)
-
-        selectBtn.MouseButton1Click:Connect(function()
-            selScript = data
-            showCloudOptions(data)
-        end)
-
-        return cloudCard
-    end
-
-    function showCloudOptions(data)
-        if scriptF then
-            scriptF:Destroy()
-        end
-        local ui = FW.getUI()
-        local mainUI = ui["11"]
         
-        scriptF = FW.cF(mainUI, {
+        sb.MouseEnter:Connect(function() sb.BackgroundColor3 = Color3.fromRGB(60, 140, 220) end)
+        sb.MouseLeave:Connect(function() sb.BackgroundColor3 = Color3.fromRGB(50, 130, 210) end)
+        sb.MouseButton1Click:Connect(function()
+            ss = dt
+            shCO(dt)
+        end)
+        
+        return cc
+    end
+    
+    function shCO(dt)
+        if sf then sf:Destroy() end
+        local ui = FW.getUI()
+        local mui = ui["11"]
+        
+        sf = FW.cF(mui, {
             BackgroundColor3 = Color3.fromRGB(0, 0, 0),
             BackgroundTransparency = 0.4,
             Size = UDim2.new(1, 0, 1, 0),
@@ -574,22 +509,22 @@ spawn(function()
             Name = "CloudOptionsOverlay",
             ZIndex = 10
         })
-
-        local optionsPanel, optionsPanelOuter = createStyledContainer(scriptF, {
+        
+        local op, opo = cSC(sf, {
             BackgroundColor3 = Color3.fromRGB(20, 25, 35),
             Size = UDim2.new(0, 400, 0, 350),
             Position = UDim2.new(0.5, -200, 0.5, -175),
             Name = "OptionsPanel"
         })
-
-        local titleBar = FW.cF(optionsPanel, {
+        
+        local tb = FW.cF(op, {
             BackgroundColor3 = Color3.fromRGB(30, 35, 45),
             Size = UDim2.new(1, 0, 0, 50),
             Position = UDim2.new(0, 0, 0, 0),
             Name = "TitleBar"
         })
-
-        createStyledText(titleBar, {
+        
+        cST(tb, {
             Text = "Select Your Option",
             TextSize = 18,
             TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -597,8 +532,8 @@ spawn(function()
             Position = UDim2.new(0.1, 0, 0, 0),
             Name = "Title"
         })
-
-        local closeBtn, closeBtnOuter = createStyledButton(titleBar, {
+        
+        local cb, cbo = cSB(tb, {
             BackgroundColor3 = Color3.fromRGB(190, 60, 60),
             Size = UDim2.new(0, 30, 0, 30),
             Position = UDim2.new(1, -40, 0, 10),
@@ -607,15 +542,12 @@ spawn(function()
             TextSize = 16,
             Name = "CloseBtn"
         })
-
-        closeBtn.MouseButton1Click:Connect(function()
-            if scriptF then
-                scriptF:Destroy()
-                scriptF = nil
-            end
+        
+        cb.MouseButton1Click:Connect(function()
+            if sf then sf:Destroy() sf = nil end
         end)
-
-        createStyledText(optionsPanel, {
+        
+        cST(op, {
             Text = "Choose whether to execute,\nopen in a new tab, etc...",
             TextSize = 12,
             TextColor3 = Color3.fromRGB(190, 200, 220),
@@ -624,58 +556,49 @@ spawn(function()
             TextYAlignment = Enum.TextYAlignment.Top,
             Name = "Subtitle"
         })
-
-        local buttons = {
+        
+        local btns = {
             {text = "EXECUTE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 120)},
             {text = "OPEN SCRIPT IN EDITOR", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 170)},
             {text = "SAVE SELECTED SCRIPT", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 220)},
             {text = "COPY TO CLIPBOARD", color = Color3.fromRGB(50, 130, 210), pos = UDim2.new(0.1, 0, 0, 270)}
         }
-
-        for i, btnData in pairs(buttons) do
-            local btn, btnOuter = createStyledButton(optionsPanel, {
-                BackgroundColor3 = btnData.color,
+        
+        for i, bd in pairs(btns) do
+            local btn, bo = cSB(op, {
+                BackgroundColor3 = bd.color,
                 Size = UDim2.new(0.8, 0, 0, 35),
-                Position = btnData.pos,
-                Text = btnData.text,
+                Position = bd.pos,
+                Text = bd.text,
                 TextColor3 = Color3.fromRGB(255, 255, 255),
                 TextSize = 12,
                 Name = "CloudOptionBtn" .. i
             })
-
-            btn.MouseEnter:Connect(function()
-                btn.BackgroundColor3 = Color3.fromRGB(60, 140, 220)
-            end)
-
-            btn.MouseLeave:Connect(function()
-                btn.BackgroundColor3 = btnData.color
-            end)
-
+            
+            btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(60, 140, 220) end)
+            btn.MouseLeave:Connect(function() btn.BackgroundColor3 = bd.color end)
+            
             if i == 1 then
                 btn.MouseButton1Click:Connect(function()
                     spawn(function()
-                        local scriptContent = nil
-                        if data.script then
-                            scriptContent = data.script
+                        local sc = nil
+                        if dt.script then
+                            sc = dt.script
                         else
-                            local success, response = pcall(function()
-                                return game:HttpGet("https://scriptblox.com/api/script/" .. data._id)
+                            local ok, res = pcall(function()
+                                return game:HttpGet("https://scriptblox.com/api/script/" .. dt._id)
                             end)
-                            if success then
-                                local scriptData = HttpService:JSONDecode(response)
-                                if scriptData.script then
-                                    scriptContent = scriptData.script
-                                end
+                            if ok then
+                                local sd = hs:JSONDecode(res)
+                                if sd.script then sc = sd.script end
                             end
                         end
-                        if scriptContent then
+                        if sc then
                             FW.showAlert("Success", "Executing script...", 2)
-                            local success, result = pcall(function()
-                                return loadstring(scriptContent)
-                            end)
-                            if success and result then
-                                local execSuccess, execErr = pcall(result)
-                                if execSuccess then
+                            local ok, res = pcall(function() return loadstring(sc) end)
+                            if ok and res then
+                                local eok, err = pcall(res)
+                                if eok then
                                     FW.showAlert("Success", "Script executed!", 2)
                                 else
                                     FW.showAlert("Error", "Execution failed!", 3)
@@ -686,127 +609,119 @@ spawn(function()
                         else
                             FW.showAlert("Error", "Failed to fetch script!", 3)
                         end
-                        scriptF:Destroy()
-                        scriptF = nil
+                        sf:Destroy()
+                        sf = nil
                     end)
                 end)
             elseif i == 2 then
                 btn.MouseButton1Click:Connect(function()
                     spawn(function()
-                        local scriptContent = nil
-                        if data.script then
-                            scriptContent = data.script
+                        local sc = nil
+                        if dt.script then
+                            sc = dt.script
                         else
-                            local success, response = pcall(function()
-                                return game:HttpGet("https://scriptblox.com/api/script/" .. data._id)
+                            local ok, res = pcall(function()
+                                return game:HttpGet("https://scriptblox.com/api/script/" .. dt._id)
                             end)
-                            if success then
-                                local scriptData = HttpService:JSONDecode(response)
-                                if scriptData.script then
-                                    scriptContent = scriptData.script
-                                end
+                            if ok then
+                                local sd = hs:JSONDecode(res)
+                                if sd.script then sc = sd.script end
                             end
                         end
-                        if scriptContent then
-                            local srcRef = FW.getUI()["11"]:FindFirstChild("EditorPage"):FindFirstChild("EditorPage"):FindFirstChild("TxtBox"):FindFirstChild("EditorFrame"):FindFirstChild("Source")
-                            if srcRef then
-                                srcRef.Text = scriptContent
+                        if sc then
+                            local sr = FW.getUI()["11"]:FindFirstChild("EditorPage"):FindFirstChild("EditorPage"):FindFirstChild("TxtBox"):FindFirstChild("EditorFrame"):FindFirstChild("Source")
+                            if sr then
+                                sr.Text = sc
                                 FW.switchPage("Editor", FW.getUI()["6"]:FindFirstChild("Sidebar"))
                                 FW.showAlert("Success", "Script loaded to editor!", 2)
                             end
                         else
                             FW.showAlert("Error", "Failed to load script!", 3)
                         end
-                        scriptF:Destroy()
-                        scriptF = nil
+                        sf:Destroy()
+                        sf = nil
                     end)
                 end)
             elseif i == 3 then
                 btn.MouseButton1Click:Connect(function()
                     spawn(function()
-                        local scriptContent = nil
-                        if data.script then
-                            scriptContent = data.script
+                        local sc = nil
+                        if dt.script then
+                            sc = dt.script
                         else
-                            local success, response = pcall(function()
-                                return game:HttpGet("https://scriptblox.com/api/script/" .. data._id)
+                            local ok, res = pcall(function()
+                                return game:HttpGet("https://scriptblox.com/api/script/" .. dt._id)
                             end)
-                            if success then
-                                local scriptData = HttpService:JSONDecode(response)
-                                if scriptData.script then
-                                    scriptContent = scriptData.script
-                                end
+                            if ok then
+                                local sd = hs:JSONDecode(res)
+                                if sd.script then sc = sd.script end
                             end
                         end
-                        if scriptContent then
-                            saveScript(data.title or "CloudScript_" .. tick(), scriptContent)
+                        if sc then
+                            svS(dt.title or "CloudScript_" .. tick(), sc)
                             FW.showAlert("Success", "Script saved!", 2)
                         else
                             FW.showAlert("Error", "Failed to save!", 3)
                         end
-                        scriptF:Destroy()
-                        scriptF = nil
+                        sf:Destroy()
+                        sf = nil
                     end)
                 end)
             elseif i == 4 then
                 btn.MouseButton1Click:Connect(function()
                     spawn(function()
-                        local scriptContent = nil
-                        if data.script then
-                            scriptContent = data.script
+                        local sc = nil
+                        if dt.script then
+                            sc = dt.script
                         else
-                            local success, response = pcall(function()
-                                return game:HttpGet("https://scriptblox.com/api/script/" .. data._id)
+                            local ok, res = pcall(function()
+                                return game:HttpGet("https://scriptblox.com/api/script/" .. dt._id)
                             end)
-                            if success then
-                                local scriptData = HttpService:JSONDecode(response)
-                                if scriptData.script then
-                                    scriptContent = scriptData.script
-                                end
+                            if ok then
+                                local sd = hs:JSONDecode(res)
+                                if sd.script then sc = sd.script end
                             end
                         end
-                        if scriptContent and setclipboard then
-                            setclipboard(scriptContent)
+                        if sc and setclipboard then
+                            setclipboard(sc)
                             FW.showAlert("Success", "Script copied!", 2)
                         else
                             FW.showAlert("Error", "Failed to copy!", 3)
                         end
-                        scriptF:Destroy()
-                        scriptF = nil
+                        sf:Destroy()
+                        sf = nil
                     end)
                 end)
             end
         end
     end
-
-    local function searchScripts(query, maxResults)
-        maxResults = maxResults or 20
-        local success, response = pcall(function()
-            local url = "https://scriptblox.com/api/script/search?q=" .. HttpService:UrlEncode(query) .. "&max=" .. maxResults
+    
+    local function srS(qry, mr)
+        mr = mr or 20
+        local ok, res = pcall(function()
+            local url = "https://scriptblox.com/api/script/search?q=" .. hs:UrlEncode(qry) .. "&max=" .. mr
             return game:HttpGet(url)
         end)
-        if success then
-            local data = HttpService:JSONDecode(response)
-            if data.result and data.result.scripts then
-                return data.result.scripts
+        if ok then
+            local dt = hs:JSONDecode(res)
+            if dt.result and dt.result.scripts then
+                return dt.result.scripts
             end
         end
         return {}
     end
-
-    local function displayCloudScripts(scripts, scrollFrame)
-        for _, child in pairs(scrollFrame:GetChildren()) do
-            if child.Name == "CloudCard" then
-                child:Destroy()
-            end
+    
+    local function dsCS(scs, sf)
+        for _, ch in pairs(sf:GetChildren()) do
+            if ch.Name == "CloudCard" then ch:Destroy() end
         end
-        for i, script in pairs(scripts) do
-            createCloudCard(scrollFrame, script, i)
+        for i, sc in pairs(scs) do
+            cCC(sf, sc, i)
         end
-        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, #scripts * 65 + 20)
+        sf.CanvasSize = UDim2.new(0, 0, 0, #scs * 65 + 20)
     end
-
-    local scriptsPage = FW.cI(FW.getUI()["11"], {
+    
+    local sp = FW.cI(FW.getUI()["11"], {
         ImageTransparency = 1,
         ImageColor3 = Color3.fromRGB(15, 18, 25),
         Image = "rbxassetid://18665679839",
@@ -817,23 +732,23 @@ spawn(function()
         Name = "ScriptsPage",
         Position = UDim2.new(-0.001, 0, 0, 0)
     })
-
-    local topBar, topBarOuter = createStyledContainer(scriptsPage, {
+    
+    local tb, tbo = cSC(sp, {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
         Size = UDim2.new(1, -20, 0, 60),
         Position = UDim2.new(0, 10, 0, 10),
         Name = "TopBar"
     })
-
-    local searchBox, searchBoxOuter = createStyledInput(topBar, {
+    
+    local sb, sbo = cSI(tb, {
         Size = UDim2.new(0.5, -10, 0, 35),
         Position = UDim2.new(0, 15, 0, 12),
         PlaceholderText = "Search for scripts...",
         TextSize = 14,
         Name = "SearchBox"
     })
-
-    local localTab, localTabOuter = createStyledButton(topBar, {
+    
+    local lt, lto = cSB(tb, {
         BackgroundColor3 = Color3.fromRGB(50, 130, 210),
         Size = UDim2.new(0.2, -5, 0, 35),
         Position = UDim2.new(0.55, 5, 0, 12),
@@ -842,8 +757,8 @@ spawn(function()
         TextSize = 14,
         Name = "LocalTab"
     })
-
-    local cloudTab, cloudTabOuter = createStyledButton(topBar, {
+    
+    local ct, cto = cSB(tb, {
         BackgroundColor3 = Color3.fromRGB(65, 75, 90),
         Size = UDim2.new(0.2, -5, 0, 35),
         Position = UDim2.new(0.78, 5, 0, 12),
@@ -852,47 +767,47 @@ spawn(function()
         TextSize = 14,
         Name = "CloudTab"
     })
-
-    localF = FW.cF(scriptsPage, {
+    
+    lf = FW.cF(sp, {
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, -80),
         Position = UDim2.new(0, 0, 0, 80),
         Name = "LocalFrame",
         Visible = true
     })
-
-    cloudF = FW.cF(scriptsPage, {
+    
+    cf = FW.cF(sp, {
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, -80),
         Position = UDim2.new(0, 0, 0, 80),
         Name = "CloudFrame",
         Visible = false
     })
-
-    local addPanel, addPanelOuter = createStyledContainer(localF, {
+    
+    local ap, apo = cSC(lf, {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
         Size = UDim2.new(1, -20, 0, 80),
         Position = UDim2.new(0, 10, 0, 10),
         Name = "AddPanel"
     })
-
-    local nameInput, nameInputOuter = createStyledInput(addPanel, {
+    
+    local ni, nio = cSI(ap, {
         Size = UDim2.new(0.25, -5, 0, 30),
         Position = UDim2.new(0, 10, 0, 10),
         PlaceholderText = "Script Name",
         TextSize = 12,
         Name = "NameInput"
     })
-
-    local contentInput, contentInputOuter = createStyledInput(addPanel, {
+    
+    local ci, cio = cSI(ap, {
         Size = UDim2.new(0.45, -5, 0, 30),
         Position = UDim2.new(0.27, 5, 0, 10),
         PlaceholderText = "Paste script content here",
         TextSize = 12,
         Name = "ContentInput"
     })
-
-    local saveBtn, saveBtnOuter = createStyledButton(addPanel, {
+    
+    local svb, svbo = cSB(ap, {
         BackgroundColor3 = Color3.fromRGB(50, 170, 90),
         Size = UDim2.new(0.12, -5, 0, 30),
         Position = UDim2.new(0.74, 5, 0, 10),
@@ -901,8 +816,8 @@ spawn(function()
         TextSize = 12,
         Name = "SaveBtn"
     })
-
-    local pasteBtn, pasteBtnOuter = createStyledButton(addPanel, {
+    
+    local pb, pbo = cSB(ap, {
         BackgroundColor3 = Color3.fromRGB(50, 130, 210),
         Size = UDim2.new(0.12, -5, 0, 30),
         Position = UDim2.new(0.88, 5, 0, 10),
@@ -911,15 +826,15 @@ spawn(function()
         TextSize = 12,
         Name = "PasteBtn"
     })
-
-    local scriptsContainer, scriptsContainerOuter = createStyledContainer(localF, {
+    
+    local sc, sco = cSC(lf, {
         BackgroundColor3 = Color3.fromRGB(20, 25, 35),
         Size = UDim2.new(1, -20, 1, -110),
         Position = UDim2.new(0, 10, 0, 100),
         Name = "ScriptsContainer"
     })
-
-    local scriptsScroll = FW.cSF(scriptsContainer, {
+    
+    local ss = FW.cSF(sc, {
         BackgroundTransparency = 1,
         Size = UDim2.new(1, -10, 1, -10),
         Position = UDim2.new(0, 5, 0, 5),
@@ -928,16 +843,16 @@ spawn(function()
         Name = "ScriptsScroll",
         ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210)
     })
-    scriptsScrollRef = scriptsScroll
-
-    local cloudContainer, cloudContainerOuter = createStyledContainer(cloudF, {
+    ssr = ss
+    
+    local cc, cco = cSC(cf, {
         BackgroundColor3 = Color3.fromRGB(20, 25, 35),
         Size = UDim2.new(1, -20, 1, -20),
         Position = UDim2.new(0, 10, 0, 10),
         Name = "CloudContainer"
     })
-
-    local cloudScroll = FW.cSF(cloudContainer, {
+    
+    local cs = FW.cSF(cc, {
         BackgroundTransparency = 1,
         Size = UDim2.new(1, -10, 1, -10),
         Position = UDim2.new(0, 5, 0, 5),
@@ -946,41 +861,41 @@ spawn(function()
         Name = "CloudScroll",
         ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210)
     })
-
-    saveBtn.MouseButton1Click:Connect(function()
-        local name = nameInput.Text
-        local content = contentInput.Text
-        if name and name ~= "" and content and content ~= "" then
-            saveScript(name, content)
-            nameInput.Text = ""
-            contentInput.Text = ""
-            FW.showAlert("Success", "Script saved: " .. name, 2)
+    
+    svb.MouseButton1Click:Connect(function()
+        local nm = ni.Text
+        local cont = ci.Text
+        if nm and nm ~= "" and cont and cont ~= "" then
+            svS(nm, cont)
+            ni.Text = ""
+            ci.Text = ""
+            FW.showAlert("Success", "Script saved: " .. nm, 2)
         else
             FW.showAlert("Error", "Please enter name and content!", 2)
         end
     end)
-
-    pasteBtn.MouseButton1Click:Connect(function()
-        local clipboard = getclipboard and getclipboard() or ""
-        if clipboard ~= "" then
-            contentInput.Text = clipboard
+    
+    pb.MouseButton1Click:Connect(function()
+        local cb = getclipboard and getclipboard() or ""
+        if cb ~= "" then
+            ci.Text = cb
             FW.showAlert("Success", "Content pasted!", 2)
         else
             FW.showAlert("Error", "Clipboard is empty!", 2)
         end
     end)
-
-    searchBox.FocusLost:Connect(function(enterPressed)
-        if enterPressed and curSec == "Cloud" then
-            local query = searchBox.Text
-            if query and query ~= "" then
+    
+    sb.FocusLost:Connect(function(ep)
+        if ep and cs == "Cloud" then
+            local qry = sb.Text
+            if qry and qry ~= "" then
                 FW.showAlert("Info", "Searching scripts...", 1)
                 spawn(function()
-                    local scripts = searchScripts(query, 50)
-                    if #scripts > 0 then
-                        curScripts = scripts
-                        displayCloudScripts(scripts, cloudScroll)
-                        FW.showAlert("Success", "Found " .. #scripts .. " scripts!", 2)
+                    local scs = srS(qry, 50)
+                    if #scs > 0 then
+                        csc = scs
+                        dsCS(scs, cs)
+                        FW.showAlert("Success", "Found " .. #scs .. " scripts!", 2)
                     else
                         FW.showAlert("Error", "No scripts found!", 2)
                     end
@@ -988,29 +903,29 @@ spawn(function()
             end
         end
     end)
-
-    localTab.MouseButton1Click:Connect(function()
-        switchSec("Local")
-        localTab.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
-        localTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-        cloudTab.BackgroundColor3 = Color3.fromRGB(65, 75, 90)
-        cloudTab.TextColor3 = Color3.fromRGB(190, 200, 220)
+    
+    lt.MouseButton1Click:Connect(function()
+        swS("Local")
+        lt.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
+        lt.TextColor3 = Color3.fromRGB(255, 255, 255)
+        ct.BackgroundColor3 = Color3.fromRGB(65, 75, 90)
+        ct.TextColor3 = Color3.fromRGB(190, 200, 220)
     end)
-
-    cloudTab.MouseButton1Click:Connect(function()
-        switchSec("Cloud")
-        cloudTab.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
-        cloudTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-        localTab.BackgroundColor3 = Color3.fromRGB(65, 75, 90)
-        localTab.TextColor3 = Color3.fromRGB(190, 200, 220)
+    
+    ct.MouseButton1Click:Connect(function()
+        swS("Cloud")
+        ct.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
+        ct.TextColor3 = Color3.fromRGB(255, 255, 255)
+        lt.BackgroundColor3 = Color3.fromRGB(65, 75, 90)
+        lt.TextColor3 = Color3.fromRGB(190, 200, 220)
     end)
-
-    local sidebar = FW.getUI()["6"]:FindFirstChild("Sidebar")
-    if sidebar then
+    
+    local sb = FW.getUI()["6"]:FindFirstChild("Sidebar")
+    if sb then
         local function cSBtn(nm, txt, ico, pos, sel)
-            local btn = FW.cF(sidebar, {
+            local btn = FW.cF(sb, {
                 BackgroundColor3 = sel and Color3.fromRGB(30, 36, 51) or Color3.fromRGB(31, 34, 50),
-                Size = UDim2.new(0.85, 0, 0.08, 0),
+                Size = UDim2.new(0.68, 0, 0.064, 0),
                 Position = pos,
                 Name = nm,
                 BackgroundTransparency = sel and 0 or 1
@@ -1045,7 +960,7 @@ spawn(function()
             
             local lbl = FW.cT(btn, {
                 TextWrapped = true,
-                TextSize = 20,
+                TextSize = 16,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 TextYAlignment = Enum.TextYAlignment.Top,
                 TextScaled = true,
@@ -1057,12 +972,12 @@ spawn(function()
                 Name = "Lbl",
                 Position = UDim2.new(0.3, 0, 0.2, 0)
             })
-            FW.cTC(lbl, 20)
+            FW.cTC(lbl, 16)
             
             local clk = FW.cB(btn, {
                 TextWrapped = true,
                 TextColor3 = Color3.fromRGB(0, 0, 0),
-                TextSize = 14,
+                TextSize = 12,
                 TextScaled = true,
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 1, 0),
@@ -1071,27 +986,27 @@ spawn(function()
                 ZIndex = 5
             })
             FW.cC(clk, 0)
-            FW.cTC(clk, 14)
+            FW.cTC(clk, 12)
             
             return btn, clk
         end
         
-        local scriptsBtn, scriptsClk = cSBtn("Scripts", "Scripts", scriptIconAsset or "rbxassetid://7733779610", UDim2.new(0.088, 0, 0.483, 0), false)
-        scriptsClk.MouseButton1Click:Connect(function()
-            FW.switchPage("Scripts", sidebar)
+        local sb, sc = cSBtn("Scripts", "Scripts", sia or "rbxassetid://7733779610", UDim2.new(0.075, 0, 0.44, 0), false)
+        sc.MouseButton1Click:Connect(function()
+            FW.switchPage("Scripts", FW.getUI()["6"]:FindFirstChild("Sidebar"))
         end)
     end
-
-    loadAutoExec()
-    loadScripts()
-    executeAutoScripts()
+    
+    ldAE()
+    ldS()
+    exAS()
     
     spawn(function()
         FW.showAlert("Info", "Loading popular scripts...", 1)
-        local popularScripts = searchScripts("popular", 30)
-        if #popularScripts > 0 then
-            curScripts = popularScripts
-            displayCloudScripts(popularScripts, cloudScroll)
+        local ps = srS("popular", 30)
+        if #ps > 0 then
+            csc = ps
+            dsCS(ps, cs)
         end
     end)
 end)
