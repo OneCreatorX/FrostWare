@@ -7,6 +7,10 @@ if not getgenv().__FW then
     end
 end
 
+while not getgenv()._FW_ACCESS_GRANTED do
+    wait(0.5)
+end
+
 local FW = getgenv()._FW or {}
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
