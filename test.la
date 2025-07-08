@@ -843,7 +843,7 @@ end
 function FW.initializeWithAccess()
     hasAccess = true
 getgenv()._FW_ACCESS_GRANTED = true
-    
+
     local sb, upClk, edClk, coClk, exClk, slide = FW.cSidebar()
     
     spawn(function()
