@@ -23,6 +23,10 @@ spawn(function()
     local downloadProgress = {}
     local currentSection = "local"
     local currentPlayingIsCloud = false
+    local availableGenres = {}
+    local availableUploaders = {}
+    local currentGenreFilter = ""
+    local currentUploaderFilter = ""
     
     local mp = FW.cI(FW.getUI()["11"], {
         ImageTransparency = 1,
@@ -143,6 +147,41 @@ spawn(function()
             })
             
             return sf, sh, sb
+        elseif t == "dropdown" then
+            local df = FW.cF(p, {
+                BackgroundColor3 = Color3.fromRGB(18, 22, 32),
+                Size = props.Size,
+                Position = props.Position,
+                Name = (props.Name or "Dropdown") .. "_Frame"
+            })
+            FW.cC(df, 0.18)
+            
+            local db = FW.cB(df, {
+                BackgroundColor3 = Color3.fromRGB(35, 40, 50),
+                Size = UDim2.new(1, -4, 1, -4),
+                Position = UDim2.new(0, 2, 0, 2),
+                Text = props.Text or "Select...",
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                TextSize = props.TextSize or 12,
+                FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+                Name = props.Name or "Dropdown"
+            })
+            FW.cC(db, 0.15)
+            FW.cTC(db, props.TextSize or 12)
+            
+            local dl = FW.cSF(df, {
+                BackgroundColor3 = Color3.fromRGB(25, 30, 40),
+                Size = UDim2.new(1, 0, 0, 200),
+                Position = UDim2.new(0, 0, 1, 2),
+                ScrollBarThickness = 6,
+                CanvasSize = UDim2.new(0, 0, 0, 0),
+                Visible = false,
+                ZIndex = 10,
+                Name = (props.Name or "Dropdown") .. "_List"
+            })
+            FW.cC(dl, 0.15)
+            
+            return df, db, dl
         end
     end
     
@@ -377,18 +416,50 @@ spawn(function()
         Name = "AddBtn"
     })
     
-    local sf, sfo = cUI(mp, "input", {
-        Size = UDim2.new(0.4, 0, 0, 28),
+    local ff, ffo = cUI(mp, "container", {
+        BackgroundColor3 = Color3.fromRGB(25, 30, 40),
+        Size = UDim2.new(1, -20, 0, 35),
         Position = UDim2.new(0, 10, 0, 215),
-        PlaceholderText = "🔍 Search music by name or artist...",
-        TextSize = 12,
+        Name = "FilterFrame"
+    })
+    
+    local sf, sfo = cUI(ff, "input", {
+        Size = UDim2.new(0.3, -5, 0, 25),
+        Position = UDim2.new(0, 10, 0, 5),
+        PlaceholderText = "🔍 Search music...",
+        TextSize = 11,
         Name = "SearchInput"
+    })
+    
+    local gdf, gdb, gdl = cUI(ff, "dropdown", {
+        Size = UDim2.new(0.2, -5, 0, 25),
+        Position = UDim2.new(0.32, 5, 0, 5),
+        Text = "🎵 All Genres",
+        TextSize = 10,
+        Name = "GenreDropdown"
+    })
+    
+    local udf, udb, udl = cUI(ff, "dropdown", {
+        Size = UDim2.new(0.2, -5, 0, 25),
+        Position = UDim2.new(0.54, 5, 0, 5),
+        Text = "👤 All Users",
+        TextSize = 10,
+        Name = "UploaderDropdown"
+    })
+    
+    local cfb, cfbo = cUI(ff, "button", {
+        BackgroundColor3 = Color3.fromRGB(200, 100, 100),
+        Size = UDim2.new(0.15, -5, 0, 25),
+        Position = UDim2.new(0.76, 5, 0, 5),
+        Text = "🗑 CLEAR",
+        TextSize = 10,
+        Name = "ClearFiltersBtn"
     })
     
     local mlf, mlfo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(1, -20, 1, -260),
-        Position = UDim2.new(0, 10, 0, 250),
+        Size = UDim2.new(1, -20, 1, -295),
+        Position = UDim2.new(0, 10, 0, 260),
         Name = "MusicListFrame"
     })
     
@@ -518,6 +589,152 @@ spawn(function()
 
     local function getCloudFiles()
         return safeListFiles(cd, { isCloud = true, isCached = true })
+    end
+    
+    local function updateGenresAndUploaders()
+        availableGenres = {}
+        availableUploaders = {}
+        
+        for _, song in pairs(cl) do
+            if song.genre and song.genre ~= "" then
+                local found = false
+                for _, g in pairs(availableGenres) do
+                    if g == song.genre then
+                        found = true
+                        break
+                    end
+                end
+                if not found then
+                    table.insert(availableGenres, song.genre)
+                end
+            end
+            
+            if song.uploader_name and song.uploader_name ~= "" then
+                local found = false
+                for _, u in pairs(availableUploaders) do
+                    if u == song.uploader_name then
+                        found = true
+                        break
+                    end
+                end
+                if not found then
+                    table.insert(availableUploaders, song.uploader_name)
+                end
+            end
+        end
+        
+        table.sort(availableGenres)
+        table.sort(availableUploaders)
+    end
+    
+    local function updateDropdowns()
+        local children = gdl:GetChildren()
+        for i = 1, #children do
+            if children[i]:IsA("TextButton") then
+                children[i]:Destroy()
+            end
+        end
+        
+        children = udl:GetChildren()
+        for i = 1, #children do
+            if children[i]:IsA("TextButton") then
+                children[i]:Destroy()
+            end
+        end
+        
+        local yPos = 0
+        local allGenreBtn = FW.cB(gdl, {
+            BackgroundColor3 = Color3.fromRGB(35, 40, 50),
+            Size = UDim2.new(1, -10, 0, 25),
+            Position = UDim2.new(0, 5, 0, yPos),
+            Text = "🎵 All Genres",
+            TextColor3 = Color3.fromRGB(240, 245, 255),
+            TextSize = 10,
+            FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+            Name = "AllGenres"
+        })
+        FW.cC(allGenreBtn, 0.15)
+        FW.cTC(allGenreBtn, 10)
+        yPos = yPos + 30
+        
+        allGenreBtn.MouseButton1Click:Connect(function()
+            currentGenreFilter = ""
+            gdb.Text = "🎵 All Genres"
+            gdl.Visible = false
+            ftM(sf.Text)
+        end)
+        
+        for _, genre in pairs(availableGenres) do
+            local genreBtn = FW.cB(gdl, {
+                BackgroundColor3 = Color3.fromRGB(35, 40, 50),
+                Size = UDim2.new(1, -10, 0, 25),
+                Position = UDim2.new(0, 5, 0, yPos),
+                Text = "🎵 " .. genre,
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                TextSize = 10,
+                FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+                Name = "Genre_" .. genre
+            })
+            FW.cC(genreBtn, 0.15)
+            FW.cTC(genreBtn, 10)
+            yPos = yPos + 30
+            
+            genreBtn.MouseButton1Click:Connect(function()
+                currentGenreFilter = genre
+                gdb.Text = "🎵 " .. genre
+                gdl.Visible = false
+                ftM(sf.Text)
+            end)
+        end
+        
+        gdl.CanvasSize = UDim2.new(0, 0, 0, yPos)
+        
+        yPos = 0
+        local allUserBtn = FW.cB(udl, {
+            BackgroundColor3 = Color3.fromRGB(35, 40, 50),
+            Size = UDim2.new(1, -10, 0, 25),
+            Position = UDim2.new(0, 5, 0, yPos),
+            Text = "👤 All Users",
+            TextColor3 = Color3.fromRGB(240, 245, 255),
+            TextSize = 10,
+            FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+            Name = "AllUsers"
+        })
+        FW.cC(allUserBtn, 0.15)
+        FW.cTC(allUserBtn, 10)
+        yPos = yPos + 30
+        
+        allUserBtn.MouseButton1Click:Connect(function()
+            currentUploaderFilter = ""
+            udb.Text = "👤 All Users"
+            udl.Visible = false
+            ftM(sf.Text)
+        end)
+        
+        for _, uploader in pairs(availableUploaders) do
+            local uploaderBtn = FW.cB(udl, {
+                BackgroundColor3 = Color3.fromRGB(35, 40, 50),
+                Size = UDim2.new(1, -10, 0, 25),
+                Position = UDim2.new(0, 5, 0, yPos),
+                Text = "👤 " .. uploader,
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                TextSize = 10,
+                FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+                Name = "User_" .. uploader
+            })
+            FW.cC(uploaderBtn, 0.15)
+            FW.cTC(uploaderBtn, 10)
+            yPos = yPos + 30
+            
+            uploaderBtn.MouseButton1Click:Connect(function()
+                currentUploaderFilter = uploader
+                udb.Text = "👤 " .. uploader
+                udl.Visible = false
+                ftM(sf.Text)
+            end)
+        end
+        
+        udl.CanvasSize = UDim2.new(0, 0, 0, yPos)
     end
     
     local function playSound(soundPath, trackName, isCloudTrack)
@@ -668,6 +885,8 @@ spawn(function()
                                 title = song.name,
                                 url = song.url,
                                 filename = filename,
+                                genre = song.genre or "Unknown",
+                                uploader_name = song.uploader_name or "Unknown",
                                 isCloud = true,
                                 isCached = cachedFiles[key] ~= nil,
                                 path = cachedFiles[key] and cachedFiles[key].path or nil
@@ -676,6 +895,8 @@ spawn(function()
                     end
                     
                     fcl = cl
+                    updateGenresAndUploaders()
+                    updateDropdowns()
                     if currentSection == "cloud" then upML() end
                     
                     local count = 0
@@ -840,16 +1061,18 @@ spawn(function()
             end
         else
             fcl = {}
-            if qry == "" then
-                for nm, dt in pairs(cl) do 
-                    fcl[nm] = dt 
-                end
-            else
-                qry = qry:lower()
-                for nm, dt in pairs(cl) do
-                    if nm:lower():find(qry) or (dt.artist and dt.artist:lower():find(qry)) or (dt.title and dt.title:lower():find(qry)) then
-                        fcl[nm] = dt
-                    end
+            local searchQuery = qry:lower()
+            
+            for nm, dt in pairs(cl) do
+                local matchesSearch = qry == "" or nm:lower():find(searchQuery) or 
+                                    (dt.artist and dt.artist:lower():find(searchQuery)) or 
+                                    (dt.title and dt.title:lower():find(searchQuery))
+                
+                local matchesGenre = currentGenreFilter == "" or dt.genre == currentGenreFilter
+                local matchesUploader = currentUploaderFilter == "" or dt.uploader_name == currentUploaderFilter
+                
+                if matchesSearch and matchesGenre and matchesUploader then
+                    fcl[nm] = dt
                 end
             end
         end
@@ -862,12 +1085,14 @@ spawn(function()
             localBtn.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
             cloudBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 150)
             af.Visible = true
+            ff.Visible = false
             rfb.Text = "📁 SCAN"
             scb.Text = "📁 SCAN"
         else
             localBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 150)
             cloudBtn.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
             af.Visible = false
+            ff.Visible = true
             rfb.Text = "🔄 REFRESH"
             scb.Text = "🔄 REFRESH"
         end
@@ -903,7 +1128,7 @@ spawn(function()
                 
                 local mc = FW.cF(scrollFrame, {
                     BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-                    Size = UDim2.new(1, -20, 0, 80),
+                    Size = UDim2.new(1, -20, 0, 65),
                     Position = UDim2.new(0, 10, 0, yp),
                     Name = "MusicCard_" .. idx
                 })
@@ -925,7 +1150,7 @@ spawn(function()
                 
                 local ico = FW.cF(mc, {
                     BackgroundColor3 = Color3.fromRGB(166, 190, 255),
-                    Size = UDim2.new(0, 60, 0, 60),
+                    Size = UDim2.new(0, 45, 0, 45),
                     Position = UDim2.new(0, 10, 0, 10),
                     Name = "MusicIcon"
                 })
@@ -934,45 +1159,64 @@ spawn(function()
                 
                 cUI(ico, "text", {
                     Text = cp == nm and (cm and cm.IsPlaying and "♪" or "⏸") or (currentSection == "cloud" and "☁" or "♫"),
-                    TextSize = cp == nm and 28 or 24,
+                    TextSize = cp == nm and 20 or 18,
                     TextColor3 = Color3.fromRGB(29, 29, 38),
                     Name = "MusicEmoji"
                 })
                 
                 cUI(mc, "text", {
                     Text = nm,
-                    TextSize = 16,
-                    Size = UDim2.new(0.35, 0, 0.4, 0),
-                    Position = UDim2.new(0, 80, 0, 5),
+                    TextSize = 13,
+                    Size = UDim2.new(0.4, 0, 0.35, 0),
+                    Position = UDim2.new(0, 65, 0, 2),
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Name = "MusicTitle"
                 })
                 
                 local statusText = ""
+                local infoText = ""
                 if currentSection == "cloud" then
                     statusText = dt.isCached and "☁ Cached" or "☁ Cloud"
+                    if dt.genre then
+                        infoText = "🎵 " .. dt.genre
+                    end
+                    if dt.uploader_name then
+                        infoText = infoText .. (infoText ~= "" and " | " or "") .. "👤 " .. dt.uploader_name
+                    end
                 else
                     statusText = dt.isLocal and "📁 Local File" or "🌐 Downloaded"
                 end
                 
                 cUI(mc, "text", {
                     Text = statusText,
-                    TextSize = 12,
+                    TextSize = 10,
                     TextColor3 = Color3.fromRGB(160, 170, 190),
-                    Size = UDim2.new(0.35, 0, 0.3, 0),
-                    Position = UDim2.new(0, 80, 0, 35),
+                    Size = UDim2.new(0.4, 0, 0.25, 0),
+                    Position = UDim2.new(0, 65, 0, 20),
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Name = "MusicStatus"
                 })
+                
+                if infoText ~= "" then
+                    cUI(mc, "text", {
+                        Text = infoText,
+                        TextSize = 9,
+                        TextColor3 = Color3.fromRGB(140, 150, 170),
+                        Size = UDim2.new(0.4, 0, 0.25, 0),
+                        Position = UDim2.new(0, 65, 0, 35),
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        Name = "MusicInfo"
+                    })
+                end
                 
                 if downloadProgress[dt.filename] then
                     local prog = downloadProgress[dt.filename]
                     cUI(mc, "text", {
                         Text = "Downloading... " .. prog .. "%",
-                        TextSize = 12,
+                        TextSize = 10,
                         TextColor3 = Color3.fromRGB(100, 200, 255),
-                        Size = UDim2.new(0.35, 0, 0.3, 0),
-                        Position = UDim2.new(0, 80, 0, 50),
+                        Size = UDim2.new(0.4, 0, 0.25, 0),
+                        Position = UDim2.new(0, 65, 0, 50),
                         TextXAlignment = Enum.TextXAlignment.Left,
                         Name = "DownloadProgress"
                     })
@@ -980,37 +1224,37 @@ spawn(function()
                 
                 local pb, po = cUI(mc, "button", {
                     BackgroundColor3 = cp == nm and (cm and cm.IsPlaying and Color3.fromRGB(255, 150, 100) or Color3.fromRGB(100, 200, 100)) or Color3.fromRGB(50, 170, 90),
-                    Size = UDim2.new(0, 70, 0, 30),
-                    Position = UDim2.new(1, -240, 0, 10),
+                    Size = UDim2.new(0, 55, 0, 22),
+                    Position = UDim2.new(1, -220, 0, 8),
                     Text = cp == nm and (cm and cm.IsPlaying and "PAUSE" or "RESUME") or "PLAY",
-                    TextSize = 11,
+                    TextSize = 9,
                     Name = "PlayBtn"
                 })
                 
                 local stb, sto = cUI(mc, "button", {
                     BackgroundColor3 = Color3.fromRGB(100, 100, 200),
-                    Size = UDim2.new(0, 70, 0, 30),
-                    Position = UDim2.new(1, -160, 0, 10),
+                    Size = UDim2.new(0, 55, 0, 22),
+                    Position = UDim2.new(1, -160, 0, 8),
                     Text = "STOP",
-                    TextSize = 11,
+                    TextSize = 9,
                     Name = "StopBtn"
                 })
                 
                 local rb, ro = cUI(mc, "button", {
                     BackgroundColor3 = Color3.fromRGB(200, 100, 100),
-                    Size = UDim2.new(0, 70, 0, 30),
-                    Position = UDim2.new(1, -80, 0, 10),
+                    Size = UDim2.new(0, 55, 0, 22),
+                    Position = UDim2.new(1, -100, 0, 8),
                     Text = "REMOVE",
-                    TextSize = 11,
+                    TextSize = 9,
                     Name = "RemoveBtn"
                 })
                 
                 local lb, lo = cUI(mc, "button", {
                     BackgroundColor3 = isLooped and Color3.fromRGB(255, 200, 100) or Color3.fromRGB(100, 150, 200),
-                    Size = UDim2.new(0, 70, 0, 30),
-                    Position = UDim2.new(1, -240, 0, 45),
+                    Size = UDim2.new(0, 55, 0, 22),
+                    Position = UDim2.new(1, -40, 0, 8),
                     Text = isLooped and "LOOP ON" or "LOOP OFF",
-                    TextSize = 10,
+                    TextSize = 8,
                     Name = "LoopBtn"
                 })
                 
@@ -1035,7 +1279,7 @@ spawn(function()
                     upML()
                 end)
                 
-                yp = yp + 90
+                yp = yp + 75
             end
             
             scrollFrame.CanvasSize = UDim2.new(0, 0, 0, yp)
@@ -1132,6 +1376,27 @@ spawn(function()
     
     sf.Changed:Connect(function(prop)
         if prop == "Text" then ftM(sf.Text) end
+    end)
+    
+    gdb.MouseButton1Click:Connect(function()
+        gdl.Visible = not gdl.Visible
+        udl.Visible = false
+    end)
+    
+    udb.MouseButton1Click:Connect(function()
+        udl.Visible = not udl.Visible
+        gdl.Visible = false
+    end)
+    
+    cfb.MouseButton1Click:Connect(function()
+        currentGenreFilter = ""
+        currentUploaderFilter = ""
+        gdb.Text = "🎵 All Genres"
+        udb.Text = "👤 All Users"
+        sf.Text = ""
+        gdl.Visible = false
+        udl.Visible = false
+        ftM("")
     end)
     
     local sb = FW.getUI()["6"]:FindFirstChild("Sidebar")
