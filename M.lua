@@ -24,6 +24,63 @@ spawn(function()
     local currentSection = "local"
     local currentPlayingIsCloud = false
     
+    local scaleFactor = 0.8
+    local baseTopBarHeight = 120
+    local baseSectionHeight = 50
+    local baseAddFrameHeight = 60
+    local baseListOffset = 330
+    
+    local function calculateScaleFactor()
+        local viewport = workspace.CurrentCamera.ViewportSize
+        local screenHeight = viewport.Y
+        
+        if screenHeight >= 1080 then
+            return 0.8
+        elseif screenHeight >= 900 then
+            return 0.7
+        elseif screenHeight >= 720 then
+            return 0.6
+        elseif screenHeight >= 600 then
+            return 0.5
+        else
+            return 0.4
+        end
+    end
+    
+    local function updateScaling()
+        scaleFactor = calculateScaleFactor()
+        
+        if mp then
+            local scaledTopBarHeight = math.floor(baseTopBarHeight * scaleFactor)
+            local scaledSectionHeight = math.floor(baseSectionHeight * scaleFactor)
+            local scaledAddFrameHeight = math.floor(baseAddFrameHeight * scaleFactor)
+            local scaledListOffset = math.floor(baseListOffset * scaleFactor)
+            
+            if tb then
+                tb.Size = UDim2.new(1, -20, 0, scaledTopBarHeight)
+            end
+            
+            if sectf then
+                sectf.Size = UDim2.new(1, -20, 0, scaledSectionHeight)
+                sectf.Position = UDim2.new(0, 10, 0, scaledTopBarHeight + 10)
+            end
+            
+            if af then
+                af.Size = UDim2.new(1, -20, 0, scaledAddFrameHeight)
+                af.Position = UDim2.new(0, 10, 0, scaledTopBarHeight + scaledSectionHeight + 20)
+            end
+            
+            if sf then
+                sf.Position = UDim2.new(0, 10, 0, scaledTopBarHeight + scaledSectionHeight + scaledAddFrameHeight + 35)
+            end
+            
+            if mlf then
+                mlf.Size = UDim2.new(1, -20, 1, -scaledListOffset)
+                mlf.Position = UDim2.new(0, 10, 0, scaledListOffset - 10)
+            end
+        end
+    end
+    
     local mp = FW.cI(FW.getUI()["11"], {
         ImageTransparency = 1,
         ImageColor3 = Color3.fromRGB(15, 18, 25),
@@ -41,7 +98,7 @@ spawn(function()
         if t == "text" then
             local txt = FW.cT(p, {
                 Text = props.Text or "",
-                TextSize = props.TextSize or 14,
+                TextSize = math.floor((props.TextSize or 14) * scaleFactor),
                 TextColor3 = props.TextColor3 or Color3.fromRGB(240, 245, 255),
                 BackgroundTransparency = props.BackgroundTransparency or 1,
                 Size = props.Size or UDim2.new(1, 0, 1, 0),
@@ -51,7 +108,7 @@ spawn(function()
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
                 Name = props.Name or "StyledText"
             })
-            FW.cTC(txt, props.TextSize or 14)
+            FW.cTC(txt, math.floor((props.TextSize or 14) * scaleFactor))
             return txt
         elseif t == "button" then
             local of = FW.cF(p, {
@@ -68,12 +125,12 @@ spawn(function()
                 Position = UDim2.new(0, 2, 0, 2),
                 Text = props.Text or "",
                 TextColor3 = props.TextColor3 or Color3.fromRGB(255, 255, 255),
-                TextSize = props.TextSize or 12,
+                TextSize = math.floor((props.TextSize or 12) * scaleFactor),
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
                 Name = props.Name or "Button"
             })
             FW.cC(btn, 0.15)
-            FW.cTC(btn, props.TextSize or 12)
+            FW.cTC(btn, math.floor((props.TextSize or 12) * scaleFactor))
             return btn, of
         elseif t == "input" then
             local of = FW.cF(p, {
@@ -91,13 +148,13 @@ spawn(function()
                 PlaceholderText = props.PlaceholderText or "",
                 PlaceholderColor3 = Color3.fromRGB(120, 130, 150),
                 Text = props.Text or "",
-                TextSize = props.TextSize or 14,
+                TextSize = math.floor((props.TextSize or 14) * scaleFactor),
                 TextColor3 = Color3.fromRGB(240, 245, 255),
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
                 Name = props.Name or "Input"
             })
             FW.cC(inp, 0.15)
-            FW.cTC(inp, props.TextSize or 14)
+            FW.cTC(inp, math.floor((props.TextSize or 14) * scaleFactor))
             return inp, of
         elseif t == "container" then
             local of = FW.cF(p, {
@@ -146,9 +203,11 @@ spawn(function()
         end
     end
     
+    scaleFactor = calculateScaleFactor()
+    
     local tb, tbo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(1, -20, 0, 120),
+        Size = UDim2.new(1, -20, 0, math.floor(baseTopBarHeight * scaleFactor)),
         Position = UDim2.new(0, 10, 0, 10),
         Name = "TopBar"
     })
@@ -322,15 +381,15 @@ spawn(function()
     
     local sectf, sectfo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(1, -20, 0, 50),
-        Position = UDim2.new(0, 10, 0, 140),
+        Size = UDim2.new(1, -20, 0, math.floor(baseSectionHeight * scaleFactor)),
+        Position = UDim2.new(0, 10, 0, math.floor(baseTopBarHeight * scaleFactor) + 10),
         Name = "SectionFrame"
     })
     
     local localBtn, localBtnO = cUI(sectf, "button", {
         BackgroundColor3 = Color3.fromRGB(50, 130, 210),
-        Size = UDim2.new(0.2, -5, 0, 35),
-        Position = UDim2.new(0, 10, 0, 7),
+        Size = UDim2.new(0.2, -5, 0, math.floor(35 * scaleFactor)),
+        Position = UDim2.new(0, 10, 0, math.floor(7 * scaleFactor)),
         Text = "📁 LOCAL",
         TextSize = 12,
         Name = "LocalBtn"
@@ -338,8 +397,8 @@ spawn(function()
     
     local cloudBtn, cloudBtnO = cUI(sectf, "button", {
         BackgroundColor3 = Color3.fromRGB(100, 100, 150),
-        Size = UDim2.new(0.2, -5, 0, 35),
-        Position = UDim2.new(0.22, 5, 0, 7),
+        Size = UDim2.new(0.2, -5, 0, math.floor(35 * scaleFactor)),
+        Position = UDim2.new(0.22, 5, 0, math.floor(7 * scaleFactor)),
         Text = "☁ CLOUD",
         TextSize = 12,
         Name = "CloudBtn"
@@ -347,22 +406,22 @@ spawn(function()
     
     local af, afo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(1, -20, 0, 60),
-        Position = UDim2.new(0, 10, 0, 200),
+        Size = UDim2.new(1, -20, 0, math.floor(baseAddFrameHeight * scaleFactor)),
+        Position = UDim2.new(0, 10, 0, math.floor(baseTopBarHeight * scaleFactor) + math.floor(baseSectionHeight * scaleFactor) + 20),
         Name = "AddFrame"
     })
     
     local ni, nio = cUI(af, "input", {
-        Size = UDim2.new(0.25, -5, 0, 35),
-        Position = UDim2.new(0, 10, 0, 12),
+        Size = UDim2.new(0.25, -5, 0, math.floor(35 * scaleFactor)),
+        Position = UDim2.new(0, 10, 0, math.floor(12 * scaleFactor)),
         PlaceholderText = "Music Name",
         TextSize = 14,
         Name = "NameInput"
     })
     
     local ui, uio = cUI(af, "input", {
-        Size = UDim2.new(0.55, -5, 0, 35),
-        Position = UDim2.new(0.27, 5, 0, 12),
+        Size = UDim2.new(0.55, -5, 0, math.floor(35 * scaleFactor)),
+        Position = UDim2.new(0.27, 5, 0, math.floor(12 * scaleFactor)),
         PlaceholderText = "Direct URL to music file (.mp3, .ogg, .wav, .m4a, .flac)",
         TextSize = 14,
         Name = "UrlInput"
@@ -370,16 +429,16 @@ spawn(function()
     
     local ab, abo = cUI(af, "button", {
         BackgroundColor3 = Color3.fromRGB(50, 130, 210),
-        Size = UDim2.new(0.15, -5, 0, 35),
-        Position = UDim2.new(0.85, 5, 0, 12),
+        Size = UDim2.new(0.15, -5, 0, math.floor(35 * scaleFactor)),
+        Position = UDim2.new(0.85, 5, 0, math.floor(12 * scaleFactor)),
         Text = "📥 ADD",
         TextSize = 12,
         Name = "AddBtn"
     })
     
     local sf, sfo = cUI(mp, "input", {
-        Size = UDim2.new(0.4, 0, 0, 35),
-        Position = UDim2.new(0, 10, 0, 275),
+        Size = UDim2.new(0.4, 0, 0, math.floor(35 * scaleFactor)),
+        Position = UDim2.new(0, 10, 0, math.floor(baseTopBarHeight * scaleFactor) + math.floor(baseSectionHeight * scaleFactor) + math.floor(baseAddFrameHeight * scaleFactor) + 35),
         PlaceholderText = "🔍 Search music by name or artist...",
         TextSize = 14,
         Name = "SearchInput"
@@ -387,8 +446,8 @@ spawn(function()
     
     local mlf, mlfo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(1, -20, 1, -330),
-        Position = UDim2.new(0, 10, 0, 320),
+        Size = UDim2.new(1, -20, 1, -math.floor(baseListOffset * scaleFactor)),
+        Position = UDim2.new(0, 10, 0, math.floor(baseListOffset * scaleFactor) - 10),
         Name = "MusicListFrame"
     })
     
@@ -415,6 +474,10 @@ spawn(function()
         Visible = false
     })
     csr = cmls
+    
+    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+        updateScaling()
+    end)
     
     local function ensDir(dir)
         if not isfolder(dir) then 
@@ -481,49 +544,44 @@ spawn(function()
                 timeLabel.Text = "00:00 / 00:00"
             end
         end
-    end
-    
- local function safeListFiles(directory)
-    local success, result = pcall(function()
-        return listfiles(directory)
-    end)
+    end 
 
-    if not success or type(result) ~= "table" then
-        return {}
-    end
-
-    local files = {}
-
-    for _, filePath in ipairs(result) do
-        if isfile(filePath) then -- Asegurarse de que no es una carpeta
-            local filename = filePath:match("([^/\\]+)$")
-            if filename then
-                local success, asset = pcall(function()
-                    return getcustomasset(filePath)
-                end)
-                if success and asset then
-                    files[filename] = {
-                        name = filename,
-                        path = asset,
-                        filename = filename,
-                        isLocal = true
-                    }
+    local function safeListFiles(directory)
+        local success, result = pcall(function()
+            return listfiles(directory)
+        end)
+        if not success or type(result) ~= "table" then
+            return {}
+        end
+        local files = {}
+        for _, filePath in ipairs(result) do
+            if isfile(filePath) then
+                local filename = filePath:match("([^/\\]+)$")
+                if filename then
+                    local success, asset = pcall(function()
+                        return getcustomasset(filePath)
+                    end)
+                    if success and asset then
+                        files[filename] = {
+                            name = filename,
+                            path = asset,
+                            filename = filename,
+                            isLocal = true
+                        }
+                    end
                 end
             end
         end
+        return files
     end
 
-    return files
-end
+    local function getLocalFiles()
+        return safeListFiles(md, { isLocal = true })
+    end
 
--- Luego podés usarlo así:
-local function getLocalFiles()
-    return safeListFiles(md, { isLocal = true })
-end
-
-local function getCloudFiles()
-    return safeListFiles(cd, { isCloud = true, isCached = true })
-end
+    local function getCloudFiles()
+        return safeListFiles(cd, { isCloud = true, isCached = true })
+    end
     
     local function playSound(soundPath, trackName, isCloudTrack)
         if not soundPath then
@@ -604,7 +662,7 @@ end
             if callback then callback("downloading", 0) end
             
             local proxyUrl = PROXY_URL .. song.url
-            local success, data = pcall(function() 
+            local success, data = pcall(function()
                 return game:HttpGet(proxyUrl) 
             end)
             
@@ -650,12 +708,12 @@ end
     local function fetchCloudList()
         spawn(function()
             FW.showAlert("Info", "Fetching cloud music list...", 2)
-            local success, response = pcall(function() 
+            local success, response = pcall(function()
                 return game:HttpGet(CLOUD_JSON_URL) 
             end)
             
             if success then
-                local success2, data = pcall(function() 
+                local success2, data = pcall(function()
                     return hs:JSONDecode(response) 
                 end)
                 if success2 and data and type(data) == "table" then
@@ -783,7 +841,7 @@ end
         FW.showAlert("Info", "Downloading: " .. nm, 1)
         
         spawn(function()
-            local success, data = pcall(function() 
+            local success, data = pcall(function()
                 return game:HttpGet(url) 
             end)
             if success then
@@ -906,9 +964,10 @@ end
                 local dt = entry.data
                 idx = idx + 1
                 
+                local cardHeight = math.floor(80 * scaleFactor)
                 local mc = FW.cF(scrollFrame, {
                     BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-                    Size = UDim2.new(1, -20, 0, 80),
+                    Size = UDim2.new(1, -20, 0, cardHeight),
                     Position = UDim2.new(0, 10, 0, yp),
                     Name = "MusicCard_" .. idx
                 })
@@ -928,10 +987,11 @@ end
                     FW.cC(glow, 0.15)
                 end
                 
+                local iconSize = math.floor(60 * scaleFactor)
                 local ico = FW.cF(mc, {
                     BackgroundColor3 = Color3.fromRGB(166, 190, 255),
-                    Size = UDim2.new(0, 60, 0, 60),
-                    Position = UDim2.new(0, 10, 0, 10),
+                    Size = UDim2.new(0, iconSize, 0, iconSize),
+                    Position = UDim2.new(0, 10, 0, (cardHeight - iconSize) / 2),
                     Name = "MusicIcon"
                 })
                 FW.cC(ico, 0.3)
@@ -948,7 +1008,7 @@ end
                     Text = nm,
                     TextSize = 16,
                     Size = UDim2.new(0.35, 0, 0.4, 0),
-                    Position = UDim2.new(0, 80, 0, 5),
+                    Position = UDim2.new(0, iconSize + 20, 0, 5),
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Name = "MusicTitle"
                 })
@@ -965,7 +1025,7 @@ end
                     TextSize = 12,
                     TextColor3 = Color3.fromRGB(160, 170, 190),
                     Size = UDim2.new(0.35, 0, 0.3, 0),
-                    Position = UDim2.new(0, 80, 0, 35),
+                    Position = UDim2.new(0, iconSize + 20, 0, cardHeight * 0.4),
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Name = "MusicStatus"
                 })
@@ -977,16 +1037,19 @@ end
                         TextSize = 12,
                         TextColor3 = Color3.fromRGB(100, 200, 255),
                         Size = UDim2.new(0.35, 0, 0.3, 0),
-                        Position = UDim2.new(0, 80, 0, 50),
+                        Position = UDim2.new(0, iconSize + 20, 0, cardHeight * 0.7),
                         TextXAlignment = Enum.TextXAlignment.Left,
                         Name = "DownloadProgress"
                     })
                 end
                 
+                local buttonHeight = math.floor(30 * scaleFactor)
+                local buttonWidth = math.floor(70 * scaleFactor)
+                
                 local pb, po = cUI(mc, "button", {
                     BackgroundColor3 = cp == nm and (cm and cm.IsPlaying and Color3.fromRGB(255, 150, 100) or Color3.fromRGB(100, 200, 100)) or Color3.fromRGB(50, 170, 90),
-                    Size = UDim2.new(0, 70, 0, 30),
-                    Position = UDim2.new(1, -240, 0, 10),
+                    Size = UDim2.new(0, buttonWidth, 0, buttonHeight),
+                    Position = UDim2.new(1, -240 * scaleFactor, 0, 10),
                     Text = cp == nm and (cm and cm.IsPlaying and "PAUSE" or "RESUME") or "PLAY",
                     TextSize = 11,
                     Name = "PlayBtn"
@@ -994,8 +1057,8 @@ end
                 
                 local stb, sto = cUI(mc, "button", {
                     BackgroundColor3 = Color3.fromRGB(100, 100, 200),
-                    Size = UDim2.new(0, 70, 0, 30),
-                    Position = UDim2.new(1, -160, 0, 10),
+                    Size = UDim2.new(0, buttonWidth, 0, buttonHeight),
+                    Position = UDim2.new(1, -160 * scaleFactor, 0, 10),
                     Text = "STOP",
                     TextSize = 11,
                     Name = "StopBtn"
@@ -1003,8 +1066,8 @@ end
                 
                 local rb, ro = cUI(mc, "button", {
                     BackgroundColor3 = Color3.fromRGB(200, 100, 100),
-                    Size = UDim2.new(0, 70, 0, 30),
-                    Position = UDim2.new(1, -80, 0, 10),
+                    Size = UDim2.new(0, buttonWidth, 0, buttonHeight),
+                    Position = UDim2.new(1, -80 * scaleFactor, 0, 10),
                     Text = "REMOVE",
                     TextSize = 11,
                     Name = "RemoveBtn"
@@ -1012,8 +1075,8 @@ end
                 
                 local lb, lo = cUI(mc, "button", {
                     BackgroundColor3 = isLooped and Color3.fromRGB(255, 200, 100) or Color3.fromRGB(100, 150, 200),
-                    Size = UDim2.new(0, 70, 0, 30),
-                    Position = UDim2.new(1, -240, 0, 45),
+                    Size = UDim2.new(0, buttonWidth, 0, buttonHeight),
+                    Position = UDim2.new(1, -240 * scaleFactor, 0, cardHeight - buttonHeight - 5),
                     Text = isLooped and "LOOP ON" or "LOOP OFF",
                     TextSize = 10,
                     Name = "LoopBtn"
@@ -1040,7 +1103,7 @@ end
                     upML()
                 end)
                 
-                yp = yp + 90
+                yp = yp + cardHeight + 10
             end
             
             scrollFrame.CanvasSize = UDim2.new(0, 0, 0, yp)
