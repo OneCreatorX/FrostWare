@@ -24,63 +24,6 @@ spawn(function()
     local currentSection = "local"
     local currentPlayingIsCloud = false
     
-    local scaleFactor = 0.8
-    local baseTopBarHeight = 120
-    local baseSectionHeight = 50
-    local baseAddFrameHeight = 60
-    local baseListOffset = 330
-    
-    local function calculateScaleFactor()
-        local viewport = workspace.CurrentCamera.ViewportSize
-        local screenHeight = viewport.Y
-        
-        if screenHeight >= 1080 then
-            return 0.8
-        elseif screenHeight >= 900 then
-            return 0.7
-        elseif screenHeight >= 720 then
-            return 0.6
-        elseif screenHeight >= 600 then
-            return 0.5
-        else
-            return 0.4
-        end
-    end
-    
-    local function updateScaling()
-        scaleFactor = calculateScaleFactor()
-        
-        if mp then
-            local scaledTopBarHeight = math.floor(baseTopBarHeight * scaleFactor)
-            local scaledSectionHeight = math.floor(baseSectionHeight * scaleFactor)
-            local scaledAddFrameHeight = math.floor(baseAddFrameHeight * scaleFactor)
-            local scaledListOffset = math.floor(baseListOffset * scaleFactor)
-            
-            if tb then
-                tb.Size = UDim2.new(1, -20, 0, scaledTopBarHeight)
-            end
-            
-            if sectf then
-                sectf.Size = UDim2.new(1, -20, 0, scaledSectionHeight)
-                sectf.Position = UDim2.new(0, 10, 0, scaledTopBarHeight + 10)
-            end
-            
-            if af then
-                af.Size = UDim2.new(1, -20, 0, scaledAddFrameHeight)
-                af.Position = UDim2.new(0, 10, 0, scaledTopBarHeight + scaledSectionHeight + 20)
-            end
-            
-            if sf then
-                sf.Position = UDim2.new(0, 10, 0, scaledTopBarHeight + scaledSectionHeight + scaledAddFrameHeight + 35)
-            end
-            
-            if mlf then
-                mlf.Size = UDim2.new(1, -20, 1, -scaledListOffset)
-                mlf.Position = UDim2.new(0, 10, 0, scaledListOffset - 10)
-            end
-        end
-    end
-    
     local mp = FW.cI(FW.getUI()["11"], {
         ImageTransparency = 1,
         ImageColor3 = Color3.fromRGB(15, 18, 25),
@@ -98,7 +41,7 @@ spawn(function()
         if t == "text" then
             local txt = FW.cT(p, {
                 Text = props.Text or "",
-                TextSize = math.floor((props.TextSize or 14) * scaleFactor),
+                TextSize = props.TextSize or 14,
                 TextColor3 = props.TextColor3 or Color3.fromRGB(240, 245, 255),
                 BackgroundTransparency = props.BackgroundTransparency or 1,
                 Size = props.Size or UDim2.new(1, 0, 1, 0),
@@ -108,7 +51,7 @@ spawn(function()
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
                 Name = props.Name or "StyledText"
             })
-            FW.cTC(txt, math.floor((props.TextSize or 14) * scaleFactor))
+            FW.cTC(txt, props.TextSize or 14)
             return txt
         elseif t == "button" then
             local of = FW.cF(p, {
@@ -125,12 +68,12 @@ spawn(function()
                 Position = UDim2.new(0, 2, 0, 2),
                 Text = props.Text or "",
                 TextColor3 = props.TextColor3 or Color3.fromRGB(255, 255, 255),
-                TextSize = math.floor((props.TextSize or 12) * scaleFactor),
+                TextSize = props.TextSize or 12,
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
                 Name = props.Name or "Button"
             })
             FW.cC(btn, 0.15)
-            FW.cTC(btn, math.floor((props.TextSize or 12) * scaleFactor))
+            FW.cTC(btn, props.TextSize or 12)
             return btn, of
         elseif t == "input" then
             local of = FW.cF(p, {
@@ -148,13 +91,13 @@ spawn(function()
                 PlaceholderText = props.PlaceholderText or "",
                 PlaceholderColor3 = Color3.fromRGB(120, 130, 150),
                 Text = props.Text or "",
-                TextSize = math.floor((props.TextSize or 14) * scaleFactor),
+                TextSize = props.TextSize or 14,
                 TextColor3 = Color3.fromRGB(240, 245, 255),
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
                 Name = props.Name or "Input"
             })
             FW.cC(inp, 0.15)
-            FW.cTC(inp, math.floor((props.TextSize or 14) * scaleFactor))
+            FW.cTC(inp, props.TextSize or 14)
             return inp, of
         elseif t == "container" then
             local of = FW.cF(p, {
@@ -203,11 +146,9 @@ spawn(function()
         end
     end
     
-    scaleFactor = calculateScaleFactor()
-    
     local tb, tbo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(1, -20, 0, math.floor(baseTopBarHeight * scaleFactor)),
+        Size = UDim2.new(1, -20, 0, 90),
         Position = UDim2.new(0, 10, 0, 10),
         Name = "TopBar"
     })
@@ -221,7 +162,7 @@ spawn(function()
     
     cUI(cpf, "text", {
         Text = "🎵 Now Playing",
-        TextSize = 16,
+        TextSize = 14,
         TextColor3 = Color3.fromRGB(166, 190, 255),
         Size = UDim2.new(1, 0, 0.25, 0),
         Position = UDim2.new(0, 0, 0, 0),
@@ -230,7 +171,7 @@ spawn(function()
     
     cUI(cpf, "text", {
         Text = "No music selected",
-        TextSize = 18,
+        TextSize = 16,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Size = UDim2.new(1, 0, 0.35, 0),
         Position = UDim2.new(0, 0, 0.25, 0),
@@ -239,7 +180,7 @@ spawn(function()
     
     cUI(cpf, "text", {
         Text = "⏹ Stopped",
-        TextSize = 14,
+        TextSize = 12,
         TextColor3 = Color3.fromRGB(200, 200, 200),
         Size = UDim2.new(1, 0, 0.25, 0),
         Position = UDim2.new(0, 0, 0.6, 0),
@@ -248,8 +189,8 @@ spawn(function()
     
     local vf = FW.cF(cpf, {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0.3, 0),
-        Position = UDim2.new(0, 0, 0.7, 0),
+        Size = UDim2.new(1, 0, 0.15, 0),
+        Position = UDim2.new(0, 0, 0.85, 0),
         Name = "Visualizer"
     })
     
@@ -276,7 +217,7 @@ spawn(function()
     
     cUI(vcf, "text", {
         Text = "🔊 Volume: " .. math.floor(cv * 100) .. "%",
-        TextSize = 14,
+        TextSize = 12,
         TextColor3 = Color3.fromRGB(200, 200, 200),
         Size = UDim2.new(1, 0, 0.3, 0),
         Position = UDim2.new(0, 0, 0, 0),
@@ -310,7 +251,7 @@ spawn(function()
     
     local tl = cUI(vcf, "text", {
         Text = "00:00 / 00:00",
-        TextSize = 12,
+        TextSize = 10,
         TextColor3 = Color3.fromRGB(180, 180, 180),
         Size = UDim2.new(1, 0, 0.2, 0),
         Position = UDim2.new(0, 0, 0.8, 0),
@@ -330,7 +271,7 @@ spawn(function()
         Size = UDim2.new(0.22, -2, 0.4, 0),
         Position = UDim2.new(0, 2, 0.1, 0),
         Text = "▶",
-        TextSize = 16,
+        TextSize = 14,
         Name = "PlayPauseBtn"
     })
     
@@ -339,7 +280,7 @@ spawn(function()
         Size = UDim2.new(0.22, -2, 0.4, 0),
         Position = UDim2.new(0.26, 2, 0.1, 0),
         Text = "■",
-        TextSize = 16,
+        TextSize = 14,
         Name = "StopBtn"
     })
     
@@ -348,7 +289,7 @@ spawn(function()
         Size = UDim2.new(0.22, -2, 0.4, 0),
         Position = UDim2.new(0.52, 2, 0.1, 0),
         Text = "🔀",
-        TextSize = 14,
+        TextSize = 12,
         Name = "ShuffleBtn"
     })
     
@@ -357,7 +298,7 @@ spawn(function()
         Size = UDim2.new(0.22, -2, 0.4, 0),
         Position = UDim2.new(0.78, 2, 0.1, 0),
         Text = "🔄",
-        TextSize = 14,
+        TextSize = 12,
         Name = "RefreshBtn"
     })
     
@@ -366,7 +307,7 @@ spawn(function()
         Size = UDim2.new(0.48, -2, 0.4, 0),
         Position = UDim2.new(0, 2, 0.55, 0),
         Text = isLooped and "🔁 LOOP ON" or "🔁 LOOP OFF",
-        TextSize = 12,
+        TextSize = 10,
         Name = "LoopBtn"
     })
     
@@ -375,79 +316,79 @@ spawn(function()
         Size = UDim2.new(0.48, -2, 0.4, 0),
         Position = UDim2.new(0.52, 2, 0.55, 0),
         Text = "📁 SCAN",
-        TextSize = 12,
+        TextSize = 10,
         Name = "ScanBtn"
     })
     
     local sectf, sectfo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(1, -20, 0, math.floor(baseSectionHeight * scaleFactor)),
-        Position = UDim2.new(0, 10, 0, math.floor(baseTopBarHeight * scaleFactor) + 10),
+        Size = UDim2.new(1, -20, 0, 40),
+        Position = UDim2.new(0, 10, 0, 110),
         Name = "SectionFrame"
     })
     
     local localBtn, localBtnO = cUI(sectf, "button", {
         BackgroundColor3 = Color3.fromRGB(50, 130, 210),
-        Size = UDim2.new(0.2, -5, 0, math.floor(35 * scaleFactor)),
-        Position = UDim2.new(0, 10, 0, math.floor(7 * scaleFactor)),
+        Size = UDim2.new(0.2, -5, 0, 28),
+        Position = UDim2.new(0, 10, 0, 6),
         Text = "📁 LOCAL",
-        TextSize = 12,
+        TextSize = 11,
         Name = "LocalBtn"
     })
     
     local cloudBtn, cloudBtnO = cUI(sectf, "button", {
         BackgroundColor3 = Color3.fromRGB(100, 100, 150),
-        Size = UDim2.new(0.2, -5, 0, math.floor(35 * scaleFactor)),
-        Position = UDim2.new(0.22, 5, 0, math.floor(7 * scaleFactor)),
+        Size = UDim2.new(0.2, -5, 0, 28),
+        Position = UDim2.new(0.22, 5, 0, 6),
         Text = "☁ CLOUD",
-        TextSize = 12,
+        TextSize = 11,
         Name = "CloudBtn"
     })
     
     local af, afo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(1, -20, 0, math.floor(baseAddFrameHeight * scaleFactor)),
-        Position = UDim2.new(0, 10, 0, math.floor(baseTopBarHeight * scaleFactor) + math.floor(baseSectionHeight * scaleFactor) + 20),
+        Size = UDim2.new(1, -20, 0, 45),
+        Position = UDim2.new(0, 10, 0, 160),
         Name = "AddFrame"
     })
     
     local ni, nio = cUI(af, "input", {
-        Size = UDim2.new(0.25, -5, 0, math.floor(35 * scaleFactor)),
-        Position = UDim2.new(0, 10, 0, math.floor(12 * scaleFactor)),
+        Size = UDim2.new(0.25, -5, 0, 28),
+        Position = UDim2.new(0, 10, 0, 8),
         PlaceholderText = "Music Name",
-        TextSize = 14,
+        TextSize = 12,
         Name = "NameInput"
     })
     
     local ui, uio = cUI(af, "input", {
-        Size = UDim2.new(0.55, -5, 0, math.floor(35 * scaleFactor)),
-        Position = UDim2.new(0.27, 5, 0, math.floor(12 * scaleFactor)),
+        Size = UDim2.new(0.55, -5, 0, 28),
+        Position = UDim2.new(0.27, 5, 0, 8),
         PlaceholderText = "Direct URL to music file (.mp3, .ogg, .wav, .m4a, .flac)",
-        TextSize = 14,
+        TextSize = 12,
         Name = "UrlInput"
     })
     
     local ab, abo = cUI(af, "button", {
         BackgroundColor3 = Color3.fromRGB(50, 130, 210),
-        Size = UDim2.new(0.15, -5, 0, math.floor(35 * scaleFactor)),
-        Position = UDim2.new(0.85, 5, 0, math.floor(12 * scaleFactor)),
+        Size = UDim2.new(0.15, -5, 0, 28),
+        Position = UDim2.new(0.85, 5, 0, 8),
         Text = "📥 ADD",
-        TextSize = 12,
+        TextSize = 11,
         Name = "AddBtn"
     })
     
     local sf, sfo = cUI(mp, "input", {
-        Size = UDim2.new(0.4, 0, 0, math.floor(35 * scaleFactor)),
-        Position = UDim2.new(0, 10, 0, math.floor(baseTopBarHeight * scaleFactor) + math.floor(baseSectionHeight * scaleFactor) + math.floor(baseAddFrameHeight * scaleFactor) + 35),
+        Size = UDim2.new(0.4, 0, 0, 28),
+        Position = UDim2.new(0, 10, 0, 215),
         PlaceholderText = "🔍 Search music by name or artist...",
-        TextSize = 14,
+        TextSize = 12,
         Name = "SearchInput"
     })
     
     local mlf, mlfo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(1, -20, 1, -math.floor(baseListOffset * scaleFactor)),
-        Position = UDim2.new(0, 10, 0, math.floor(baseListOffset * scaleFactor) - 10),
+        Size = UDim2.new(1, -20, 1, -260),
+        Position = UDim2.new(0, 10, 0, 250),
         Name = "MusicListFrame"
     })
     
@@ -474,10 +415,6 @@ spawn(function()
         Visible = false
     })
     csr = cmls
-    
-    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
-        updateScaling()
-    end)
     
     local function ensDir(dir)
         if not isfolder(dir) then 
@@ -964,10 +901,9 @@ spawn(function()
                 local dt = entry.data
                 idx = idx + 1
                 
-                local cardHeight = math.floor(80 * scaleFactor)
                 local mc = FW.cF(scrollFrame, {
                     BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-                    Size = UDim2.new(1, -20, 0, cardHeight),
+                    Size = UDim2.new(1, -20, 0, 80),
                     Position = UDim2.new(0, 10, 0, yp),
                     Name = "MusicCard_" .. idx
                 })
@@ -987,11 +923,10 @@ spawn(function()
                     FW.cC(glow, 0.15)
                 end
                 
-                local iconSize = math.floor(60 * scaleFactor)
                 local ico = FW.cF(mc, {
                     BackgroundColor3 = Color3.fromRGB(166, 190, 255),
-                    Size = UDim2.new(0, iconSize, 0, iconSize),
-                    Position = UDim2.new(0, 10, 0, (cardHeight - iconSize) / 2),
+                    Size = UDim2.new(0, 60, 0, 60),
+                    Position = UDim2.new(0, 10, 0, 10),
                     Name = "MusicIcon"
                 })
                 FW.cC(ico, 0.3)
@@ -1008,7 +943,7 @@ spawn(function()
                     Text = nm,
                     TextSize = 16,
                     Size = UDim2.new(0.35, 0, 0.4, 0),
-                    Position = UDim2.new(0, iconSize + 20, 0, 5),
+                    Position = UDim2.new(0, 80, 0, 5),
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Name = "MusicTitle"
                 })
@@ -1025,7 +960,7 @@ spawn(function()
                     TextSize = 12,
                     TextColor3 = Color3.fromRGB(160, 170, 190),
                     Size = UDim2.new(0.35, 0, 0.3, 0),
-                    Position = UDim2.new(0, iconSize + 20, 0, cardHeight * 0.4),
+                    Position = UDim2.new(0, 80, 0, 35),
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Name = "MusicStatus"
                 })
@@ -1037,19 +972,16 @@ spawn(function()
                         TextSize = 12,
                         TextColor3 = Color3.fromRGB(100, 200, 255),
                         Size = UDim2.new(0.35, 0, 0.3, 0),
-                        Position = UDim2.new(0, iconSize + 20, 0, cardHeight * 0.7),
+                        Position = UDim2.new(0, 80, 0, 50),
                         TextXAlignment = Enum.TextXAlignment.Left,
                         Name = "DownloadProgress"
                     })
                 end
                 
-                local buttonHeight = math.floor(30 * scaleFactor)
-                local buttonWidth = math.floor(70 * scaleFactor)
-                
                 local pb, po = cUI(mc, "button", {
                     BackgroundColor3 = cp == nm and (cm and cm.IsPlaying and Color3.fromRGB(255, 150, 100) or Color3.fromRGB(100, 200, 100)) or Color3.fromRGB(50, 170, 90),
-                    Size = UDim2.new(0, buttonWidth, 0, buttonHeight),
-                    Position = UDim2.new(1, -240 * scaleFactor, 0, 10),
+                    Size = UDim2.new(0, 70, 0, 30),
+                    Position = UDim2.new(1, -240, 0, 10),
                     Text = cp == nm and (cm and cm.IsPlaying and "PAUSE" or "RESUME") or "PLAY",
                     TextSize = 11,
                     Name = "PlayBtn"
@@ -1057,8 +989,8 @@ spawn(function()
                 
                 local stb, sto = cUI(mc, "button", {
                     BackgroundColor3 = Color3.fromRGB(100, 100, 200),
-                    Size = UDim2.new(0, buttonWidth, 0, buttonHeight),
-                    Position = UDim2.new(1, -160 * scaleFactor, 0, 10),
+                    Size = UDim2.new(0, 70, 0, 30),
+                    Position = UDim2.new(1, -160, 0, 10),
                     Text = "STOP",
                     TextSize = 11,
                     Name = "StopBtn"
@@ -1066,8 +998,8 @@ spawn(function()
                 
                 local rb, ro = cUI(mc, "button", {
                     BackgroundColor3 = Color3.fromRGB(200, 100, 100),
-                    Size = UDim2.new(0, buttonWidth, 0, buttonHeight),
-                    Position = UDim2.new(1, -80 * scaleFactor, 0, 10),
+                    Size = UDim2.new(0, 70, 0, 30),
+                    Position = UDim2.new(1, -80, 0, 10),
                     Text = "REMOVE",
                     TextSize = 11,
                     Name = "RemoveBtn"
@@ -1075,8 +1007,8 @@ spawn(function()
                 
                 local lb, lo = cUI(mc, "button", {
                     BackgroundColor3 = isLooped and Color3.fromRGB(255, 200, 100) or Color3.fromRGB(100, 150, 200),
-                    Size = UDim2.new(0, buttonWidth, 0, buttonHeight),
-                    Position = UDim2.new(1, -240 * scaleFactor, 0, cardHeight - buttonHeight - 5),
+                    Size = UDim2.new(0, 70, 0, 30),
+                    Position = UDim2.new(1, -240, 0, 45),
                     Text = isLooped and "LOOP ON" or "LOOP OFF",
                     TextSize = 10,
                     Name = "LoopBtn"
@@ -1103,7 +1035,7 @@ spawn(function()
                     upML()
                 end)
                 
-                yp = yp + cardHeight + 10
+                yp = yp + 90
             end
             
             scrollFrame.CanvasSize = UDim2.new(0, 0, 0, yp)
