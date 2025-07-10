@@ -1,7 +1,6 @@
 local FW = {}
 local _e = getgenv()._e or {}
 getgenv()._e = _e
-
 _e.fn = function(f) return f end
 _e.v = function(x) return x end
 _e.sref = function(n) return cloneref(game:GetService(n)) end
@@ -69,7 +68,6 @@ local g = {}
 local n = _e.s
 local c = _e.c
 local cr = _e.cr
-
 local cF = _e.fn(function(p,props) return cr("Frame",p,props) end)
 local cT = _e.fn(function(p,props) return cr("TextLabel",p,props) end)
 local cB = _e.fn(function(p,props) return cr("TextButton",p,props) end)
@@ -103,6 +101,7 @@ local verifyBtnRef = nil
 local sidebarRef = nil
 local pagesRef = nil
 local openBtnRef = nil
+local currentPageName = "Editor"
 
 function FW.animateInterfaceOpen()
     if not openBtnRef or not g["3"] then return end
@@ -227,6 +226,52 @@ function FW.animateInterfaceClose()
                 
                 buttonAppear:Play()
             end)
+        end)
+    end
+end
+
+function FW.animatePageTransition(fromPage, toPage, callback)
+    if getgenv()._FW_DISABLE_ANIMATIONS then
+        if fromPage then fromPage.Visible = false end
+        if toPage then toPage.Visible = true end
+        if callback then callback() end
+        return
+    end
+    
+    if fromPage and toPage then
+        toPage.Visible = true
+        toPage.Position = UDim2.new(0.1, 0, 0, 0)
+        
+        local slideOut = ts:Create(fromPage, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Position = UDim2.new(-0.1, 0, 0, 0)
+        })
+        
+        local slideIn = ts:Create(toPage, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Position = UDim2.new(-0.001, 0, 0, 0)
+        })
+        
+        slideOut:Play()
+        
+        slideOut.Completed:Connect(function()
+            fromPage.Visible = false
+            fromPage.Position = UDim2.new(-0.001, 0, 0, 0)
+            slideIn:Play()
+            
+            slideIn.Completed:Connect(function()
+                if callback then callback() end
+            end)
+        end)
+    elseif toPage then
+        toPage.Visible = true
+        toPage.Position = UDim2.new(0.1, 0, 0, 0)
+        
+        local slideIn = ts:Create(toPage, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Position = UDim2.new(-0.001, 0, 0, 0)
+        })
+        
+        slideIn:Play()
+        slideIn.Completed:Connect(function()
+            if callback then callback() end
         end)
     end
 end
@@ -475,6 +520,7 @@ function FW.cAR(p,ratio) return cAR(p,ratio) end
 
 function FW.cBaseUI()
     g["1"] = c(n("ScreenGui",cs),{IgnoreGuiInset=true,DisplayOrder=999999999,ScreenInsets=Enum.ScreenInsets.None,Name="FW",ZIndexBehavior=Enum.ZIndexBehavior.Sibling,ResetOnSpawn=false})
+
 g["3"] = cF(g["1"],{
     Visible=false,
     BorderSizePixel=0,
@@ -483,29 +529,39 @@ g["3"] = cF(g["1"],{
     ClipsDescendants=true,
     Size=UDim2.new(0.964,0,0.936,0),
     Position=UDim2.new(0.018,0,0.031,0),
-    Name="UI"
-})
+    Name="UI"})
     cC(g["3"],0.04)
     cS(g["3"],10,Color3.fromRGB(35,39,54))
+
     g["6"] = c(n("Folder",g["3"]),{Name="Main"})
+
     g["7"] = cI(g["6"],{ZIndex=6,ImageColor3=Color3.fromRGB(36,42,60),Image="rbxassetid://133620562515152",Size=UDim2.new(0.314,0,0.185,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="Alert",Position=UDim2.new(0.398,0,0.074,0)})
     
     local at = cT(g["7"],{TextWrapped=true,LineHeight=0,TextSize=31,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(0.505,0,0.175,0),Text="FrostWare Notification",Position=UDim2.new(0.147,0,0.21,0)})
     cTC(at,31)
+
     local am = cT(g["7"],{TextWrapped=true,TextSize=23,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.SemiBold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(162,177,234),BackgroundTransparency=1,Size=UDim2.new(0.45,0,0.321,0),Text="Message content",Name="MSG",Position=UDim2.new(0.148,0,0.449,0)})
     cTC(am,23)
+
     local ai = cI(g["7"],{ZIndex=2,Image="rbxassetid://107516337694688",Size=UDim2.new(0.031,0,0.54,0),BackgroundTransparency=1,Position=UDim2.new(0.059,0,0.21,0)})
     cG(ai,Color3.fromRGB(166,190,255),Color3.fromRGB(121,152,207),91.1)
+
     cI(g["7"],{ImageColor3=Color3.fromRGB(16,19,27),Image="rbxassetid://82022759470861",Size=UDim2.new(0.067,0,0.941,0),BackgroundTransparency=1,Name="Shd",Position=UDim2.new(0.036,0,0,0)})
+
     cIB(g["7"],{Image="rbxassetid://88951128464748",Size=UDim2.new(0.05,0,0.16,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.84,0,0.396,0)})
+
     cI(g["6"],{ZIndex=22,ImageColor3=Color3.fromRGB(16,19,27),Image="rbxassetid://102023075611323",Size=UDim2.new(0.019,0,1,0),BackgroundTransparency=1,Name="Shd",Position=UDim2.new(0.254,0,0,0)})
+
     g["11"] = cI(g["6"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(0.745,0,1,0),ClipsDescendants=true,BackgroundTransparency=1,Name="Pages",Position=UDim2.new(0.255,0,0,0)})
     
     local openBtn = cI(g["1"],{Image="rbxassetid://132133828845126",Size=UDim2.new(0.116,0,0.208,0),Visible=false,BackgroundTransparency=1,Name="OpenBtn",Position=UDim2.new(0.442,0,0.045,0),Active=true,Draggable=true})
     cC(openBtn,0)
+
     cI(openBtn,{ScaleType=Enum.ScaleType.Fit,ImageColor3=Color3.fromRGB(255,255,255),Image="rbxassetid://102761807757832",Size=UDim2.new(0.221,0,0.244,0),BackgroundTransparency=1,Position=UDim2.new(0.388,0,0.367,0)})
+
     local openClk = cB(openBtn,{TextColor3=Color3.fromRGB(0,0,0),TextSize=14,BackgroundTransparency=1,ZIndex=6,Size=UDim2.new(0.441,0,0.427,0),Name="OpenClk",Text="  ",Position=UDim2.new(0.279,0,0.284,0)})
     cC(openClk,0)
+
     c(n("Folder",g["6"]),{Name="Alerts"})
     
     openBtnRef = openBtn
@@ -548,6 +604,7 @@ function FW.cSidebar()
     
     local ubl = cT(ub,{TextWrapped=true,TextSize=14,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(29,29,38),BackgroundTransparency=1,Size=UDim2.new(0.7,0,0.6,0),Text="Upgrade Plan",Name="UpLbl",Position=UDim2.new(0.25,0,0.2,0)})
     cTC(ubl,14)
+
     cI(ub,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://110667923648139",Size=UDim2.new(0.15,0,0.6,0),BackgroundTransparency=1,Name="UpIco",Position=UDim2.new(0.05,0,0.2,0)})
     
     local ubClk = cB(ub,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=12,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="UpClk",Text=""})
@@ -561,20 +618,26 @@ function FW.cSidebar()
     local function cSBtn(nm,txt,ico,pos,sel)
         local btn = cF(sb,{BackgroundColor3=sel and Color3.fromRGB(30,36,51) or Color3.fromRGB(31,34,50),Size=UDim2.new(0.68,0,0.064,0),Position=pos,Name=nm,BackgroundTransparency=sel and 0 or 1})
         cC(btn,0.15)
+
         local box = cF(btn,{ZIndex=sel and 2 or 0,BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.15,0,0.6,0),Position=UDim2.new(0.08,0,0.2,0),Name="Box"})
         cC(box,0.2)
         cAR(box,1)
+
         if sel then 
             cG(box,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
         else 
             cG(box,Color3.fromRGB(66,79,113),Color3.fromRGB(36,44,63))
         end
+
         cI(box,{ZIndex=sel and 2 or 0,ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.6,0,0.6,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.2,0,0.2,0)})
+
         local lbl = cT(btn,{TextWrapped=true,TextSize=16,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(0.6,0,0.6,0),Text=txt,Name="Lbl",Position=UDim2.new(0.3,0,0.2,0)})
         cTC(lbl,16)
+
         local clk = cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=12,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  ",ZIndex=5})
         cC(clk,0)
         cTC(clk,12)
+
         return btn,clk
     end
     
@@ -586,6 +649,7 @@ function FW.cSidebar()
     cC(logo,0)
     
     local close = cI(sb,{ZIndex=2,ImageColor3=Color3.fromRGB(34,41,58),Image="rbxassetid://124705542662472",Size=UDim2.new(0.13,0,1,0),BackgroundTransparency=1,Name="Close",Position=UDim2.new(0.891,0,0,0)})
+
     local slide = cB(close,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,0.189,0),Name="Slide",Text="  ",Position=UDim2.new(0,0,0.43,0)})
     cTC(slide,14)
     
@@ -628,6 +692,7 @@ function FW.cEditor()
     
     srcRef = src
     lnRef = ln
+
     return ep,src,ln,ts,addTab,execBtn,clrBtn,pstBtn,execClpBtn
 end
 
@@ -871,9 +936,17 @@ function FW.showAlert(title,msg,dur)
 end
 
 function FW.switchPage(pn,sb)
+    local currentPage = nil
+    local targetPage = nil
+    
     for _,pg in pairs(g["11"]:GetChildren()) do 
         if pg:IsA("ImageLabel") then 
-            pg.Visible = false 
+            if pg.Visible then
+                currentPage = pg
+            end
+            if pg.Name == pn.."Page" then
+                targetPage = pg
+            end
         end 
     end
     
@@ -887,18 +960,20 @@ function FW.switchPage(pn,sb)
         end
     end
     
-    local po = g["11"]:FindFirstChild(pn.."Page")
-    if po then
-        po.Visible = true
-        local sbb = sb:FindFirstChild(pn)
-        if sbb then
-            sbb.BackgroundTransparency = 0
-            local box = sbb:FindFirstChild("Box")
-            if box then 
-                cG(box,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
-            end
+    local sbb = sb:FindFirstChild(pn)
+    if sbb then
+        sbb.BackgroundTransparency = 0
+        local box = sbb:FindFirstChild("Box")
+        if box then 
+            cG(box,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
         end
     end
+    
+    currentPageName = pn
+    
+    FW.animatePageTransition(currentPage, targetPage, function()
+        
+    end)
 end
 
 function FW.restoreTabs(ts)
@@ -1227,6 +1302,7 @@ local function initializeFrostWare()
 end
 
 initializeFrostWare()
+
 getgenv()._G = nil
 getgenv()._FW = FW
 return FW
