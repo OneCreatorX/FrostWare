@@ -172,10 +172,10 @@ spawn(function()
             FW.cC(db, 0.15)
             FW.cTC(db, props.TextSize or 12)
             
-            local dl = FW.cSF(p, {
+            local dl = FW.cSF(mp, {
                 BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-                Size = UDim2.new(0, props.Size.X.Offset, 0, 150),
-                Position = UDim2.new(0, props.Position.X.Offset, 0, props.Position.Y.Offset + props.Size.Y.Offset + 2),
+                Size = UDim2.new(0, 160, 0, 180),
+                Position = UDim2.new(0, 0, 0, 0),
                 ScrollBarThickness = 6,
                 CanvasSize = UDim2.new(0, 0, 0, 0),
                 Visible = false,
@@ -191,7 +191,7 @@ spawn(function()
     
     local tb, tbo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(0.95, 0, 0.15, 0),
+        Size = UDim2.new(0.95, 0, 0.16, 0),
         Position = UDim2.new(0.025, 0, 0.02, 0),
         Name = "TopBar"
     })
@@ -205,7 +205,7 @@ spawn(function()
     
     cUI(cpf, "text", {
         Text = "🎵 Now Playing",
-        TextSize = 12,
+        TextSize = 13,
         TextColor3 = Color3.fromRGB(166, 190, 255),
         Size = UDim2.new(1, 0, 0.25, 0),
         Position = UDim2.new(0, 0, 0, 0),
@@ -214,7 +214,7 @@ spawn(function()
     
     cUI(cpf, "text", {
         Text = "No music selected",
-        TextSize = 14,
+        TextSize = 15,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         Size = UDim2.new(1, 0, 0.35, 0),
         Position = UDim2.new(0, 0, 0.25, 0),
@@ -223,7 +223,7 @@ spawn(function()
     
     cUI(cpf, "text", {
         Text = "⏹ Stopped",
-        TextSize = 10,
+        TextSize = 11,
         TextColor3 = Color3.fromRGB(200, 200, 200),
         Size = UDim2.new(1, 0, 0.25, 0),
         Position = UDim2.new(0, 0, 0.6, 0),
@@ -260,7 +260,7 @@ spawn(function()
     
     cUI(vcf, "text", {
         Text = "🔊 Volume: " .. math.floor(cv * 100) .. "%",
-        TextSize = 10,
+        TextSize = 11,
         TextColor3 = Color3.fromRGB(200, 200, 200),
         Size = UDim2.new(1, 0, 0.3, 0),
         Position = UDim2.new(0, 0, 0, 0),
@@ -294,7 +294,7 @@ spawn(function()
     
     local tl = cUI(vcf, "text", {
         Text = "00:00 / 00:00",
-        TextSize = 8,
+        TextSize = 9,
         TextColor3 = Color3.fromRGB(180, 180, 180),
         Size = UDim2.new(1, 0, 0.2, 0),
         Position = UDim2.new(0, 0, 0.8, 0),
@@ -314,7 +314,7 @@ spawn(function()
         Size = UDim2.new(0.22, 0, 0.4, 0),
         Position = UDim2.new(0.02, 0, 0.1, 0),
         Text = "▶",
-        TextSize = 12,
+        TextSize = 13,
         Name = "PlayPauseBtn"
     })
     
@@ -323,7 +323,7 @@ spawn(function()
         Size = UDim2.new(0.22, 0, 0.4, 0),
         Position = UDim2.new(0.26, 0, 0.1, 0),
         Text = "■",
-        TextSize = 12,
+        TextSize = 13,
         Name = "StopBtn"
     })
     
@@ -332,7 +332,7 @@ spawn(function()
         Size = UDim2.new(0.22, 0, 0.4, 0),
         Position = UDim2.new(0.5, 0, 0.1, 0),
         Text = "🔀",
-        TextSize = 10,
+        TextSize = 11,
         Name = "ShuffleBtn"
     })
     
@@ -341,7 +341,7 @@ spawn(function()
         Size = UDim2.new(0.22, 0, 0.4, 0),
         Position = UDim2.new(0.74, 0, 0.1, 0),
         Text = "🔄",
-        TextSize = 10,
+        TextSize = 11,
         Name = "RefreshBtn"
     })
     
@@ -350,7 +350,7 @@ spawn(function()
         Size = UDim2.new(0.47, 0, 0.4, 0),
         Position = UDim2.new(0.02, 0, 0.55, 0),
         Text = isLooped and "🔁 LOOP ON" or "🔁 LOOP OFF",
-        TextSize = 8,
+        TextSize = 9,
         Name = "LoopBtn"
     })
     
@@ -359,14 +359,14 @@ spawn(function()
         Size = UDim2.new(0.47, 0, 0.4, 0),
         Position = UDim2.new(0.51, 0, 0.55, 0),
         Text = "📁 SCAN",
-        TextSize = 8,
+        TextSize = 9,
         Name = "ScanBtn"
     })
     
     local sectf, sectfo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(0.95, 0, 0.07, 0),
-        Position = UDim2.new(0.025, 0, 0.18, 0),
+        Size = UDim2.new(0.95, 0, 0.075, 0),
+        Position = UDim2.new(0.025, 0, 0.19, 0),
         Name = "SectionFrame"
     })
     
@@ -375,7 +375,7 @@ spawn(function()
         Size = UDim2.new(0.18, 0, 0.7, 0),
         Position = UDim2.new(0.02, 0, 0.15, 0),
         Text = "📁 LOCAL",
-        TextSize = 9,
+        TextSize = 10,
         Name = "LocalBtn"
     })
     
@@ -384,14 +384,14 @@ spawn(function()
         Size = UDim2.new(0.18, 0, 0.7, 0),
         Position = UDim2.new(0.22, 0, 0.15, 0),
         Text = "☁ CLOUD",
-        TextSize = 9,
+        TextSize = 10,
         Name = "CloudBtn"
     })
     
     local af, afo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(0.95, 0, 0.08, 0),
-        Position = UDim2.new(0.025, 0, 0.26, 0),
+        Size = UDim2.new(0.95, 0, 0.085, 0),
+        Position = UDim2.new(0.025, 0, 0.275, 0),
         Name = "AddFrame"
     })
     
@@ -399,7 +399,7 @@ spawn(function()
         Size = UDim2.new(0.23, 0, 0.6, 0),
         Position = UDim2.new(0.02, 0, 0.2, 0),
         PlaceholderText = "Music Name",
-        TextSize = 10,
+        TextSize = 11,
         Name = "NameInput"
     })
     
@@ -407,7 +407,7 @@ spawn(function()
         Size = UDim2.new(0.52, 0, 0.6, 0),
         Position = UDim2.new(0.27, 0, 0.2, 0),
         PlaceholderText = "Direct URL to music file (.mp3, .ogg, .wav, .m4a, .flac)",
-        TextSize = 10,
+        TextSize = 11,
         Name = "UrlInput"
     })
     
@@ -416,14 +416,14 @@ spawn(function()
         Size = UDim2.new(0.17, 0, 0.6, 0),
         Position = UDim2.new(0.81, 0, 0.2, 0),
         Text = "📥 ADD",
-        TextSize = 9,
+        TextSize = 10,
         Name = "AddBtn"
     })
     
     local ff, ffo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(0.95, 0, 0.06, 0),
-        Position = UDim2.new(0.025, 0, 0.35, 0),
+        Size = UDim2.new(0.95, 0, 0.065, 0),
+        Position = UDim2.new(0.025, 0, 0.37, 0),
         Name = "FilterFrame"
     })
     
@@ -431,33 +431,33 @@ spawn(function()
         Size = UDim2.new(0.28, 0, 0.7, 0),
         Position = UDim2.new(0.02, 0, 0.15, 0),
         PlaceholderText = "🔍 Search music...",
-        TextSize = 9,
+        TextSize = 10,
         Name = "SearchInput"
     })
     searchInput = sf
     
     local gdf, gdb, gdl = cUI(mp, "dropdown", {
-        Size = UDim2.new(0.18, 0, 0.04, 0),
-        Position = UDim2.new(0.32, 0, 0.365, 0),
+        Size = UDim2.new(0.18, 0, 0.045, 0),
+        Position = UDim2.new(0.32, 0, 0.385, 0),
         Text = "🎵 All Genres",
-        TextSize = 8,
+        TextSize = 9,
         Name = "GenreDropdown",
         ZIndex = 50
     })
     
     local udf, udb, udl = cUI(mp, "dropdown", {
-        Size = UDim2.new(0.18, 0, 0.04, 0),
-        Position = UDim2.new(0.52, 0, 0.365, 0),
+        Size = UDim2.new(0.18, 0, 0.045, 0),
+        Position = UDim2.new(0.52, 0, 0.385, 0),
         Text = "👤 All Users",
-        TextSize = 8,
+        TextSize = 9,
         Name = "UploaderDropdown",
         ZIndex = 50
     })
     
     local mlf, mlfo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(0.95, 0, 0.57, 0),
-        Position = UDim2.new(0.025, 0, 0.42, 0),
+        Size = UDim2.new(0.95, 0, 0.55, 0),
+        Position = UDim2.new(0.025, 0, 0.445, 0),
         Name = "MusicListFrame"
     })
     
@@ -660,6 +660,16 @@ spawn(function()
         upML()
     end
     
+    local function updateDropdownPosition(dropdown, button)
+        if dropdown and button then
+            local buttonPos = button.AbsolutePosition
+            local buttonSize = button.AbsoluteSize
+            local screenSize = button.Parent.AbsoluteSize
+            
+            dropdown.Position = UDim2.new(0, buttonPos.X, 0, buttonPos.Y + buttonSize.Y + 5)
+        end
+    end
+    
     local function updateDropdowns()
         local children = gdl:GetChildren()
         for i = 1, #children do
@@ -678,18 +688,18 @@ spawn(function()
         local yPos = 0
         local allGenreBtn = FW.cB(gdl, {
             BackgroundColor3 = Color3.fromRGB(35, 40, 50),
-            Size = UDim2.new(1, -10, 0, 25),
+            Size = UDim2.new(1, -10, 0, 30),
             Position = UDim2.new(0, 5, 0, yPos),
             Text = "🎵 All Genres",
             TextColor3 = Color3.fromRGB(240, 245, 255),
-            TextSize = 8,
+            TextSize = 9,
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
             Name = "AllGenres",
             ZIndex = 201
         })
         FW.cC(allGenreBtn, 0.15)
-        FW.cTC(allGenreBtn, 8)
-        yPos = yPos + 30
+        FW.cTC(allGenreBtn, 9)
+        yPos = yPos + 35
         
         allGenreBtn.MouseButton1Click:Connect(function()
             currentGenreFilter = ""
@@ -701,18 +711,18 @@ spawn(function()
         for _, genre in pairs(availableGenres) do
             local genreBtn = FW.cB(gdl, {
                 BackgroundColor3 = Color3.fromRGB(35, 40, 50),
-                Size = UDim2.new(1, -10, 0, 25),
+                Size = UDim2.new(1, -10, 0, 30),
                 Position = UDim2.new(0, 5, 0, yPos),
                 Text = "🎵 " .. genre,
                 TextColor3 = Color3.fromRGB(240, 245, 255),
-                TextSize = 8,
+                TextSize = 9,
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
                 Name = "Genre_" .. genre,
                 ZIndex = 201
             })
             FW.cC(genreBtn, 0.15)
-            FW.cTC(genreBtn, 8)
-            yPos = yPos + 30
+            FW.cTC(genreBtn, 9)
+            yPos = yPos + 35
             
             genreBtn.MouseButton1Click:Connect(function()
                 currentGenreFilter = genre
@@ -727,18 +737,18 @@ spawn(function()
         yPos = 0
         local allUserBtn = FW.cB(udl, {
             BackgroundColor3 = Color3.fromRGB(35, 40, 50),
-            Size = UDim2.new(1, -10, 0, 25),
+            Size = UDim2.new(1, -10, 0, 30),
             Position = UDim2.new(0, 5, 0, yPos),
             Text = "👤 All Users",
             TextColor3 = Color3.fromRGB(240, 245, 255),
-            TextSize = 8,
+            TextSize = 9,
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
             Name = "AllUsers",
             ZIndex = 201
         })
         FW.cC(allUserBtn, 0.15)
-        FW.cTC(allUserBtn, 8)
-        yPos = yPos + 30
+        FW.cTC(allUserBtn, 9)
+        yPos = yPos + 35
         
         allUserBtn.MouseButton1Click:Connect(function()
             currentUploaderFilter = ""
@@ -750,18 +760,18 @@ spawn(function()
         for _, uploader in pairs(availableUploaders) do
             local uploaderBtn = FW.cB(udl, {
                 BackgroundColor3 = Color3.fromRGB(35, 40, 50),
-                Size = UDim2.new(1, -10, 0, 25),
+                Size = UDim2.new(1, -10, 0, 30),
                 Position = UDim2.new(0, 5, 0, yPos),
                 Text = "👤 " .. uploader,
                 TextColor3 = Color3.fromRGB(240, 245, 255),
-                TextSize = 8,
+                TextSize = 9,
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
                 Name = "User_" .. uploader,
                 ZIndex = 201
             })
             FW.cC(uploaderBtn, 0.15)
-            FW.cTC(uploaderBtn, 8)
-            yPos = yPos + 30
+            FW.cTC(uploaderBtn, 9)
+            yPos = yPos + 35
             
             uploaderBtn.MouseButton1Click:Connect(function()
                 currentUploaderFilter = uploader
@@ -1136,7 +1146,7 @@ spawn(function()
                 
                 local mc = FW.cF(scrollFrame, {
                     BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-                    Size = UDim2.new(0.98, 0, 0, 55),
+                    Size = UDim2.new(0.98, 0, 0, 60),
                     Position = UDim2.new(0.01, 0, 0, yp),
                     Name = "MusicCard_" .. idx
                 })
@@ -1158,7 +1168,7 @@ spawn(function()
                 
                 local ico = FW.cF(mc, {
                     BackgroundColor3 = Color3.fromRGB(166, 190, 255),
-                    Size = UDim2.new(0, 35, 0, 35),
+                    Size = UDim2.new(0, 40, 0, 40),
                     Position = UDim2.new(0, 8, 0, 10),
                     Name = "MusicIcon"
                 })
@@ -1167,16 +1177,16 @@ spawn(function()
                 
                 cUI(ico, "text", {
                     Text = cp == nm and (cm and cm.IsPlaying and "♪" or "⏸") or (currentSection == "cloud" and "☁" or "♫"),
-                    TextSize = cp == nm and 16 or 14,
+                    TextSize = cp == nm and 18 or 16,
                     TextColor3 = Color3.fromRGB(29, 29, 38),
                     Name = "MusicEmoji"
                 })
                 
                 cUI(mc, "text", {
                     Text = nm,
-                    TextSize = 11,
+                    TextSize = 12,
                     Size = UDim2.new(0.35, 0, 0.35, 0),
-                    Position = UDim2.new(0, 50, 0, 2),
+                    Position = UDim2.new(0, 55, 0, 2),
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Name = "MusicTitle"
                 })
@@ -1197,10 +1207,10 @@ spawn(function()
                 
                 cUI(mc, "text", {
                     Text = statusText,
-                    TextSize = 8,
+                    TextSize = 9,
                     TextColor3 = Color3.fromRGB(160, 170, 190),
                     Size = UDim2.new(0.35, 0, 0.25, 0),
-                    Position = UDim2.new(0, 50, 0, 18),
+                    Position = UDim2.new(0, 55, 0, 20),
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Name = "MusicStatus"
                 })
@@ -1208,10 +1218,10 @@ spawn(function()
                 if infoText ~= "" then
                     cUI(mc, "text", {
                         Text = infoText,
-                        TextSize = 7,
+                        TextSize = 8,
                         TextColor3 = Color3.fromRGB(140, 150, 170),
                         Size = UDim2.new(0.35, 0, 0.25, 0),
-                        Position = UDim2.new(0, 50, 0, 32),
+                        Position = UDim2.new(0, 55, 0, 35),
                         TextXAlignment = Enum.TextXAlignment.Left,
                         Name = "MusicInfo"
                     })
@@ -1221,10 +1231,10 @@ spawn(function()
                     local prog = downloadProgress[dt.filename]
                     cUI(mc, "text", {
                         Text = "Downloading... " .. prog .. "%",
-                        TextSize = 8,
+                        TextSize = 9,
                         TextColor3 = Color3.fromRGB(100, 200, 255),
                         Size = UDim2.new(0.35, 0, 0.25, 0),
-                        Position = UDim2.new(0, 50, 0, 42),
+                        Position = UDim2.new(0, 55, 0, 45),
                         TextXAlignment = Enum.TextXAlignment.Left,
                         Name = "DownloadProgress"
                     })
@@ -1232,37 +1242,37 @@ spawn(function()
                 
                 local pb, po = cUI(mc, "button", {
                     BackgroundColor3 = cp == nm and (cm and cm.IsPlaying and Color3.fromRGB(255, 150, 100) or Color3.fromRGB(100, 200, 100)) or Color3.fromRGB(50, 170, 90),
-                    Size = UDim2.new(0.12, 0, 0.35, 0),
-                    Position = UDim2.new(0.65, 0, 0.1, 0),
+                    Size = UDim2.new(0.13, 0, 0.35, 0),
+                    Position = UDim2.new(0.63, 0, 0.1, 0),
                     Text = cp == nm and (cm and cm.IsPlaying and "PAUSE" or "RESUME") or "PLAY",
-                    TextSize = 7,
+                    TextSize = 8,
                     Name = "PlayBtn"
                 })
                 
                 local stb, sto = cUI(mc, "button", {
                     BackgroundColor3 = Color3.fromRGB(100, 100, 200),
-                    Size = UDim2.new(0.12, 0, 0.35, 0),
-                    Position = UDim2.new(0.65, 0, 0.55, 0),
+                    Size = UDim2.new(0.13, 0, 0.35, 0),
+                    Position = UDim2.new(0.63, 0, 0.55, 0),
                     Text = "STOP",
-                    TextSize = 7,
+                    TextSize = 8,
                     Name = "StopBtn"
                 })
                 
                 local rb, ro = cUI(mc, "button", {
                     BackgroundColor3 = Color3.fromRGB(200, 100, 100),
-                    Size = UDim2.new(0.1, 0, 0.35, 0),
-                    Position = UDim2.new(0.78, 0, 0.1, 0),
+                    Size = UDim2.new(0.11, 0, 0.35, 0),
+                    Position = UDim2.new(0.77, 0, 0.1, 0),
                     Text = "REMOVE",
-                    TextSize = 6,
+                    TextSize = 7,
                     Name = "RemoveBtn"
                 })
                 
                 local lb, lo = cUI(mc, "button", {
                     BackgroundColor3 = isLooped and Color3.fromRGB(255, 200, 100) or Color3.fromRGB(100, 150, 200),
-                    Size = UDim2.new(0.1, 0, 0.35, 0),
-                    Position = UDim2.new(0.78, 0, 0.55, 0),
+                    Size = UDim2.new(0.11, 0, 0.35, 0),
+                    Position = UDim2.new(0.77, 0, 0.55, 0),
                     Text = isLooped and "LOOP ON" or "LOOP OFF",
-                    TextSize = 6,
+                    TextSize = 7,
                     Name = "LoopBtn"
                 })
                 
@@ -1287,7 +1297,7 @@ spawn(function()
                     upML()
                 end)
                 
-                yp = yp + 60
+                yp = yp + 65
             end
             
             scrollFrame.CanvasSize = UDim2.new(0, 0, 0, yp)
@@ -1387,11 +1397,13 @@ spawn(function()
     end)
     
     gdb.MouseButton1Click:Connect(function()
+        updateDropdownPosition(gdl, gdb)
         gdl.Visible = not gdl.Visible
         udl.Visible = false
     end)
     
     udb.MouseButton1Click:Connect(function()
+        updateDropdownPosition(udl, udb)
         udl.Visible = not udl.Visible
         gdl.Visible = false
     end)
