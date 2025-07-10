@@ -102,6 +102,8 @@ local sidebarRef = nil
 local pagesRef = nil
 local openBtnRef = nil
 local currentPageName = "Editor"
+local isAnimating = false
+local currentTweens = {}
 
 function FW.animateInterfaceOpen()
     if not openBtnRef or not g["3"] then return end
@@ -230,34 +232,62 @@ function FW.animateInterfaceClose()
     end
 end
 
+function FW.stopCurrentTweens()
+    for _, tween in pairs(currentTweens) do
+        if tween then
+            tween:Cancel()
+        end
+    end
+    currentTweens = {}
+end
+
 function FW.animatePageTransition(fromPage, toPage, callback)
+    if isAnimating then
+        FW.stopCurrentTweens()
+    end
+    
     if getgenv()._FW_DISABLE_ANIMATIONS then
         if fromPage then fromPage.Visible = false end
         if toPage then toPage.Visible = true end
+        isAnimating = false
         if callback then callback() end
         return
     end
     
+    isAnimating = true
+    
     if fromPage and toPage then
+        if fromPage == toPage then
+            isAnimating = false
+            if callback then callback() end
+            return
+        end
+        
         toPage.Visible = true
         toPage.Position = UDim2.new(0.1, 0, 0, 0)
         
-        local slideOut = ts:Create(fromPage, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        local slideOut = ts:Create(fromPage, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Position = UDim2.new(-0.1, 0, 0, 0)
         })
         
-        local slideIn = ts:Create(toPage, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        local slideIn = ts:Create(toPage, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Position = UDim2.new(-0.001, 0, 0, 0)
         })
+        
+        currentTweens[1] = slideOut
+        currentTweens[2] = slideIn
         
         slideOut:Play()
         
         slideOut.Completed:Connect(function()
+            if not isAnimating then return end
             fromPage.Visible = false
             fromPage.Position = UDim2.new(-0.001, 0, 0, 0)
             slideIn:Play()
             
             slideIn.Completed:Connect(function()
+                isAnimating = false
+                currentTweens = {}
                 if callback then callback() end
             end)
         end)
@@ -265,14 +295,21 @@ function FW.animatePageTransition(fromPage, toPage, callback)
         toPage.Visible = true
         toPage.Position = UDim2.new(0.1, 0, 0, 0)
         
-        local slideIn = ts:Create(toPage, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        local slideIn = ts:Create(toPage, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Position = UDim2.new(-0.001, 0, 0, 0)
         })
         
+        currentTweens[1] = slideIn
+        
         slideIn:Play()
         slideIn.Completed:Connect(function()
+            isAnimating = false
+            currentTweens = {}
             if callback then callback() end
         end)
+    else
+        isAnimating = false
+        if callback then callback() end
     end
 end
 
@@ -936,6 +973,10 @@ function FW.showAlert(title,msg,dur)
 end
 
 function FW.switchPage(pn,sb)
+    if isAnimating then
+        return
+    end
+    
     local currentPage = nil
     local targetPage = nil
     
@@ -948,6 +989,10 @@ function FW.switchPage(pn,sb)
                 targetPage = pg
             end
         end 
+    end
+    
+    if currentPage == targetPage then
+        return
     end
     
     for _,btn in pairs(sb:GetChildren()) do
