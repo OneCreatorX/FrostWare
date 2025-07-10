@@ -27,6 +27,7 @@ spawn(function()
     local availableUploaders = {}
     local currentGenreFilter = ""
     local currentUploaderFilter = ""
+    local searchInput = nil
     
     local mp = FW.cI(FW.getUI()["11"], {
         ImageTransparency = 1,
@@ -433,6 +434,7 @@ spawn(function()
         TextSize = 11,
         Name = "SearchInput"
     })
+    searchInput = sf
     
     local gdf, gdb, gdl = cUI(mp, "dropdown", {
         Size = UDim2.new(0, 150, 0, 25),
@@ -623,6 +625,41 @@ spawn(function()
         table.sort(availableUploaders, function(a, b) return a:lower() < b:lower() end)
     end
     
+    local function ftM(qry)
+        if currentSection == "local" then
+            fl = {}
+            if qry == "" then
+                for nm, dt in pairs(ml) do 
+                    fl[nm] = dt 
+                end
+            else
+                qry = qry:lower()
+                for nm, dt in pairs(ml) do
+                    if nm:lower():find(qry) then
+                        fl[nm] = dt
+                    end
+                end
+            end
+        else
+            fcl = {}
+            local searchQuery = qry:lower()
+            
+            for nm, dt in pairs(cl) do
+                local matchesSearch = qry == "" or nm:lower():find(searchQuery) or 
+                                    (dt.artist and dt.artist:lower():find(searchQuery)) or 
+                                    (dt.title and dt.title:lower():find(searchQuery))
+                
+                local matchesGenre = currentGenreFilter == "" or dt.genre:lower() == currentGenreFilter:lower()
+                local matchesUploader = currentUploaderFilter == "" or dt.uploader_name:lower() == currentUploaderFilter:lower()
+                
+                if matchesSearch and matchesGenre and matchesUploader then
+                    fcl[nm] = dt
+                end
+            end
+        end
+        upML()
+    end
+    
     local function updateDropdowns()
         local children = gdl:GetChildren()
         for i = 1, #children do
@@ -658,7 +695,7 @@ spawn(function()
             currentGenreFilter = ""
             gdb.Text = "🎵 All Genres"
             gdl.Visible = false
-            ftM(sf.Text)
+            ftM(searchInput and searchInput.Text or "")
         end)
         
         for _, genre in pairs(availableGenres) do
@@ -681,7 +718,7 @@ spawn(function()
                 currentGenreFilter = genre
                 gdb.Text = "🎵 " .. genre
                 gdl.Visible = false
-                ftM(sf.Text)
+                ftM(searchInput and searchInput.Text or "")
             end)
         end
         
@@ -707,7 +744,7 @@ spawn(function()
             currentUploaderFilter = ""
             udb.Text = "👤 All Users"
             udl.Visible = false
-            ftM(sf.Text)
+            ftM(searchInput and searchInput.Text or "")
         end)
         
         for _, uploader in pairs(availableUploaders) do
@@ -730,7 +767,7 @@ spawn(function()
                 currentUploaderFilter = uploader
                 udb.Text = "👤 " .. uploader
                 udl.Visible = false
-                ftM(sf.Text)
+                ftM(searchInput and searchInput.Text or "")
             end)
         end
         
@@ -1042,41 +1079,6 @@ spawn(function()
         end
         upML()
         FW.showAlert("Success", "Music removed: " .. nm, 2)
-    end
-    
-    local function ftM(qry)
-        if currentSection == "local" then
-            fl = {}
-            if qry == "" then
-                for nm, dt in pairs(ml) do 
-                    fl[nm] = dt 
-                end
-            else
-                qry = qry:lower()
-                for nm, dt in pairs(ml) do
-                    if nm:lower():find(qry) then
-                        fl[nm] = dt
-                    end
-                end
-            end
-        else
-            fcl = {}
-            local searchQuery = qry:lower()
-            
-            for nm, dt in pairs(cl) do
-                local matchesSearch = qry == "" or nm:lower():find(searchQuery) or 
-                                    (dt.artist and dt.artist:lower():find(searchQuery)) or 
-                                    (dt.title and dt.title:lower():find(searchQuery))
-                
-                local matchesGenre = currentGenreFilter == "" or dt.genre:lower() == currentGenreFilter:lower()
-                local matchesUploader = currentUploaderFilter == "" or dt.uploader_name:lower() == currentUploaderFilter:lower()
-                
-                if matchesSearch and matchesGenre and matchesUploader then
-                    fcl[nm] = dt
-                end
-            end
-        end
-        upML()
     end
     
     local function switchSection(section)
