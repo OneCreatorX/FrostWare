@@ -152,7 +152,8 @@ spawn(function()
                 BackgroundColor3 = Color3.fromRGB(18, 22, 32),
                 Size = props.Size,
                 Position = props.Position,
-                Name = (props.Name or "Dropdown") .. "_Frame"
+                Name = (props.Name or "Dropdown") .. "_Frame",
+                ZIndex = props.ZIndex or 1
             })
             FW.cC(df, 0.18)
             
@@ -164,22 +165,24 @@ spawn(function()
                 TextColor3 = Color3.fromRGB(240, 245, 255),
                 TextSize = props.TextSize or 12,
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-                Name = props.Name or "Dropdown"
+                Name = props.Name or "Dropdown",
+                ZIndex = props.ZIndex or 1
             })
             FW.cC(db, 0.15)
             FW.cTC(db, props.TextSize or 12)
             
-            local dl = FW.cSF(df, {
+            local dl = FW.cSF(p, {
                 BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-                Size = UDim2.new(1, 0, 0, 200),
-                Position = UDim2.new(0, 0, 1, 2),
+                Size = UDim2.new(0, props.Size.X.Offset, 0, 200),
+                Position = UDim2.new(0, props.Position.X.Offset, 0, props.Position.Y.Offset + props.Size.Y.Offset + 2),
                 ScrollBarThickness = 6,
                 CanvasSize = UDim2.new(0, 0, 0, 0),
                 Visible = false,
-                ZIndex = 10,
+                ZIndex = 100,
                 Name = (props.Name or "Dropdown") .. "_List"
             })
             FW.cC(dl, 0.15)
+            FW.cS(dl, 2, Color3.fromRGB(50, 130, 210))
             
             return df, db, dl
         end
@@ -431,20 +434,22 @@ spawn(function()
         Name = "SearchInput"
     })
     
-    local gdf, gdb, gdl = cUI(ff, "dropdown", {
-        Size = UDim2.new(0.2, -5, 0, 25),
-        Position = UDim2.new(0.32, 5, 0, 5),
+    local gdf, gdb, gdl = cUI(mp, "dropdown", {
+        Size = UDim2.new(0, 150, 0, 25),
+        Position = UDim2.new(0, 320, 0, 220),
         Text = "🎵 All Genres",
         TextSize = 10,
-        Name = "GenreDropdown"
+        Name = "GenreDropdown",
+        ZIndex = 50
     })
     
-    local udf, udb, udl = cUI(ff, "dropdown", {
-        Size = UDim2.new(0.2, -5, 0, 25),
-        Position = UDim2.new(0.54, 5, 0, 5),
+    local udf, udb, udl = cUI(mp, "dropdown", {
+        Size = UDim2.new(0, 150, 0, 25),
+        Position = UDim2.new(0, 480, 0, 220),
         Text = "👤 All Users",
         TextSize = 10,
-        Name = "UploaderDropdown"
+        Name = "UploaderDropdown",
+        ZIndex = 50
     })
     
     local cfb, cfbo = cUI(ff, "button", {
@@ -651,7 +656,8 @@ spawn(function()
             TextColor3 = Color3.fromRGB(240, 245, 255),
             TextSize = 10,
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-            Name = "AllGenres"
+            Name = "AllGenres",
+            ZIndex = 101
         })
         FW.cC(allGenreBtn, 0.15)
         FW.cTC(allGenreBtn, 10)
@@ -673,7 +679,8 @@ spawn(function()
                 TextColor3 = Color3.fromRGB(240, 245, 255),
                 TextSize = 10,
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-                Name = "Genre_" .. genre
+                Name = "Genre_" .. genre,
+                ZIndex = 101
             })
             FW.cC(genreBtn, 0.15)
             FW.cTC(genreBtn, 10)
@@ -698,7 +705,8 @@ spawn(function()
             TextColor3 = Color3.fromRGB(240, 245, 255),
             TextSize = 10,
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-            Name = "AllUsers"
+            Name = "AllUsers",
+            ZIndex = 101
         })
         FW.cC(allUserBtn, 0.15)
         FW.cTC(allUserBtn, 10)
@@ -720,7 +728,8 @@ spawn(function()
                 TextColor3 = Color3.fromRGB(240, 245, 255),
                 TextSize = 10,
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-                Name = "User_" .. uploader
+                Name = "User_" .. uploader,
+                ZIndex = 101
             })
             FW.cC(uploaderBtn, 0.15)
             FW.cTC(uploaderBtn, 10)
@@ -1086,6 +1095,10 @@ spawn(function()
             cloudBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 150)
             af.Visible = true
             ff.Visible = false
+            gdf.Visible = false
+            udf.Visible = false
+            gdl.Visible = false
+            udl.Visible = false
             rfb.Text = "📁 SCAN"
             scb.Text = "📁 SCAN"
         else
@@ -1093,6 +1106,8 @@ spawn(function()
             cloudBtn.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
             af.Visible = false
             ff.Visible = true
+            gdf.Visible = true
+            udf.Visible = true
             rfb.Text = "🔄 REFRESH"
             scb.Text = "🔄 REFRESH"
         end
@@ -1397,6 +1412,28 @@ spawn(function()
         gdl.Visible = false
         udl.Visible = false
         ftM("")
+    end)
+    
+    game:GetService("UserInputService").InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local target = input.Target
+            if target and target.Parent then
+                local isDropdownElement = false
+                local current = target
+                while current and current ~= game do
+                    if current.Name:find("Dropdown") then
+                        isDropdownElement = true
+                        break
+                    end
+                    current = current.Parent
+                end
+                
+                if not isDropdownElement then
+                    gdl.Visible = false
+                    udl.Visible = false
+                end
+            end
+        end
     end)
     
     local sb = FW.getUI()["6"]:FindFirstChild("Sidebar")
