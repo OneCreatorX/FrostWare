@@ -11,6 +11,8 @@ spawn(function()
     local lf, cf, csc, ss, sf = nil, nil, {}, nil, nil
     local ls, aes = {}, {}
     local ssr = nil
+    local csr = nil
+    local searchBox = nil
     local sd = "FrostWare/Scripts/"
     local aef = "FrostWare/AutoExec.json"
     
@@ -245,6 +247,106 @@ spawn(function()
             end
         end
         upL()
+    end
+    
+    local function filterLocalScripts(query)
+        if not query or query == "" then
+            upL()
+            return
+        end
+        
+        if ssr then
+            for _, ch in pairs(ssr:GetChildren()) do
+                if ch:IsA("Frame") then ch:Destroy() end
+            end
+            
+            local filteredScripts = {}
+            for nm, cont in pairs(ls) do
+                if string.lower(nm):find(string.lower(query)) then
+                    table.insert(filteredScripts, {name = nm, content = cont})
+                end
+            end
+            
+            for i, sc in pairs(filteredScripts) do
+                local yp = (i - 1) * 65 + 10
+                
+                local scd = FW.cF(ssr, {
+                    BackgroundColor3 = Color3.fromRGB(25, 30, 40),
+                    Size = UDim2.new(1, -20, 0, 55),
+                    Position = UDim2.new(0, 10, 0, yp),
+                    Name = "ScriptCard_" .. sc.name
+                })
+                FW.cC(scd, 0.15)
+                
+                cST(scd, {
+                    Text = sc.name,
+                    TextSize = 16,
+                    Size = UDim2.new(0.4, 0, 0.6, 0),
+                    Position = UDim2.new(0, 15, 0, 5),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Name = "ScriptTitle"
+                })
+                
+                if ds[sc.name] then
+                    cVB(scd, UDim2.new(0, 13, 0, 28))
+                end
+                
+                local aeb, aeo = cSB(scd, {
+                    BackgroundColor3 = aes[sc.name] and Color3.fromRGB(50, 170, 90) or Color3.fromRGB(65, 75, 90),
+                    Size = UDim2.new(0, 80, 0, 25),
+                    Position = UDim2.new(0.45, 0, 0, 15),
+                    Text = aes[sc.name] and "AUTO: ON" or "AUTO: OFF",
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 10,
+                    Name = "AutoExecBtn"
+                })
+                
+                local exb, exo = cSB(scd, {
+                    BackgroundColor3 = Color3.fromRGB(50, 170, 90),
+                    Size = UDim2.new(0, 80, 0, 25),
+                    Position = UDim2.new(0.65, 0, 0, 15),
+                    Text = "EXECUTE",
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 11,
+                    Name = "ExecuteBtn"
+                })
+                
+                local mrb, mro = cSB(scd, {
+                    BackgroundColor3 = Color3.fromRGB(50, 130, 210),
+                    Size = UDim2.new(0, 60, 0, 25),
+                    Position = UDim2.new(0.85, 0, 0, 15),
+                    Text = "MORE",
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 11,
+                    Name = "MoreBtn"
+                })
+                
+                exb.MouseEnter:Connect(function() exb.BackgroundColor3 = Color3.fromRGB(60, 180, 100) end)
+                exb.MouseLeave:Connect(function() exb.BackgroundColor3 = Color3.fromRGB(50, 170, 90) end)
+                mrb.MouseEnter:Connect(function() mrb.BackgroundColor3 = Color3.fromRGB(60, 140, 220) end)
+                mrb.MouseLeave:Connect(function() mrb.BackgroundColor3 = Color3.fromRGB(50, 130, 210) end)
+                
+                exb.MouseButton1Click:Connect(function()
+                    FW.showAlert("Success", sc.name .. " executing...", 2)
+                    local ok, res = pcall(function() return loadstring(sc.content) end)
+                    if ok and res then
+                        local eok, err = pcall(res)
+                        if eok then
+                            FW.showAlert("Success", sc.name .. " executed!", 2)
+                        else
+                            FW.showAlert("Error", "Execution failed!", 3)
+                        end
+                    else
+                        FW.showAlert("Error", "Compilation failed!", 3)
+                    end
+                end)
+                
+                aeb.MouseButton1Click:Connect(function() tgAE(sc.name) end)
+                mrb.MouseButton1Click:Connect(function() shSO(sc.name, sc.content) end)
+            end
+            
+            ssr.CanvasSize = UDim2.new(0, 0, 0, #filteredScripts * 65 + 20)
+        end
     end
     
     function upL()
@@ -768,20 +870,23 @@ spawn(function()
     
     local function performSearch()
         if cs == "Cloud" then
-            local qry = sb.Text
+            local qry = searchBox.Text
             if qry and qry ~= "" then
                 FW.showAlert("Info", "Searching scripts...", 1)
                 spawn(function()
                     local scs = srS(qry, 50)
                     if #scs > 0 then
                         csc = scs
-                        dsCS(scs, cs)
+                        dsCS(scs, csr)
                         FW.showAlert("Success", "Found " .. #scs .. " scripts!", 2)
                     else
                         FW.showAlert("Error", "No scripts found!", 2)
                     end
                 end)
             end
+        elseif cs == "Local" then
+            local qry = searchBox.Text
+            filterLocalScripts(qry)
         end
     end
     
@@ -804,7 +909,7 @@ spawn(function()
         Name = "TopBar"
     })
     
-    local sb, sbo = cSI(tb, {
+    searchBox, sbo = cSI(tb, {
         Size = UDim2.new(0.5, -10, 0, 35),
         Position = UDim2.new(0, 15, 0, 12),
         PlaceholderText = "Search for scripts...",
@@ -925,6 +1030,7 @@ spawn(function()
         Name = "CloudScroll",
         ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210)
     })
+    csr = cs
     
     svb.MouseButton1Click:Connect(function()
         local nm = ni.Text
@@ -949,13 +1055,13 @@ spawn(function()
         end
     end)
     
-    sb.FocusLost:Connect(function(ep)
+    searchBox.FocusLost:Connect(function(ep)
         if ep then
             performSearch()
         end
     end)
     
-    sb.InputBegan:Connect(function(input)
+    searchBox.InputBegan:Connect(function(input)
         if input.KeyCode == Enum.KeyCode.Return then
             performSearch()
         end
@@ -977,10 +1083,10 @@ spawn(function()
         lt.TextColor3 = Color3.fromRGB(190, 200, 220)
     end)
     
-    local sb = FW.getUI()["6"]:FindFirstChild("Sidebar")
-    if sb then
+    local sidebar = FW.getUI()["6"]:FindFirstChild("Sidebar")
+    if sidebar then
         local function cSBtn(nm, txt, ico, pos, sel)
-            local btn = FW.cF(sb, {
+            local btn = FW.cF(sidebar, {
                 BackgroundColor3 = sel and Color3.fromRGB(30, 36, 51) or Color3.fromRGB(31, 34, 50),
                 Size = UDim2.new(0.68, 0, 0.064, 0),
                 Position = pos,
@@ -1048,8 +1154,8 @@ spawn(function()
             return btn, clk
         end
         
-        local sb, sc = cSBtn("Scripts", "Scripts", sia or "rbxassetid://7733779610", UDim2.new(0.075, 0, 0.44, 0), false)
-        sc.MouseButton1Click:Connect(function()
+        local scriptBtn, scriptClk = cSBtn("Scripts", "Scripts", sia or "rbxassetid://7733779610", UDim2.new(0.075, 0, 0.44, 0), false)
+        scriptClk.MouseButton1Click:Connect(function()
             FW.switchPage("Scripts", FW.getUI()["6"]:FindFirstChild("Sidebar"))
         end)
     end
@@ -1063,7 +1169,7 @@ spawn(function()
         local ps = srS("popular", 30)
         if #ps > 0 then
             csc = ps
-            dsCS(ps, cs)
+            dsCS(ps, csr)
         end
     end)
 end)
