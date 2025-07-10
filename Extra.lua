@@ -311,12 +311,10 @@ local function uep()
     
     local bsz = UDim2.new(0.31, 0, 0.1, 0)
     
-    ceb(mf, "💀", "Reset Character", UDim2.new(0.02, 0, 0.25, 0), bsz, function()
-        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Dead)
-            FW.showAlert("Success", "Character reset!", 2)
-        end
-    end)
+    ceb(mf, "🗄️", "Animation UI", UDim2.new(0.02, 0, 0.25, 0), bsz, function()
+    getgenv()._FW_DISABLE_ANIMATIONS = not getgenv()._FW_DISABLE_ANIMATIONS
+    FW.showAlert("Success", "Animations " .. (getgenv()._FW_DISABLE_ANIMATIONS and "disabled" or "enabled") .. "!", 2)
+end)
     
     ceb(mf, "🔄", "Rejoin Server", UDim2.new(0.345, 0, 0.25, 0), bsz, function()
         ts:Teleport(game.PlaceId, game.Players.LocalPlayer)
@@ -452,7 +450,8 @@ spawn(function()
     uep()
     
     local mods = {
-        "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Scripts.lua"
+        "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Scripts.lua",
+            "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/M.lua"
     }
     
     for i, mu in pairs(mods) do
