@@ -173,12 +173,12 @@ spawn(function()
             
             local dl = FW.cSF(p, {
                 BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-                Size = UDim2.new(0, props.Size.X.Offset, 0, 200),
+                Size = UDim2.new(0, props.Size.X.Offset, 0, 150),
                 Position = UDim2.new(0, props.Position.X.Offset, 0, props.Position.Y.Offset + props.Size.Y.Offset + 2),
                 ScrollBarThickness = 6,
                 CanvasSize = UDim2.new(0, 0, 0, 0),
                 Visible = false,
-                ZIndex = 100,
+                ZIndex = 200,
                 Name = (props.Name or "Dropdown") .. "_List"
             })
             FW.cC(dl, 0.15)
@@ -452,18 +452,9 @@ spawn(function()
         ZIndex = 50
     })
     
-    local cfb, cfbo = cUI(ff, "button", {
-        BackgroundColor3 = Color3.fromRGB(200, 100, 100),
-        Size = UDim2.new(0.15, -5, 0, 25),
-        Position = UDim2.new(0.76, 5, 0, 5),
-        Text = "🗑 CLEAR",
-        TextSize = 10,
-        Name = "ClearFiltersBtn"
-    })
-    
     local mlf, mlfo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(20, 25, 35),
-        Size = UDim2.new(1, -20, 1, -295),
+        Size = UDim2.new(1, -20, 1, -270),
         Position = UDim2.new(0, 10, 0, 260),
         Name = "MusicListFrame"
     })
@@ -604,7 +595,7 @@ spawn(function()
             if song.genre and song.genre ~= "" then
                 local found = false
                 for _, g in pairs(availableGenres) do
-                    if g == song.genre then
+                    if g:lower() == song.genre:lower() then
                         found = true
                         break
                     end
@@ -617,7 +608,7 @@ spawn(function()
             if song.uploader_name and song.uploader_name ~= "" then
                 local found = false
                 for _, u in pairs(availableUploaders) do
-                    if u == song.uploader_name then
+                    if u:lower() == song.uploader_name:lower() then
                         found = true
                         break
                     end
@@ -628,8 +619,8 @@ spawn(function()
             end
         end
         
-        table.sort(availableGenres)
-        table.sort(availableUploaders)
+        table.sort(availableGenres, function(a, b) return a:lower() < b:lower() end)
+        table.sort(availableUploaders, function(a, b) return a:lower() < b:lower() end)
     end
     
     local function updateDropdowns()
@@ -657,7 +648,7 @@ spawn(function()
             TextSize = 10,
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
             Name = "AllGenres",
-            ZIndex = 101
+            ZIndex = 201
         })
         FW.cC(allGenreBtn, 0.15)
         FW.cTC(allGenreBtn, 10)
@@ -680,7 +671,7 @@ spawn(function()
                 TextSize = 10,
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
                 Name = "Genre_" .. genre,
-                ZIndex = 101
+                ZIndex = 201
             })
             FW.cC(genreBtn, 0.15)
             FW.cTC(genreBtn, 10)
@@ -706,7 +697,7 @@ spawn(function()
             TextSize = 10,
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
             Name = "AllUsers",
-            ZIndex = 101
+            ZIndex = 201
         })
         FW.cC(allUserBtn, 0.15)
         FW.cTC(allUserBtn, 10)
@@ -729,7 +720,7 @@ spawn(function()
                 TextSize = 10,
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
                 Name = "User_" .. uploader,
-                ZIndex = 101
+                ZIndex = 201
             })
             FW.cC(uploaderBtn, 0.15)
             FW.cTC(uploaderBtn, 10)
@@ -1077,8 +1068,8 @@ spawn(function()
                                     (dt.artist and dt.artist:lower():find(searchQuery)) or 
                                     (dt.title and dt.title:lower():find(searchQuery))
                 
-                local matchesGenre = currentGenreFilter == "" or dt.genre == currentGenreFilter
-                local matchesUploader = currentUploaderFilter == "" or dt.uploader_name == currentUploaderFilter
+                local matchesGenre = currentGenreFilter == "" or dt.genre:lower() == currentGenreFilter:lower()
+                local matchesUploader = currentUploaderFilter == "" or dt.uploader_name:lower() == currentUploaderFilter:lower()
                 
                 if matchesSearch and matchesGenre and matchesUploader then
                     fcl[nm] = dt
@@ -1401,17 +1392,6 @@ spawn(function()
     udb.MouseButton1Click:Connect(function()
         udl.Visible = not udl.Visible
         gdl.Visible = false
-    end)
-    
-    cfb.MouseButton1Click:Connect(function()
-        currentGenreFilter = ""
-        currentUploaderFilter = ""
-        gdb.Text = "🎵 All Genres"
-        udb.Text = "👤 All Users"
-        sf.Text = ""
-        gdl.Visible = false
-        udl.Visible = false
-        ftM("")
     end)
     
     game:GetService("UserInputService").InputBegan:Connect(function(input)
