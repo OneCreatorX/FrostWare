@@ -174,7 +174,7 @@ spawn(function()
             
             local dl = FW.cSF(mp, {
                 BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-                Size = UDim2.new(0, 200, 0, 220),
+                Size = UDim2.new(0, 200, 0, 150),
                 Position = UDim2.new(0, 0, 0, 0),
                 ScrollBarThickness = 6,
                 CanvasSize = UDim2.new(0, 0, 0, 0),
@@ -661,7 +661,18 @@ spawn(function()
             local buttonPos = button.AbsolutePosition
             local buttonSize = button.AbsoluteSize
             
-            dropdown.Position = UDim2.new(0, buttonPos.X, 0, buttonPos.Y + buttonSize.Y + 5)
+            dropdown.Position = UDim2.new(0, buttonPos.X, 0, buttonPos.Y + buttonSize.Y + 10)
+            
+            local maxHeight = 150
+            local itemCount = 0
+            for _ in pairs(dropdown:GetChildren()) do
+                if _:IsA("TextButton") then
+                    itemCount = itemCount + 1
+                end
+            end
+            
+            local neededHeight = math.min(itemCount * 35 + 10, maxHeight)
+            dropdown.Size = UDim2.new(0, buttonSize.X, 0, neededHeight)
         end
     end
     
@@ -1378,8 +1389,7 @@ spawn(function()
         end
     end)
     
-    
-        lpb.MouseButton1Click:Connect(function()
+    lpb.MouseButton1Click:Connect(function()
         tgL()
         lpb.BackgroundColor3 = isLooped and Color3.fromRGB(255, 200, 100) or Color3.fromRGB(100, 100, 150)
         lpb.Text = isLooped and "🔁 LOOP ON" or "🔁 LOOP OFF"
@@ -1393,7 +1403,7 @@ spawn(function()
         end
     end)
     
-    ab.MouseButton1Click:Connect(function()
+        ab.MouseButton1Click:Connect(function()
         local nm = ni.Text
         local url = ui.Text
         if nm ~= "" and url ~= "" then
