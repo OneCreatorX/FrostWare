@@ -180,7 +180,7 @@ spawn(function()
                 ScrollBarThickness = 6,
                 CanvasSize = UDim2.new(0, 0, 0, 0),
                 Visible = false,
-                ZIndex = 200,
+                ZIndex = 200, -- Aseguramos un ZIndex alto para que siempre esté encima
                 Name = (props.Name or "Dropdown") .. "_List"
             })
             FW.cC(dl, 0.15)
