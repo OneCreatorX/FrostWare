@@ -665,8 +665,8 @@ spawn(function()
             
             local maxHeight = 150
             local itemCount = 0
-            for _ in pairs(dropdown:GetChildren()) do
-                if _:IsA("TextButton") then
+            for _, child in pairs(dropdown:GetChildren()) do -- Corrected line
+                if child:IsA("TextButton") then
                     itemCount = itemCount + 1
                 end
             end
@@ -1403,7 +1403,7 @@ spawn(function()
         end
     end)
     
-        ab.MouseButton1Click:Connect(function()
+    ab.MouseButton1Click:Connect(function()
         local nm = ni.Text
         local url = ui.Text
         if nm ~= "" and url ~= "" then
