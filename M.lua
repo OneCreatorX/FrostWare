@@ -172,15 +172,15 @@ spawn(function()
             FW.cC(db, 0.15)
             FW.cTC(db, props.TextSize or 14)
             
-            -- IMPORTANT CHANGE: Parent the dropdown list to 'p' (the same parent as the button frame)
-            local dl = FW.cSF(p, { 
+            -- REVERTED: Parent the dropdown list to 'mp' (the main MusicPage)
+            local dl = FW.cSF(mp, { 
                 BackgroundColor3 = Color3.fromRGB(25, 30, 40),
                 Size = UDim2.new(0, 200, 0, 150), -- Initial size, will be adjusted by updateDropdownPosition
                 Position = UDim2.new(0, 0, 0, 0), -- Initial position, will be adjusted
                 ScrollBarThickness = 6,
                 CanvasSize = UDim2.new(0, 0, 0, 0),
                 Visible = false,
-                ZIndex = 200, -- Aseguramos un ZIndex alto para que siempre esté encima
+                ZIndex = 200, -- Keep this high to ensure it's always on top
                 Name = (props.Name or "Dropdown") .. "_List"
             })
             FW.cC(dl, 0.15)
@@ -659,20 +659,18 @@ spawn(function()
     
     local function updateDropdownPosition(dropdownList, dropdownButtonFrame)
         if dropdownList and dropdownButtonFrame then
-            -- dropdownButtonFrame is df (e.g., gdf or udf)
-            -- dropdownList is dl (e.g., gdl or udl)
-
-            -- Get the position and size of the button's outer frame (df) relative to its parent (af)
-            local buttonFramePos = dropdownButtonFrame.Position
-            local buttonFrameSize = dropdownButtonFrame.Size
+            -- Get the absolute position and size of the button's outer frame
+            local buttonAbsolutePos = dropdownButtonFrame.AbsolutePosition
+            local buttonAbsoluteSize = dropdownButtonFrame.AbsoluteSize
             
-            -- Calculate the new position for the dropdown list
-            -- X position: same as the button frame's X position
-            -- Y position: button frame's Y position + button frame's height + 10 pixels offset
-            dropdownList.Position = UDim2.new(
-                buttonFramePos.X.Scale, buttonFramePos.X.Offset,
-                buttonFramePos.Y.Scale + buttonFrameSize.Y.Scale, buttonFramePos.Y.Offset + buttonFrameSize.Y.Offset + 10
-            )
+            -- Calculate the new absolute position for the dropdown list
+            -- X position: same as the button's absolute X
+            -- Y position: button's absolute Y + button's absolute height + 10 pixels offset
+            local newAbsoluteX = buttonAbsolutePos.X
+            local newAbsoluteY = buttonAbsolutePos.Y + buttonAbsoluteSize.Y + 10
+            
+            -- Set the dropdown list's position using UDim2 offsets (since its parent is mp, the root)
+            dropdownList.Position = UDim2.new(0, newAbsoluteX, 0, newAbsoluteY)
             
             local maxHeight = 150
             local itemCount = 0
@@ -684,7 +682,7 @@ spawn(function()
             
             local neededHeight = math.min(itemCount * 35 + 10, maxHeight)
             -- The width of the dropdown list should match the width of the button frame
-            dropdownList.Size = UDim2.new(buttonFrameSize.X.Scale, buttonFrameSize.X.Offset, 0, neededHeight)
+            dropdownList.Size = UDim2.new(0, buttonAbsoluteSize.X, 0, neededHeight) -- Use absolute width for consistency
         end
     end
     
