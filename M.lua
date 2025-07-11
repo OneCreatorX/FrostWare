@@ -172,10 +172,11 @@ spawn(function()
             FW.cC(db, 0.15)
             FW.cTC(db, props.TextSize or 14)
             
-            local dl = FW.cSF(mp, {
+            -- IMPORTANT CHANGE: Parent the dropdown list to 'p' (the same parent as the button frame)
+            local dl = FW.cSF(p, { 
                 BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-                Size = UDim2.new(0, 200, 0, 150),
-                Position = UDim2.new(0, 0, 0, 0),
+                Size = UDim2.new(0, 200, 0, 150), -- Initial size, will be adjusted by updateDropdownPosition
+                Position = UDim2.new(0, 0, 0, 0), -- Initial position, will be adjusted
                 ScrollBarThickness = 6,
                 CanvasSize = UDim2.new(0, 0, 0, 0),
                 Visible = false,
@@ -656,23 +657,34 @@ spawn(function()
         upML()
     end
     
-    local function updateDropdownPosition(dropdown, button)
-        if dropdown and button then
-            local buttonPos = button.AbsolutePosition
-            local buttonSize = button.AbsoluteSize
+    local function updateDropdownPosition(dropdownList, dropdownButtonFrame)
+        if dropdownList and dropdownButtonFrame then
+            -- dropdownButtonFrame is df (e.g., gdf or udf)
+            -- dropdownList is dl (e.g., gdl or udl)
+
+            -- Get the position and size of the button's outer frame (df) relative to its parent (af)
+            local buttonFramePos = dropdownButtonFrame.Position
+            local buttonFrameSize = dropdownButtonFrame.Size
             
-            dropdown.Position = UDim2.new(0, buttonPos.X, 0, buttonPos.Y + buttonSize.Y + 10)
+            -- Calculate the new position for the dropdown list
+            -- X position: same as the button frame's X position
+            -- Y position: button frame's Y position + button frame's height + 10 pixels offset
+            dropdownList.Position = UDim2.new(
+                buttonFramePos.X.Scale, buttonFramePos.X.Offset,
+                buttonFramePos.Y.Scale + buttonFrameSize.Y.Scale, buttonFramePos.Y.Offset + buttonFrameSize.Y.Offset + 10
+            )
             
             local maxHeight = 150
             local itemCount = 0
-            for _, child in pairs(dropdown:GetChildren()) do -- Corrected line
+            for _, child in pairs(dropdownList:GetChildren()) do
                 if child:IsA("TextButton") then
                     itemCount = itemCount + 1
                 end
             end
             
             local neededHeight = math.min(itemCount * 35 + 10, maxHeight)
-            dropdown.Size = UDim2.new(0, buttonSize.X, 0, neededHeight)
+            -- The width of the dropdown list should match the width of the button frame
+            dropdownList.Size = UDim2.new(buttonFrameSize.X.Scale, buttonFrameSize.X.Offset, 0, neededHeight)
         end
     end
     
@@ -1420,13 +1432,15 @@ spawn(function()
     end)
     
     gdb.MouseButton1Click:Connect(function()
-        updateDropdownPosition(gdl, gdb)
+        -- Pass the dropdown list (gdl) and the button's outer frame (gdf)
+        updateDropdownPosition(gdl, gdf) 
         gdl.Visible = not gdl.Visible
         udl.Visible = false
     end)
     
     udb.MouseButton1Click:Connect(function()
-        updateDropdownPosition(udl, udb)
+        -- Pass the dropdown list (udl) and the button's outer frame (udf)
+        updateDropdownPosition(udl, udf) 
         udl.Visible = not udl.Visible
         gdl.Visible = false
     end)
@@ -1438,7 +1452,8 @@ spawn(function()
                 local isDropdownElement = false
                 local current = target
                 while current and current ~= game do
-                    if current.Name:find("Dropdown") then
+                    -- Check if the target or any of its ancestors is a dropdown button or list
+                    if current.Name:find("Dropdown_Frame") or current.Name:find("Dropdown_List") then
                         isDropdownElement = true
                         break
                     end
