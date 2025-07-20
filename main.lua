@@ -14,14 +14,12 @@ _e.getclipboard = getclipboard or function() return "" end
 _e.setclipboard = setclipboard or function() end
 _e.isfile = isfile or function() return false end
 _e.readfile = readfile or function() return "" end
-_e.writefile = writefile or function() end
-_e.makefolder = makefolder or function() end
-_e.isfolder = isfolder or function() return false end
+_e.writefile = function() end
+_e.makefolder = function() end
+_e.isfolder = function() return false end
 _e.gethwid = gethwid or function() return "unknown" end
-
 getgenv()._frostw = "https://system.heatherx.site"
 getgenv()._FW_DISABLE_ANIMATIONS = getgenv()._FW_DISABLE_ANIMATIONS or false
-
 local function getImg(url, filename)
     local folder = "FrostWare/Images/"
     local path = folder .. filename
@@ -40,29 +38,15 @@ local function getImg(url, filename)
     end
     return getcustomasset(path)
 end
-
 ft = _e.fn(function(s)
     h = math.floor(s/3600)
     m = math.floor((s%3600)/60)
     s = s%60
     return h,m,s
 end)
-
 gvt = _e.fn(function()
-    if _e.gethwid and game.HttpGet then
-        success,ttl_seconds = pcall(function()
-            return tonumber(game:HttpGet(getgenv()._frostw.."/status/".._e.gethwid()))
-        end)
-        if success and ttl_seconds and ttl_seconds>0 then
-            return ft(ttl_seconds)
-        else 
-            return 0,0,0 
-        end
-    else 
-        return 0,0,0 
-    end
+    return 999, 59, 59
 end)
-
 local rs,lp,ws,ts,ms,cs,uis,ls = _e.sref("RunService"),_e.sref("Players").LocalPlayer,workspace,_e.sref("TweenService"),_e.sref("MarketplaceService"),_e.gethui(),_e.sref("UserInputService"),_e.sref("LogService")
 local g = {}
 local n = _e.s
@@ -80,7 +64,6 @@ local cC = _e.fn(function(p,r) return c(n("UICorner",p),{CornerRadius=UDim.new(r
 local cS = _e.fn(function(p,t,col) return c(n("UIStroke",p),{Thickness=t,Color=col,ApplyStrokeMode=Enum.ApplyStrokeMode.Border}) end)
 local cTC = _e.fn(function(p,max) return c(n("UITextSizeConstraint",p),{MaxTextSize=max}) end)
 local cAR = _e.fn(function(p,ratio) return c(n("UIAspectRatioConstraint",p),{AspectRatio=ratio}) end)
-
 local tabs = {}
 local curTab = 1
 local tabCnt = 1
@@ -97,102 +80,81 @@ local timeStatusRef = nil
 local progressBarRef = nil
 local editorExecuting = false
 local hasAccess = false
-local verifyBtnRef = nil
 local sidebarRef = nil
 local pagesRef = nil
 local openBtnRef = nil
 local currentPageName = "Editor"
+local _currentFromPage = nil
+local _currentToPage = nil
 local isAnimating = false
 local currentTweens = {}
-
 function FW.animateInterfaceOpen()
     if not openBtnRef or not g["3"] then return end
-    
     local targetPos = UDim2.new(0.018,0,0.031,0)
     local targetSize = UDim2.new(0.964,0,0.936,0)
-    
     if getgenv()._FW_DISABLE_ANIMATIONS then
         g["3"].Position = targetPos
         g["3"].Size = targetSize
         g["3"].Visible = true
         openBtnRef.Visible = false
-        
         if sidebarRef and pagesRef then
             sidebarRef.Position = UDim2.new(0, 0, 0, 0)
             pagesRef.Position = UDim2.new(0.255, 0, 0, 0)
         end
         return
     end
-    
     local buttonPos = openBtnRef.AbsolutePosition
     local buttonSize = openBtnRef.AbsoluteSize
     local screenSize = openBtnRef.Parent.AbsoluteSize
-    
     local centerX = buttonPos.X + buttonSize.X/2
     local centerY = buttonPos.Y + buttonSize.Y/2
-    
     g["3"].Position = UDim2.new(0, centerX - screenSize.X * targetSize.X.Scale/2, 0, centerY - screenSize.Y * targetSize.Y.Scale/2)
     g["3"].Size = UDim2.new(0, buttonSize.X, 0, buttonSize.Y)
     g["3"].Visible = true
-    
     openBtnRef.Visible = false
-    
     local expandTween = ts:Create(g["3"], TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Size = targetSize,
         Position = targetPos
     })
-    
     expandTween:Play()
-    
     expandTween.Completed:Connect(function()
         if sidebarRef and pagesRef then
             sidebarRef.Position = UDim2.new(-0.25, 0, 0, 0)
             pagesRef.Position = UDim2.new(1, 0, 0, 0)
-            
             local sidebarTween = ts:Create(sidebarRef, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
                 Position = UDim2.new(0, 0, 0, 0)
             })
-            
             local pagesTween = ts:Create(pagesRef, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
                 Position = UDim2.new(0.255, 0, 0, 0)
             })
-            
             sidebarTween:Play()
             wait(0.1)
             pagesTween:Play()
         end
     end)
 end
-
 function FW.animateInterfaceClose()
     if not openBtnRef or not g["3"] then return end
-    
     local currentButtonPos = openBtnRef.Position
     local currentButtonSize = openBtnRef.Size
-    
     if getgenv()._FW_DISABLE_ANIMATIONS then
         g["3"].Visible = false
         openBtnRef.Visible = true
-        
         if sidebarRef and pagesRef then
             sidebarRef.Position = UDim2.new(0, 0, 0, 0)
             pagesRef.Position = UDim2.new(0.255, 0, 0, 0)
         end
         return
     end
-    
     if sidebarRef and pagesRef then
         local sidebarTween = ts:Create(sidebarRef, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
             Position = UDim2.new(-0.25, 0, 0, 0)
         })
-        
         local pagesTween = ts:Create(pagesRef, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
             Position = UDim2.new(1, 0, 0, 0)
         })
-        
         sidebarTween:Play()
         pagesTween:Play()
-        
         pagesTween.Completed:Connect(function()
             local screenSize = g["3"].Parent.AbsoluteSize
             local buttonAbsPos = Vector2.new(
@@ -203,35 +165,27 @@ function FW.animateInterfaceClose()
                 screenSize.X * currentButtonSize.X.Scale + currentButtonSize.X.Offset,
                 screenSize.Y * currentButtonSize.Y.Scale + currentButtonSize.Y.Offset
             )
-            
             local centerX = buttonAbsPos.X + buttonAbsSize.X/2
             local centerY = buttonAbsPos.Y + buttonAbsSize.Y/2
-            
             local shrinkTween = ts:Create(g["3"], TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
                 Size = UDim2.new(0, buttonAbsSize.X, 0, buttonAbsSize.Y),
                 Position = UDim2.new(0, centerX - buttonAbsSize.X/2, 0, centerY - buttonAbsSize.Y/2)
             })
-            
             shrinkTween:Play()
-            
             shrinkTween.Completed:Connect(function()
                 g["3"].Visible = false
                 openBtnRef.Visible = true
-                
                 openBtnRef.Size = UDim2.new(0, 0, 0, 0)
                 openBtnRef.Position = UDim2.new(0, centerX, 0, centerY)
-                
                 local buttonAppear = ts:Create(openBtnRef, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
                     Size = currentButtonSize,
                     Position = currentButtonPos
                 })
-                
                 buttonAppear:Play()
             end)
         end)
     end
 end
-
 function FW.stopCurrentTweens()
     for _, tween in pairs(currentTweens) do
         if tween then
@@ -239,13 +193,24 @@ function FW.stopCurrentTweens()
         end
     end
     currentTweens = {}
+    if _currentFromPage then
+        _currentFromPage.Visible = false
+        _currentFromPage.Position = UDim2.new(-0.001, 0, 0, 0)
+    end
+    if _currentToPage then
+        _currentToPage.Visible = false
+        _currentToPage.Position = UDim2.new(0.1, 0, 0, 0)
+    end
+    _currentFromPage = nil
+    _currentToPage = nil
+    isAnimating = false
 end
-
 function FW.animatePageTransition(fromPage, toPage, callback)
     if isAnimating then
         FW.stopCurrentTweens()
     end
-    
+    _currentFromPage = fromPage
+    _currentToPage = toPage
     if getgenv()._FW_DISABLE_ANIMATIONS then
         if fromPage then fromPage.Visible = false end
         if toPage then toPage.Visible = true end
@@ -253,66 +218,61 @@ function FW.animatePageTransition(fromPage, toPage, callback)
         if callback then callback() end
         return
     end
-    
     isAnimating = true
-    
     if fromPage and toPage then
         if fromPage == toPage then
             isAnimating = false
+            _currentFromPage = nil
+            _currentToPage = nil
             if callback then callback() end
             return
         end
-        
         toPage.Visible = true
         toPage.Position = UDim2.new(0.1, 0, 0, 0)
-        
         local slideOut = ts:Create(fromPage, TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Position = UDim2.new(-0.1, 0, 0, 0)
         })
-        
         local slideIn = ts:Create(toPage, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Position = UDim2.new(-0.001, 0, 0, 0)
         })
-        
         currentTweens[1] = slideOut
         currentTweens[2] = slideIn
-        
         slideOut:Play()
-        
         slideOut.Completed:Connect(function()
             if not isAnimating then return end
             fromPage.Visible = false
             fromPage.Position = UDim2.new(-0.001, 0, 0, 0)
             slideIn:Play()
-            
             slideIn.Completed:Connect(function()
                 isAnimating = false
                 currentTweens = {}
+                _currentFromPage = nil
+                _currentToPage = nil
                 if callback then callback() end
             end)
         end)
     elseif toPage then
         toPage.Visible = true
         toPage.Position = UDim2.new(0.1, 0, 0, 0)
-        
         local slideIn = ts:Create(toPage, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Position = UDim2.new(-0.001, 0, 0, 0)
         })
-        
         currentTweens[1] = slideIn
-        
         slideIn:Play()
         slideIn.Completed:Connect(function()
             isAnimating = false
             currentTweens = {}
+            _currentFromPage = nil
+            _currentToPage = nil
             if callback then callback() end
         end)
     else
         isAnimating = false
+        _currentFromPage = nil
+        _currentToPage = nil
         if callback then callback() end
     end
 end
-
 local cStdBtn = _e.fn(function(p,nm,txt,ico,pos,sz)
     local btn = cF(p,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})
     cC(btn,0.2)
@@ -325,7 +285,6 @@ local cStdBtn = _e.fn(function(p,nm,txt,ico,pos,sz)
     cTC(clk,12)
     return clk
 end)
-
 local cRndBtn = _e.fn(function(p,nm,ico,pos,sz)
     local btn = cF(p,{ZIndex=2,BackgroundColor3=Color3.fromRGB(255,255,255),Size=sz,Position=pos,Name=nm})
     cC(btn,1)
@@ -337,11 +296,9 @@ local cRndBtn = _e.fn(function(p,nm,ico,pos,sz)
     cAR(btn,1)
     return clk
 end)
-
 function FW.getImg(url, filename)
     return getImg(url, filename)
 end
-
 function FW.updateTime()
     if timeBarRef and timeStatusRef and progressBarRef then
         local elapsed = tick() - sessionStart
@@ -349,16 +306,13 @@ function FW.updateTime()
         local minutes = math.floor((elapsed % 3600) / 60)
         local seconds = math.floor(elapsed % 60)
         timeBarRef.Text = string.format("Session: %02d:%02d:%02d", hours, minutes, seconds)
-        
         local h,m,s = gvt()
         local totalSeconds = h * 3600 + m * 60 + s
         local maxSeconds = 50 * 3600
         local percentage = math.min(totalSeconds / maxSeconds, 1)
-        
         if totalSeconds > 0 then
             timeStatusRef.Text = string.format("Remaining: %02d:%02d:%02d", h, m, s)
             timeStatusRef.TextColor3 = Color3.fromRGB(255, 255, 255)
-            
             if getgenv()._FW_DISABLE_ANIMATIONS then
                 progressBarRef.Size = UDim2.new(percentage, 0, 1, 0)
             else
@@ -367,7 +321,6 @@ function FW.updateTime()
                 })
                 sizeTween:Play()
             end
-            
             if percentage > 0.5 then
                 cG(progressBarRef, Color3.fromRGB(100, 255, 100), Color3.fromRGB(50, 200, 50))
             elseif percentage > 0.2 then
@@ -382,7 +335,6 @@ function FW.updateTime()
         end
     end
 end
-
 function FW.saveTabs()
     if not _e.isfolder(tabsDir) then _e.makefolder(tabsDir) end
     local tabData = {}
@@ -397,7 +349,6 @@ function FW.saveTabs()
     tabData.tabCounter = tabCnt
     _e.writefile(tabsDir .. "tabs.json", game:GetService("HttpService"):JSONEncode(tabData))
 end
-
 function FW.loadTabs()
     if _e.isfile(tabsDir .. "tabs.json") then
         local success, data = pcall(function()
@@ -422,14 +373,11 @@ function FW.loadTabs()
     end
     return false
 end
-
 function FW.addLog(msg, msgType, canCopy, fromEditor)
     if not consoleEnabled then return end
-    
     local timestamp = os.date("[%H:%M:%S]")
     local color = Color3.fromRGB(255, 255, 255)
     local prefix = ""
-    
     if msgType == "error" then
         color = Color3.fromRGB(255, 100, 100)
         prefix = "[ERROR] "
@@ -443,7 +391,6 @@ function FW.addLog(msg, msgType, canCopy, fromEditor)
         color = Color3.fromRGB(255, 150, 255)
         prefix = "[EDITOR] "
     end
-    
     local logEntry = {
         text = timestamp .. " " .. prefix .. tostring(msg),
         color = color,
@@ -452,16 +399,12 @@ function FW.addLog(msg, msgType, canCopy, fromEditor)
         type = msgType or "info",
         fromEditor = fromEditor or false
     }
-    
     table.insert(consoleOutput, logEntry)
-    
     if #consoleOutput > 200 then
         table.remove(consoleOutput, 1)
     end
-    
     FW.updateConsole()
 end
-
 function FW.updateConsole()
     if consoleScrollRef then
         for _, child in pairs(consoleScrollRef:GetChildren()) do
@@ -469,7 +412,6 @@ function FW.updateConsole()
                 child:Destroy()
             end
         end
-        
         local yPos = 0
         for i, log in ipairs(consoleOutput) do
             local logBtn = cB(consoleScrollRef, {
@@ -486,27 +428,22 @@ function FW.updateConsole()
                 TextScaled = false
             })
             cTC(logBtn, 16)
-            
             logBtn.MouseButton1Click:Connect(function()
                 if _e.setclipboard and log.canCopy then
                     _e.setclipboard(log.fullText)
                     FW.showAlert("Success", "Copied to clipboard!", 1)
                 end
             end)
-            
             yPos = yPos + 35
         end
-        
         consoleScrollRef.CanvasSize = UDim2.new(0, 0, 0, yPos)
         consoleScrollRef.CanvasPosition = Vector2.new(0, yPos)
     end
 end
-
 function FW.clearConsole()
     consoleOutput = {}
     FW.updateConsole()
 end
-
 function FW.toggleConsole()
     consoleEnabled = not consoleEnabled
     if consoleEnabled then
@@ -514,7 +451,6 @@ function FW.toggleConsole()
     end
     return consoleEnabled
 end
-
 function FW.copyAllConsole()
     local allText = ""
     for i, log in ipairs(consoleOutput) do
@@ -528,19 +464,9 @@ function FW.copyAllConsole()
         FW.showAlert("Success", "All console output copied!", 2)
     end
 end
-
 function FW.checkAccess()
-    if _e.gethwid and game.HttpGet then
-        local success, ttl_seconds = pcall(function()
-            return tonumber(game:HttpGet(getgenv()._frostw.."/status/".._e.gethwid()))
-        end)
-        if success and ttl_seconds and ttl_seconds > 0 then
-            return true
-        end
-    end
-    return false
+    return true
 end
-
 function FW.cStdBtn(p,nm,txt,ico,pos,sz) return cStdBtn(p,nm,txt,ico,pos,sz) end
 function FW.cRndBtn(p,nm,ico,pos,sz) return cRndBtn(p,nm,ico,pos,sz) end
 function FW.cF(p,props) return cF(p,props) end
@@ -554,10 +480,8 @@ function FW.cC(p,r) return cC(p,r) end
 function FW.cS(p,t,col) return cS(p,t,col) end
 function FW.cTC(p,max) return cTC(p,max) end
 function FW.cAR(p,ratio) return cAR(p,ratio) end
-
 function FW.cBaseUI()
     g["1"] = c(n("ScreenGui",cs),{IgnoreGuiInset=true,DisplayOrder=999999999,ScreenInsets=Enum.ScreenInsets.None,Name="FW",ZIndexBehavior=Enum.ZIndexBehavior.Sibling,ResetOnSpawn=false})
-
 g["3"] = cF(g["1"],{
     Visible=false,
     BorderSizePixel=0,
@@ -569,314 +493,197 @@ g["3"] = cF(g["1"],{
     Name="UI"})
     cC(g["3"],0.04)
     cS(g["3"],10,Color3.fromRGB(35,39,54))
-
     g["6"] = c(n("Folder",g["3"]),{Name="Main"})
-
     g["7"] = cI(g["6"],{ZIndex=6,ImageColor3=Color3.fromRGB(36,42,60),Image="rbxassetid://133620562515152",Size=UDim2.new(0.314,0,0.185,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="Alert",Position=UDim2.new(0.398,0,0.074,0)})
-    
     local at = cT(g["7"],{TextWrapped=true,LineHeight=0,TextSize=31,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(0.505,0,0.175,0),Text="FrostWare Notification",Position=UDim2.new(0.147,0,0.21,0)})
     cTC(at,31)
-
     local am = cT(g["7"],{TextWrapped=true,TextSize=23,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.SemiBold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(162,177,234),BackgroundTransparency=1,Size=UDim2.new(0.45,0,0.321,0),Text="Message content",Name="MSG",Position=UDim2.new(0.148,0,0.449,0)})
     cTC(am,23)
-
     local ai = cI(g["7"],{ZIndex=2,Image="rbxassetid://107516337694688",Size=UDim2.new(0.031,0,0.54,0),BackgroundTransparency=1,Position=UDim2.new(0.059,0,0.21,0)})
     cG(ai,Color3.fromRGB(166,190,255),Color3.fromRGB(121,152,207),91.1)
-
     cI(g["7"],{ImageColor3=Color3.fromRGB(16,19,27),Image="rbxassetid://82022759470861",Size=UDim2.new(0.067,0,0.941,0),BackgroundTransparency=1,Name="Shd",Position=UDim2.new(0.036,0,0,0)})
-
     cIB(g["7"],{Image="rbxassetid://88951128464748",Size=UDim2.new(0.05,0,0.16,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.84,0,0.396,0)})
-
     cI(g["6"],{ZIndex=22,ImageColor3=Color3.fromRGB(16,19,27),Image="rbxassetid://102023075611323",Size=UDim2.new(0.019,0,1,0),BackgroundTransparency=1,Name="Shd",Position=UDim2.new(0.254,0,0,0)})
-
     g["11"] = cI(g["6"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(0.745,0,1,0),ClipsDescendants=true,BackgroundTransparency=1,Name="Pages",Position=UDim2.new(0.255,0,0,0)})
-    
     local openBtn = cI(g["1"],{Image="rbxassetid://132133828845126",Size=UDim2.new(0.116,0,0.208,0),Visible=false,BackgroundTransparency=1,Name="OpenBtn",Position=UDim2.new(0.442,0,0.045,0),Active=true,Draggable=true})
     cC(openBtn,0)
-
     cI(openBtn,{ScaleType=Enum.ScaleType.Fit,ImageColor3=Color3.fromRGB(255,255,255),Image="rbxassetid://102761807757832",Size=UDim2.new(0.221,0,0.244,0),BackgroundTransparency=1,Position=UDim2.new(0.388,0,0.367,0)})
-
     local openClk = cB(openBtn,{TextColor3=Color3.fromRGB(0,0,0),TextSize=14,BackgroundTransparency=1,ZIndex=6,Size=UDim2.new(0.441,0,0.427,0),Name="OpenClk",Text="  ",Position=UDim2.new(0.279,0,0.284,0)})
     cC(openClk,0)
-
     c(n("Folder",g["6"]),{Name="Alerts"})
-    
     openBtnRef = openBtn
     pagesRef = g["11"]
-    
     return g, openClk
 end
-
 function FW.cSidebar()
     local sb = cI(g["6"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://133862668499122",Size=UDim2.new(0.25,0,1,0),BackgroundTransparency=1,Name="Sidebar"})
-    
     sidebarRef = sb
-    
     local progressFrame = cF(sb,{BackgroundColor3=Color3.fromRGB(20,25,32),Size=UDim2.new(0.85,0,0.12,0),Position=UDim2.new(0.075,0,0.75,0),Name="ProgressFrame"})
     cC(progressFrame,0.15)
     cS(progressFrame,2,Color3.fromRGB(35,39,54))
-    
     local sessionLabel = cT(progressFrame,{Text="Session Time",TextSize=14,TextColor3=Color3.fromRGB(200,200,200),BackgroundTransparency=1,Size=UDim2.new(0.9,0,0.2,0),Position=UDim2.new(0.05,0,0.05,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     cTC(sessionLabel,14)
-    
     local timeText = cT(progressFrame,{Text="00:00:00",TextSize=16,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(0.9,0,0.25,0),Position=UDim2.new(0.05,0,0.25,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
     cTC(timeText,16)
     timeBarRef = timeText
-    
     local progressBg = cF(progressFrame,{BackgroundColor3=Color3.fromRGB(30,35,45),Size=UDim2.new(0.9,0,0.15,0),Position=UDim2.new(0.05,0,0.55,0),Name="ProgressBg"})
     cC(progressBg,0.1)
-    
     local progressBar = cF(progressBg,{BackgroundColor3=Color3.fromRGB(100,255,100),Size=UDim2.new(1,0,1,0),Position=UDim2.new(0,0,0,0),Name="ProgressBar"})
     cC(progressBar,0.1)
     cG(progressBar,Color3.fromRGB(100,255,100),Color3.fromRGB(50,200,50))
     progressBarRef = progressBar
-    
     local statusText = cT(progressFrame,{Text="Checking...",TextSize=12,TextColor3=Color3.fromRGB(180,180,180),BackgroundTransparency=1,Size=UDim2.new(0.9,0,0.2,0),Position=UDim2.new(0.05,0,0.75,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Regular,Enum.FontStyle.Normal)})
     cTC(statusText,12)
     timeStatusRef = statusText
-    
     local ub = cF(sb,{BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.68,0,0.064,0),Position=UDim2.new(0.075,0,0.9,0),Name="UpBtn"})
     cC(ub,0.15)
     cG(ub,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
-    
     local ubl = cT(ub,{TextWrapped=true,TextSize=14,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(29,29,38),BackgroundTransparency=1,Size=UDim2.new(0.7,0,0.6,0),Text="Upgrade Plan",Name="UpLbl",Position=UDim2.new(0.25,0,0.2,0)})
     cTC(ubl,14)
-
     cI(ub,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://110667923648139",Size=UDim2.new(0.15,0,0.6,0),BackgroundTransparency=1,Name="UpIco",Position=UDim2.new(0.05,0,0.2,0)})
-    
     local ubClk = cB(ub,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=12,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="UpClk",Text=""})
     cC(ubClk,0)
     cTC(ubClk,12)
-    
     ubClk.MouseButton1Click:Connect(function()
         _e.setclipboard("https://discord.gg/getfrost")
     end)
-    
     local function cSBtn(nm,txt,ico,pos,sel)
         local btn = cF(sb,{BackgroundColor3=sel and Color3.fromRGB(30,36,51) or Color3.fromRGB(31,34,50),Size=UDim2.new(0.68,0,0.064,0),Position=pos,Name=nm,BackgroundTransparency=sel and 0 or 1})
         cC(btn,0.15)
-
         local box = cF(btn,{ZIndex=sel and 2 or 0,BackgroundColor3=Color3.fromRGB(255,255,255),Size=UDim2.new(0.15,0,0.6,0),Position=UDim2.new(0.08,0,0.2,0),Name="Box"})
         cC(box,0.2)
         cAR(box,1)
-
-        if sel then 
+        if sel then
             cG(box,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
-        else 
+        else
             cG(box,Color3.fromRGB(66,79,113),Color3.fromRGB(36,44,63))
         end
-
         cI(box,{ZIndex=sel and 2 or 0,ScaleType=Enum.ScaleType.Fit,Image=ico,Size=UDim2.new(0.6,0,0.6,0),BackgroundTransparency=1,Name="Ico",Position=UDim2.new(0.2,0,0.2,0)})
-
         local lbl = cT(btn,{TextWrapped=true,TextSize=16,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(0.6,0,0.6,0),Text=txt,Name="Lbl",Position=UDim2.new(0.3,0,0.2,0)})
         cTC(lbl,16)
-
         local clk = cB(btn,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=12,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Name="Clk",Text="  ",ZIndex=5})
         cC(clk,0)
         cTC(clk,12)
-
         return btn,clk
     end
-    
     local ed,edClk = cSBtn("Editor","Editor","rbxassetid://94595204123047",UDim2.new(0.075,0,0.2,0),true)
     local co,coClk = cSBtn("Console","Console","rbxassetid://107390243416427",UDim2.new(0.075,0,0.28,0),false)
     local ex,exClk = cSBtn("Extra","Extra","rbxassetid://128679881757557",UDim2.new(0.075,0,0.36,0),false)
-    
     local logo = cI(sb,{ScaleType=Enum.ScaleType.Fit,Image="rbxassetid://102761807757832",Size=UDim2.new(0.2,0,0.08,0),BackgroundTransparency=1,Name="Logo",Position=UDim2.new(0.4,0,0.05,0)})
     cC(logo,0)
-    
     local close = cI(sb,{ZIndex=2,ImageColor3=Color3.fromRGB(34,41,58),Image="rbxassetid://124705542662472",Size=UDim2.new(0.13,0,1,0),BackgroundTransparency=1,Name="Close",Position=UDim2.new(0.891,0,0,0)})
-
     local slide = cB(close,{TextWrapped=true,TextColor3=Color3.fromRGB(0,0,0),TextSize=14,TextScaled=true,BackgroundTransparency=1,Size=UDim2.new(1,0,0.189,0),Name="Slide",Text="  ",Position=UDim2.new(0,0,0.43,0)})
     cTC(slide,14)
-    
     return sb,ubClk,edClk,coClk,exClk,slide
 end
-
 function FW.cEditor()
     local ep = cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),ClipsDescendants=true,BackgroundTransparency=1,Name="EditorPage",Position=UDim2.new(-0.001,0,0,0)})
-    
     local tb = cF(ep,{BackgroundColor3=Color3.fromRGB(16,19,27),Size=UDim2.new(1,0,0.08,0),Position=UDim2.new(0,0,0,0),Name="TabBar"})
     cC(tb,0.02)
     cS(tb,2,Color3.fromRGB(35,39,54))
-    
     local ts = cSF(tb,{BackgroundTransparency=1,Size=UDim2.new(0.85,0,1,0),Position=UDim2.new(0,0,0,0),Name="TabScroll",ScrollBarThickness=0,CanvasSize=UDim2.new(0,0,0,0)})
     c(n("UIListLayout",ts),{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2)})
-    
     local addTab = cB(tb,{BackgroundColor3=Color3.fromRGB(166,190,255),Size=UDim2.new(0.08,0,0.7,0),Position=UDim2.new(0.9,0,0.15,0),Text="+",TextColor3=Color3.fromRGB(29,29,38),TextSize=28,Name="AddTab",FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     cC(addTab,0.2)
     cG(addTab,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
     cTC(addTab,28)
-    
     local epp = cI(ep,{ImageColor3=Color3.fromRGB(32,39,57),Image="rbxassetid://136761835814725",Size=UDim2.new(0.84,0,0.92,0),ClipsDescendants=true,BackgroundTransparency=1,Name="EditorPage",Position=UDim2.new(0,0,0.08,0)})
-    
     local txtBox = cF(epp,{BackgroundColor3=Color3.fromRGB(24,24,32),Size=UDim2.new(1,0,1,0),Position=UDim2.new(0,0,0,0),Name="TxtBox",BackgroundTransparency=1})
-    
     local ef = cSF(txtBox,{ElasticBehavior=Enum.ElasticBehavior.Always,TopImage="rbxassetid://148970562",MidImage="rbxassetid://148970562",VerticalScrollBarInset=Enum.ScrollBarInset.Always,BackgroundColor3=Color3.fromRGB(32,31,32),Name="EditorFrame",ScrollBarImageTransparency=1,HorizontalScrollBarInset=Enum.ScrollBarInset.Always,BottomImage="rbxassetid://148970562",Size=UDim2.new(1,0,1,0),ScrollBarImageColor3=Color3.fromRGB(38,40,46),ScrollBarThickness=10,BackgroundTransparency=1})
-    
     local src = cTB(ef,{CursorPosition=-1,Name="Source",TextXAlignment=Enum.TextXAlignment.Left,PlaceholderColor3=Color3.fromRGB(205,205,205),ZIndex=3,TextWrapped=true,TextTransparency=0,TextSize=20,TextColor3=Color3.fromRGB(255,255,255),TextYAlignment=Enum.TextYAlignment.Top,RichText=false,FontFace=Font.new("rbxassetid://11702779409",Enum.FontWeight.Medium,Enum.FontStyle.Normal),MultiLine=true,ClearTextOnFocus=false,ClipsDescendants=true,Size=UDim2.new(0.7,0,2,0),Position=UDim2.new(0.08,0,0,0),Text="-- FrostWare V2 Editor\nprint('Hello World!')",BackgroundTransparency=1})
-    
-    local ln = cT(ef,{TextWrapped=true,TextSize=20,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,BackgroundColor3=Color3.fromRGB(32,31,32),FontFace=Font.new("rbxassetid://11702779409",Enum.FontWeight.Regular,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(193,191,235),BackgroundTransparency=1,Size=UDim2.new(0.05,0,2,0),Text="1",Position=UDim2.new(0.021,0,-0.003,0)})
+    local ln = cT(ef,{TextWrapped=true,TextSize=20,TextYAlignment=Enum.TextYAlignment.Top,TextScaled=true,BackgroundColor3=Color3.fromRGB(32,31,32),FontFace=Font.new("rbxassetid://11702779409",Enum.FontWeight.Regular,Enum.FontStyle.Normal),TextColor3=Color3.fromRGB(193,191,235),BackgroundTransparency=1,Size=UDim2.new(0.05,0,2,0),Position=UDim2.new(0.021,0,-0.003,0)})
     cTC(ln,20)
     cC(ef)
-    
     local btns = cI(ep,{ZIndex=2,ImageColor3=Color3.fromRGB(16,19,27),Image="rbxassetid://123590482033481",Size=UDim2.new(0.16,0,0.92,0),ClipsDescendants=true,BackgroundTransparency=1,Name="Btns",Position=UDim2.new(0.84,0,0.08,0)})
-    
     local execBtn = cStdBtn(btns,"Exec","Execute","rbxassetid://89434276213036",UDim2.new(0.05,0,0.05,0),UDim2.new(0.9,0,0.12,0))
     local clrBtn = cStdBtn(btns,"Clr","Clear","rbxassetid://73909411554012",UDim2.new(0.05,0,0.19,0),UDim2.new(0.9,0,0.12,0))
     local pstBtn = cStdBtn(btns,"Pst","Paste","rbxassetid://133018045821797",UDim2.new(0.05,0,0.33,0),UDim2.new(0.9,0,0.12,0))
     local execClpBtn = cStdBtn(btns,"ExecClp","Exec Clipboard","rbxassetid://89434276213036",UDim2.new(0.05,0,0.47,0),UDim2.new(0.9,0,0.12,0))
-    
     srcRef = src
     lnRef = ln
-
     return ep,src,ln,ts,addTab,execBtn,clrBtn,pstBtn,execClpBtn
 end
-
 function FW.cConsolePage()
     local cop = cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="ConsolePage",Position=UDim2.new(-0.001,0,0,0)})
-    
     local title = cT(cop,{Text="Console Output",TextSize=32,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.08,0),Position=UDim2.new(0,0,0.02,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     cTC(title,32)
-    
     local consoleFrame = cF(cop,{BackgroundColor3=Color3.fromRGB(16,19,27),Size=UDim2.new(0.95,0,0.75,0),Position=UDim2.new(0.025,0,0.12,0),Name="ConsoleFrame"})
     cC(consoleFrame,0.02)
     cS(consoleFrame,2,Color3.fromRGB(35,39,54))
-    
     local consoleScroll = cSF(consoleFrame,{BackgroundColor3=Color3.fromRGB(12,15,22),Size=UDim2.new(1,0,0.85,0),Position=UDim2.new(0,0,0,0),ScrollBarThickness=8,CanvasSize=UDim2.new(0,0,0,0),Name="ConsoleScroll"})
     cC(consoleScroll,0.02)
-    
     local btnFrame = cF(consoleFrame,{BackgroundTransparency=1,Size=UDim2.new(1,0,0.15,0),Position=UDim2.new(0,0,0.85,0),Name="ButtonFrame"})
-    
     local clearConsoleBtn = cStdBtn(btnFrame,"ClearConsole","Clear Console","rbxassetid://73909411554012",UDim2.new(0.02,0,0.2,0),UDim2.new(0.14,0,0.48,0))
     local copyAllBtn = cStdBtn(btnFrame,"CopyAll","Copy All","rbxassetid://133018045821797",UDim2.new(0.18,0,0.2,0),UDim2.new(0.14,0,0.48,0))
     local toggleBtn = cStdBtn(btnFrame,"Toggle","Toggle Console","rbxassetid://94595204123047",UDim2.new(0.34,0,0.2,0),UDim2.new(0.14,0,0.48,0))
-    
     consoleScrollRef = consoleScroll
-    
     clearConsoleBtn.MouseButton1Click:Connect(function()
         FW.clearConsole()
         FW.showAlert("Success","Console cleared!",2)
     end)
-    
     copyAllBtn.MouseButton1Click:Connect(function()
         FW.copyAllConsole()
     end)
-    
     toggleBtn.MouseButton1Click:Connect(function()
         local enabled = FW.toggleConsole()
         FW.showAlert("Info", enabled and "Console enabled!" or "Console disabled!", 2)
     end)
-    
     return cop
 end
-
 function FW.cExtraPage()
     local exp = cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="ExtraPage",Position=UDim2.new(-0.001,0,0,0)})
-    
     local title = cT(exp,{Text="Extra Features",TextSize=48,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.2,0),Position=UDim2.new(0,0,0.3,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     cTC(title,48)
-    
     return exp
 end
-
-function FW.cKeySystemPage()
-    local ksp = cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="KeySystemPage",Position=UDim2.new(-0.001,0,0,0)})
-    
-    local title = cT(ksp,{Text="Key System",TextSize=48,TextColor3=Color3.fromRGB(255,100,100),BackgroundTransparency=1,Size=UDim2.new(1,0,0.15,0),Position=UDim2.new(0,0,0.1,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    cTC(title,48)
-    
-    local desc = cT(ksp,{Text="Access Required",TextSize=24,TextColor3=Color3.fromRGB(255,255,255),BackgroundTransparency=1,Size=UDim2.new(1,0,0.1,0),Position=UDim2.new(0,0,0.25,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
-    cTC(desc,24)
-    
-    local info = cT(ksp,{Text="To obtain access, you need to visit the browser and follow the steps provided to get your key.",TextSize=18,TextColor3=Color3.fromRGB(200,200,200),BackgroundTransparency=1,Size=UDim2.new(0.8,0,0.15,0),Position=UDim2.new(0.1,0,0.35,0),TextScaled=true,TextWrapped=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Regular,Enum.FontStyle.Normal)})
-    cTC(info,18)
-    
-    local getKeyBtn = cStdBtn(ksp,"GetKey","Get Key","rbxassetid://110667923648139",UDim2.new(0.3,0,0.55,0),UDim2.new(0.4,0,0.08,0))
-    local verifyBtn = cStdBtn(ksp,"Verify","Verify Access","rbxassetid://94595204123047",UDim2.new(0.3,0,0.7,0),UDim2.new(0.4,0,0.08,0))
-    
-    verifyBtnRef = verifyBtn
-    
-    getKeyBtn.MouseButton1Click:Connect(function()
-        local keyUrl = "https://system.heatherx.site/key/" .. _e.gethwid()
-        _e.setclipboard(keyUrl)
-        FW.showAlert("Success", "Key URL copied to clipboard!", 3)
-    end)
-    
-    return ksp
-end
-
-function FW.cVerifyingPage()
-    local vp = cI(g["11"],{ImageTransparency=1,ImageColor3=Color3.fromRGB(13,15,20),Image="rbxassetid://76734110237026",Size=UDim2.new(1.001,0,1,0),Visible=false,ClipsDescendants=true,BackgroundTransparency=1,Name="VerifyingPage",Position=UDim2.new(-0.001,0,0,0)})
-    
-    local title = cT(vp,{Text="Verifying Access...",TextSize=48,TextColor3=Color3.fromRGB(255,200,100),BackgroundTransparency=1,Size=UDim2.new(1,0,0.2,0),Position=UDim2.new(0,0,0.3,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    cTC(title,48)
-    
-    local status = cT(vp,{Text="Please wait...",TextSize=24,TextColor3=Color3.fromRGB(200,200,200),BackgroundTransparency=1,Size=UDim2.new(1,0,0.1,0),Position=UDim2.new(0,0,0.5,0),TextScaled=true,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
-    cTC(status,24)
-    
-    return vp
-end
-
 function FW.updLines(src,ln)
     if src and src.Text then
         local lines = src.Text:split("\n")
         local txt = ""
-        for i=1,#lines do 
+        for i=1,#lines do
             txt = txt..tostring(i)
-            if i<#lines then 
+            if i<#lines then
                 txt = txt.."\n"
-            end 
+            end
         end
-        if ln then 
-            ln.Text = txt 
+        if ln then
+            ln.Text = txt
         end
     end
 end
-
 function FW.cTab(ts,nm,cont)
     local td = {name=nm or "Tab "..tabCnt,content=cont or "-- New Tab\nprint('Hello from "..(nm or "Tab "..tabCnt).."!')",id=tabCnt}
-    
     local tabFrame = cF(ts,{BackgroundColor3=Color3.fromRGB(20,25,32),Size=UDim2.new(0,140,0.7,0),Position=UDim2.new(0,0,0.15,0),Name="TabFrame"..td.id})
     cC(tabFrame,0.2)
     cS(tabFrame,1,Color3.fromRGB(35,39,54))
     cG(tabFrame,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
-    
     local tb = cB(tabFrame,{BackgroundTransparency=1,Size=UDim2.new(0.8,0,1,0),Position=UDim2.new(0,0,0,0),Text=td.name,TextColor3=Color3.fromRGB(29,29,38),TextSize=16,Name="TabBtn"..td.id,TextScaled=true,ZIndex=2,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     cTC(tb,16)
-    
     local cb = cF(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,18,0,18),Position=UDim2.new(1,-22,0,4),Name="CloseFrame",ZIndex=3})
     cC(cb,0.4)
     cG(cb,Color3.fromRGB(200,100,100),Color3.fromRGB(150,50,50))
-    
     local closeBtn = cB(cb,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=14,Name="CloseBtn",ZIndex=4,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     cTC(closeBtn,14)
-    
     td.button = tb
     td.closeButton = closeBtn
     td.frame = tabFrame
     tabs[td.id] = td
-    
     tb.MouseButton1Click:Connect(function()
         FW.switchTab(td.id)
     end)
-    
     closeBtn.MouseButton1Click:Connect(function()
         FW.closeTab(td.id,ts)
     end)
-    
     ts.CanvasSize = UDim2.new(0,ts.UIListLayout.AbsoluteContentSize.X,0,0)
     tabCnt = tabCnt+1
     FW.saveTabs()
     return td.id,tb,closeBtn
 end
-
 function FW.switchTab(tid)
     if tabs[tid] then
-        if tabs[curTab] and srcRef then 
-            tabs[curTab].content = srcRef.Text 
+        if tabs[curTab] and srcRef then
+            tabs[curTab].content = srcRef.Text
         end
-        
         for _,tab in pairs(tabs) do
             if tab.frame then
                 tab.frame.BackgroundColor3 = Color3.fromRGB(20,25,32)
@@ -884,11 +691,9 @@ function FW.switchTab(tid)
                 if tab.button then
                     tab.button.TextColor3 = Color3.fromRGB(255,255,255)
                 end
-            end 
+            end
         end
-        
         curTab = tid
-        
         if tabs[tid].frame then
             tabs[tid].frame.BackgroundColor3 = Color3.fromRGB(30,36,51)
             cG(tabs[tid].frame,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
@@ -896,50 +701,42 @@ function FW.switchTab(tid)
                 tabs[tid].button.TextColor3 = Color3.fromRGB(29,29,38)
             end
         end
-        
-        if srcRef then 
+        if srcRef then
             srcRef.Text = tabs[tid].content
             FW.updLines(srcRef,lnRef)
         end
-        
         FW.saveTabs()
         return true
     end
     return false
 end
-
 function FW.closeTab(tid,ts)
     local cnt = 0
-    for _ in pairs(tabs) do 
-        cnt = cnt+1 
+    for _ in pairs(tabs) do
+        cnt = cnt+1
     end
-    
-    if cnt <= 1 then 
+    if cnt <= 1 then
         FW.showAlert("Info", "Cannot close last tab!", 2)
         return false
     end
-    
     if tabs[tid] then
-        if tabs[tid].frame then 
+        if tabs[tid].frame then
             tabs[tid].frame:Destroy()
         end
         tabs[tid] = nil
-        
-        if curTab == tid then 
+        if curTab == tid then
             for id,_ in pairs(tabs) do
                 curTab = id
                 FW.switchTab(id)
-                break 
-            end 
+                break
+            end
         end
-        
         ts.CanvasSize = UDim2.new(0,ts.UIListLayout.AbsoluteContentSize.X,0,0)
         FW.saveTabs()
         return true
     end
     return false
 end
-
 function FW.showAlert(title,msg,dur)
     local alert = g["7"]:Clone()
     local alerts = g["6"]:FindFirstChild("Alerts")
@@ -949,7 +746,6 @@ function FW.showAlert(title,msg,dur)
         alert.Name = "Alert_"..tick()
         alert:FindFirstChild("MSG").Text = msg
         alert:FindFirstChild("TextLabel").Text = title
-        
         if getgenv()._FW_DISABLE_ANIMATIONS then
             alert.Position = UDim2.new(0.398,0,0.074,0)
             spawn(function()
@@ -959,7 +755,6 @@ function FW.showAlert(title,msg,dur)
         else
             local tw = ts:Create(alert,TweenInfo.new(0.5,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.new(0.398,0,0.074,0)})
             tw:Play()
-            
             spawn(function()
                 wait(dur or 3)
                 local fo = ts:Create(alert,TweenInfo.new(0.3,Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position=UDim2.new(0.398,0,-0.3,0)})
@@ -971,56 +766,46 @@ function FW.showAlert(title,msg,dur)
         end
     end
 end
-
 function FW.switchPage(pn,sb)
     if isAnimating then
         return
     end
-    
     local currentPage = nil
     local targetPage = nil
-    
-    for _,pg in pairs(g["11"]:GetChildren()) do 
-        if pg:IsA("ImageLabel") then 
+    for _,pg in pairs(g["11"]:GetChildren()) do
+        if pg:IsA("ImageLabel") then
             if pg.Visible then
                 currentPage = pg
             end
             if pg.Name == pn.."Page" then
                 targetPage = pg
             end
-        end 
+        end
     end
-    
     if currentPage == targetPage then
         return
     end
-    
     for _,btn in pairs(sb:GetChildren()) do
         if btn:IsA("Frame") and btn.Name~="UpBtn" and btn.Name~="ProgressFrame" then
             btn.BackgroundTransparency = 1
             local box = btn:FindFirstChild("Box")
-            if box then 
+            if box then
                 cG(box,Color3.fromRGB(66,79,113),Color3.fromRGB(36,44,63))
             end
         end
     end
-    
     local sbb = sb:FindFirstChild(pn)
     if sbb then
         sbb.BackgroundTransparency = 0
         local box = sbb:FindFirstChild("Box")
-        if box then 
+        if box then
             cG(box,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))
         end
     end
-    
     currentPageName = pn
-    
     FW.animatePageTransition(currentPage, targetPage, function()
-        
-    end)
+            end)
 end
-
 function FW.restoreTabs(ts)
     if FW.loadTabs() then
         for id, tab in pairs(tabs) do
@@ -1029,25 +814,19 @@ function FW.restoreTabs(ts)
                 cC(tabFrame,0.2)
                 cS(tabFrame,1,Color3.fromRGB(35,39,54))
                 cG(tabFrame,Color3.fromRGB(66,79,113),Color3.fromRGB(36,44,63))
-                
                 local tb = cB(tabFrame,{BackgroundTransparency=1,Size=UDim2.new(0.8,0,1,0),Position=UDim2.new(0,0,0,0),Text=tab.name,TextColor3=Color3.fromRGB(255,255,255),TextSize=16,Name="TabBtn"..id,TextScaled=true,ZIndex=2,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
                 cTC(tb,16)
-                
                 local cb = cF(tabFrame,{BackgroundColor3=Color3.fromRGB(200,100,100),Size=UDim2.new(0,18,0,18),Position=UDim2.new(1,-22,0,4),Name="CloseFrame",ZIndex=3})
                 cC(cb,0.4)
                 cG(cb,Color3.fromRGB(200,100,100),Color3.fromRGB(150,50,50))
-                
                 local closeBtn = cB(cb,{BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),Text="×",TextColor3=Color3.fromRGB(255,255,255),TextSize=14,Name="CloseBtn",ZIndex=4,FontFace=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
                 cTC(closeBtn,14)
-                
                 tabs[id].button = tb
                 tabs[id].closeButton = closeBtn
                 tabs[id].frame = tabFrame
-                
                 tb.MouseButton1Click:Connect(function()
                     FW.switchTab(id)
                 end)
-                
                 closeBtn.MouseButton1Click:Connect(function()
                     FW.closeTab(id,ts)
                 end)
@@ -1058,52 +837,40 @@ function FW.restoreTabs(ts)
     end
     return false
 end
-
 function FW.getUI()
     return g
 end
-
 function FW.getCurTab()
     return curTab
 end
-
 function FW.getTabs()
     return tabs
 end
-
 function FW.show()
     FW.animateInterfaceOpen()
 end
-
 function FW.hide()
     FW.animateInterfaceClose()
 end
-
 function FW.initializeWithAccess()
     hasAccess = true
     getgenv()._FW_ACCESS_GRANTED = true
-    
     local sb, upClk, edClk, coClk, exClk, slide = FW.cSidebar()
-    
     spawn(function()
         if not getgenv()._FW_DISABLE_ANIMATIONS then
             wait(0.5)
         end
         local ed, src, ln, ts, addTab, execBtn, clrBtn, pstBtn, execClpBtn = FW.cEditor()
-        
         if not getgenv()._FW_DISABLE_ANIMATIONS then
             wait(0.5)
         end
         local cop = FW.cConsolePage()
-        
         if not getgenv()._FW_DISABLE_ANIMATIONS then
             wait(0.5)
         end
         local exp = FW.cExtraPage()
-        
         local function setupEditor()
             local tabsRestored = FW.restoreTabs(ts)
-            
             if not tabsRestored then
                 local mainTab = FW.cTab(ts, "Main", "-- FrostWare V2 Editor\nprint('Hello World!')")
                 FW.switchTab(mainTab)
@@ -1111,9 +878,7 @@ function FW.initializeWithAccess()
                 local curTab = FW.getCurTab()
                 FW.switchTab(curTab)
             end
-            
             FW.updLines(src, ln)
-            
             src:GetPropertyChangedSignal("Text"):Connect(function()
                 FW.updLines(src, ln)
                 local curTab = FW.getCurTab()
@@ -1126,13 +891,11 @@ function FW.initializeWithAccess()
                     end)
                 end
             end)
-            
             addTab.MouseButton1Click:Connect(function()
                 local newId, tabBtn, closeBtn = FW.cTab(ts, "New Tab", "-- New Tab\nprint('Hello!')")
                 FW.switchTab(newId)
             end)
         end
-        
         local function setupButtons()
             execBtn.MouseButton1Click:Connect(function()
                 local code = src.Text
@@ -1154,7 +917,6 @@ function FW.initializeWithAccess()
                     editorExecuting = false
                 end
             end)
-            
             clrBtn.MouseButton1Click:Connect(function()
                 src.Text = ""
                 local curTab = FW.getCurTab()
@@ -1165,7 +927,6 @@ function FW.initializeWithAccess()
                 FW.updLines(src, ln)
                 FW.saveTabs()
             end)
-            
             pstBtn.MouseButton1Click:Connect(function()
                 local clipboard = _e.getclipboard()
                 if clipboard ~= "" then
@@ -1179,7 +940,6 @@ function FW.initializeWithAccess()
                     FW.saveTabs()
                 end
             end)
-            
             execClpBtn.MouseButton1Click:Connect(function()
                 local clipboard = _e.getclipboard()
                 if clipboard ~= "" then
@@ -1201,31 +961,24 @@ function FW.initializeWithAccess()
                 end
             end)
         end
-        
         local function setupNavigation()
             edClk.MouseButton1Click:Connect(function()
                 FW.switchPage("Editor", sb)
             end)
-            
             coClk.MouseButton1Click:Connect(function()
                 FW.switchPage("Console", sb)
             end)
-            
             exClk.MouseButton1Click:Connect(function()
                 FW.switchPage("Extra", sb)
             end)
-            
             slide.MouseButton1Click:Connect(function()
                 FW.hide()
             end)
         end
-        
         setupEditor()
         setupButtons()
         setupNavigation()
-        
         FW.switchPage("Editor", sb)
-        
         spawn(function()
             if not getgenv()._FW_DISABLE_ANIMATIONS then
                 wait(1)
@@ -1236,11 +989,9 @@ function FW.initializeWithAccess()
         end)
     end)
 end
-
 oldPrint = print
 oldWarn = warn
 oldError = error
-
 print = function(...)
     local args = {...}
     local msg = ""
@@ -1253,7 +1004,6 @@ print = function(...)
     end
     oldPrint(...)
 end
-
 warn = function(...)
     local args = {...}
     local msg = ""
@@ -1266,7 +1016,6 @@ warn = function(...)
     end
     oldWarn(...)
 end
-
 error = function(...)
     local args = {...}
     local msg = ""
@@ -1279,7 +1028,6 @@ error = function(...)
     end
     oldError(...)
 end
-
 ls.MessageOut:Connect(function(message, messageType)
     if not editorExecuting then
         if messageType == Enum.MessageType.MessageError then
@@ -1293,61 +1041,20 @@ ls.MessageOut:Connect(function(message, messageType)
         end
     end
 end)
-
 local function initializeFrostWare()
     local ui, openClk = FW.cBaseUI()
-    
     spawn(function()
         while wait(1) do
             FW.updateTime()
         end
     end)
-    
     FW.show()
-    
-    if FW.checkAccess() then
-        local vp = FW.cVerifyingPage()
-        vp.Visible = true
-        
-        spawn(function()
-            if not getgenv()._FW_DISABLE_ANIMATIONS then
-                wait(2)
-            end
-            vp.Visible = false
-            FW.initializeWithAccess()
-        end)
-    else
-        local ksp = FW.cKeySystemPage()
-        ksp.Visible = true
-        
-        if verifyBtnRef then
-            verifyBtnRef.MouseButton1Click:Connect(function()
-                if FW.checkAccess() then
-                    ksp.Visible = false
-                    local vp = FW.cVerifyingPage()
-                    vp.Visible = true
-                    
-                    spawn(function()
-                        if not getgenv()._FW_DISABLE_ANIMATIONS then
-                            wait(2)
-                        end
-                        vp.Visible = false
-                        FW.initializeWithAccess()
-                    end)
-                else
-                    FW.showAlert("Error", "Access still not granted. Please complete the key process.", 3)
-                end
-            end)
-        end
-    end
-    
+    FW.initializeWithAccess()
     openClk.MouseButton1Click:Connect(function()
         FW.show()
     end)
 end
-
 initializeFrostWare()
-
 getgenv()._G = nil
 getgenv()._FW = FW
 return FW
