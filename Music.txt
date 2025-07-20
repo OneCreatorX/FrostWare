@@ -1,1 +1,6 @@
-https://cdnn.heatherx.site/audios/Imagine_Dragons_-_Believer.mp3 | Believer
+[
+  {
+    "url": "https://cdnn.heatherx.site/audios/Imagine_Dragons_-_Believer.mp3",
+    "name": "Believer"
+  }
+]
