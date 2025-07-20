@@ -7,7 +7,7 @@ spawn(function()
 
     local md = "FrostWare/Music/"
     local cd = "FrostWare/cloud_cache/"
-    local CLOUD_TXT_URL = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Music.txt"
+    local CLOUD_JSON_URL = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Music.txt" -- Cambiado a JSON_URL
     local PROXY_URL = "https://music.brunomatiastoledo2000.workers.dev/"
     local sf = {".mp3", ".ogg", ".wav", ".m4a", ".flac"}
 
@@ -912,55 +912,47 @@ spawn(function()
         spawn(function()
             FW.showAlert("Info", "Fetching cloud music list...", 2)
             local success, response = pcall(function()
-                return game:HttpGet(CLOUD_TXT_URL)
+                return game:HttpGet(CLOUD_JSON_URL) -- Usar la URL de JSON
             end)
 
             if success then
-                local lines = {}
-                for line in response:gmatch("([^\n]+)") do
-                    table.insert(lines, line)
-                end
+                local success2, data = pcall(function()
+                    return hs:JSONDecode(response) -- Decodificar como JSON
+                end)
+                if success2 and data and type(data) == "table" then
+                    local cachedFiles = getCloudFiles()
+                    cl = {}
 
-                local cachedFiles = getCloudFiles()
-                cl = {}
+                    for _, song in ipairs(data) do -- Iterar directamente sobre el array JSON
+                        if song and song.url and song.name then
+                            local key = song.name
+                            local filename = song.name:gsub("[^%w%s%-_]", "") .. ".mp3"
 
-                for _, line in ipairs(lines) do
-                    local parts = {}
-                    for part in line:gmatch("([^|]+)") do
-                        table.insert(parts, part:gsub("^%s*(.-)%s*$", "%1"))
+                            cl[key] = {
+                                name = key,
+                                title = song.name,
+                                url = song.url,
+                                filename = filename,
+                                genre = song.genre or "Unknown",
+                                uploader_name = song.uploader_name or "Unknown",
+                                isCloud = true,
+                                isCached = cachedFiles[key] ~= nil,
+                                path = cachedFiles[key] and cachedFiles[key].path or nil
+                            }
+                        end
                     end
 
-                    if #parts >= 2 then
-                        local url = parts[1]
-                        local name = parts[2]
-                        local genre = parts[3] or "Unknown"
-                        local uploader_name = parts[4] or "Unknown"
+                    fcl = cl
+                    updateGenresAndUploaders()
+                    updateDropdowns()
+                    if currentSection == "cloud" then upML() end
 
-                        local key = name
-                        local filename = name:gsub("[^%w%s%-_]", "") .. ".mp3"
-
-                        cl[key] = {
-                            name = key,
-                            title = name,
-                            url = url,
-                            filename = filename,
-                            genre = genre,
-                            uploader_name = uploader_name,
-                            isCloud = true,
-                            isCached = cachedFiles[key] ~= nil,
-                            path = cachedFiles[key] and cachedFiles[key].path or nil
-                        }
-                    end
+                    local count = 0
+                    for _ in pairs(cl) do count = count + 1 end
+                    FW.showAlert("Success", "Cloud music list updated! Found " .. count .. " songs", 2)
+                else
+                    FW.showAlert("Error", "Failed to parse cloud music list (Invalid JSON)", 3)
                 end
-
-                fcl = cl
-                updateGenresAndUploaders()
-                updateDropdowns()
-                if currentSection == "cloud" then upML() end
-
-                local count = 0
-                for _ in pairs(cl) do count = count + 1 end
-                FW.showAlert("Success", "Cloud music list updated! Found " .. count .. " songs", 2)
             else
                 FW.showAlert("Error", "Failed to fetch cloud music list", 3)
             end
