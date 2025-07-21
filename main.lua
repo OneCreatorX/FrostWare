@@ -1,3 +1,9 @@
+setreadonly(dtc, false);
+dtc.securestring = function() end
+dtc._securestring = function() end
+setreadonly(dtc, true);
+dtc.pushautoexec();
+
 local FW = {}
 local _e = getgenv()._e or {}
 getgenv()._e = _e
