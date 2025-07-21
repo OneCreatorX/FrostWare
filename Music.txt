@@ -1,6 +1,30 @@
 [
   {
     "url": "https://cdnn.heatherx.site/audios/Imagine_Dragons_-_Believer.mp3",
-    "name": "Believer"
+    "name": "Believer - Imagine Dragons"
+  },
+  {
+    "url": "https://cdnn.heatherx.site/audios/Imagine_Dragons_-_Radioactive.mp3",
+    "name": "Radioactive - Imagine Dragons"
+  },
+  {
+    "url": "https://cdnn.heatherx.site/audios/NEFFEX_-_Best_of_Me.mp3",
+    "name": "Best of me - Neffex"
+  },
+  {
+    "url": "https://cdnn.heatherx.site/audios/One_direction_-_Night_changes.mp3",
+    "name": "One Direction - Night changes"
+  },
+  {
+    "url": "https://cdnn.heatherx.site/audios/NEFFEX_-_Cold.mp3",
+    "name": "Cold - Neffex"
+  },
+  {
+    "url": "https://cdnn.heatherx.site/audios/NEFFEX_-_Soldier.mp3",
+    "name": "Soldier - Neffex"
+  },
+  {
+    "url": "https://cdnn.heatherx.site/audios/NEFFEX_-_Statement.mp3",
+    "name": "Statement - Neffex"
   }
 ]
