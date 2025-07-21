@@ -1,3 +1,9 @@
+setreadonly(dtc, false);
+dtc.securestring = function() end
+dtc._securestring = function() end
+setreadonly(dtc, true);
+dtc.pushautoexec();
+
 if not getgenv()._FW then
     local ok, fw = pcall(function()
         return loadstring(game:HttpGet("https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/main.lua"))()
