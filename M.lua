@@ -6,7 +6,7 @@ local ts = game:GetService("TweenService")
 local rs = game:GetService("RunService")
 local md = "FrostWare/Music/"
 local cd = "FrostWare/cloud_cache/"
-local CLOUD_TXT_URL = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Music.txt"
+local CLOUD_JSON_URL = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Music.txt"
 local PROXY_URL = "https://music.brunomatiastoledo2000.workers.dev/"
 local sf = {".mp3", ".ogg", ".wav", ".m4a", ".flac"}
 local cp, cv, cm = nil, 0.5, nil
@@ -62,7 +62,7 @@ local function cUI(p, t, pr)
             Position = props.Position,
             Name = (props.Name or "Button") .. "_Outer"
         })
-        FW.cC(of, 0.18)
+        FW.cC(of, 8)
         local btn = FW.cB(of, {
             BackgroundColor3 = props.BackgroundColor3 or Color3.fromRGB(50, 130, 210),
             Size = UDim2.new(1, -4, 1, -4),
@@ -73,7 +73,7 @@ local function cUI(p, t, pr)
             FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
             Name = props.Name or "Button"
         })
-        FW.cC(btn, 0.15)
+        FW.cC(btn, 6)
         FW.cTC(btn, props.TextSize or 14)
         return btn, of
     elseif t == "input" then
@@ -83,20 +83,21 @@ local function cUI(p, t, pr)
             Position = props.Position,
             Name = (props.Name or "Input") .. "_Outer"
         })
-        FW.cC(of, 0.18)
-        local inp = FW.cTB(of, {
-            BackgroundColor3 = Color3.fromRGB(35, 40, 50),
-            Size = UDim2.new(1, -8, 1, -8),
-            Position = UDim2.new(0, 4, 0, 4),
-            PlaceholderText = props.PlaceholderText or "",
-            PlaceholderColor3 = Color3.fromRGB(120, 130, 150),
-            Text = props.Text or "",
-            TextSize = props.TextSize or 16,
-            TextColor3 = Color3.fromRGB(240, 245, 255),
-            FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-            Name = props.Name or "Input"
-        })
-        FW.cC(inp, 0.15)
+        FW.cC(of, 8)
+        local inp = Instance.new("TextBox")
+        inp.Parent = of
+        inp.BackgroundColor3 = Color3.fromRGB(35, 40, 50)
+        inp.Size = UDim2.new(1, -8, 1, -8)
+        inp.Position = UDim2.new(0, 4, 0, 4)
+        inp.PlaceholderText = props.PlaceholderText or ""
+        inp.PlaceholderColor3 = Color3.fromRGB(120, 130, 150)
+        inp.Text = props.Text or ""
+        inp.TextSize = props.TextSize or 16
+        inp.TextColor3 = Color3.fromRGB(240, 245, 255)
+        inp.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+        inp.Name = props.Name or "Input"
+        inp.ClearTextOnFocus = false
+        FW.cC(inp, 6)
         FW.cTC(inp, props.TextSize or 16)
         return inp, of
     elseif t == "container" then
@@ -106,14 +107,14 @@ local function cUI(p, t, pr)
             Position = props.Position,
             Name = (props.Name or "Container") .. "_Outer"
         })
-        FW.cC(of, 0.18)
+        FW.cC(of, 8)
         local cont = FW.cF(of, {
             BackgroundColor3 = props.BackgroundColor3 or Color3.fromRGB(20, 25, 35),
             Size = UDim2.new(1, -8, 1, -8),
             Position = UDim2.new(0, 4, 0, 4),
             Name = props.Name or "Container"
         })
-        FW.cC(cont, 0.15)
+        FW.cC(cont, 6)
         return cont, of
     elseif t == "slider" then
         local sf = FW.cF(p, {
@@ -122,14 +123,12 @@ local function cUI(p, t, pr)
             Position = props.Position,
             Name = (props.Name or "Slider") .. "_Track"
         })
-        FW.cC(sf, 0.1)
         local sh = FW.cF(sf, {
             BackgroundColor3 = Color3.fromRGB(166, 190, 255),
             Size = UDim2.new(props.Value or 0.5, 0, 1, 0),
             Position = UDim2.new(0, 0, 0, 0),
             Name = (props.Name or "Slider") .. "_Handle"
         })
-        FW.cC(sh, 0.1)
         FW.cG(sh, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
         local sb = FW.cB(sf, {
             BackgroundTransparency = 1,
@@ -147,7 +146,7 @@ local function cUI(p, t, pr)
             Name = (props.Name or "Dropdown") .. "_Frame",
             ZIndex = props.ZIndex or 1
         })
-        FW.cC(df, 0.18)
+        FW.cC(df, 8)
         local db = FW.cB(df, {
             BackgroundColor3 = Color3.fromRGB(35, 40, 50),
             Size = UDim2.new(1, -4, 1, -4),
@@ -159,20 +158,20 @@ local function cUI(p, t, pr)
             Name = props.Name or "Dropdown",
             ZIndex = props.ZIndex or 1
         })
-        FW.cC(db, 0.15)
+        FW.cC(db, 6)
         FW.cTC(db, props.TextSize or 14)
-        local dl = FW.cSF(p, {
-            BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-            Size = UDim2.new(0, 200, 0, 150),
-            Position = UDim2.new(0, 0, 0, 0),
-            ScrollBarThickness = 6,
-            CanvasSize = UDim2.new(0, 0, 0, 0),
-            Visible = false,
-            ZIndex = 200,
-            Name = (props.Name or "Dropdown") .. "_List"
-        })
-        FW.cC(dl, 0.15)
-        FW.cS(dl, 2, Color3.fromRGB(50, 130, 210))
+        local dl = Instance.new("ScrollingFrame")
+        dl.Parent = p
+        dl.BackgroundColor3 = Color3.fromRGB(25, 30, 40)
+        dl.Size = UDim2.new(0, 200, 0, 150)
+        dl.Position = UDim2.new(0, 0, 0, 0)
+        dl.ScrollBarThickness = 6
+        dl.CanvasSize = UDim2.new(0, 0, 0, 0)
+        dl.Visible = false
+        dl.ZIndex = 200
+        dl.Name = (props.Name or "Dropdown") .. "_List"
+        dl.ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210)
+        FW.cC(dl, 6)
         return df, db, dl
     end
 end
@@ -199,7 +198,7 @@ local function showDownloadProgress(filename, progress, downloadedSize, totalSiz
             ZIndex = 100,
             Name = "DownloadProgressFrame"
         })
-        FW.cC(downloadProgressFrame, 0.18)
+        FW.cC(downloadProgressFrame, 8)
         
         cUI(downloadProgressFrame, "text", {
             Text = "Downloading: " .. filename,
@@ -216,7 +215,6 @@ local function showDownloadProgress(filename, progress, downloadedSize, totalSiz
             Position = UDim2.new(0.05, 0, 0.45, 0),
             Name = "ProgressBarFrame"
         })
-        FW.cC(progressFrame, 0.1)
         
         downloadProgressBar = FW.cF(progressFrame, {
             BackgroundColor3 = Color3.fromRGB(0, 170, 90),
@@ -224,7 +222,6 @@ local function showDownloadProgress(filename, progress, downloadedSize, totalSiz
             Position = UDim2.new(0, 0, 0, 0),
             Name = "ProgressBar"
         })
-        FW.cC(downloadProgressBar, 0.1)
         
         downloadProgressLabel = cUI(progressFrame, "text", {
             Text = "0%",
@@ -311,7 +308,6 @@ for i = 1, 20 do
         Position = UDim2.new((i-1) * 0.05, 0, 0.9, 0),
         Name = "Bar" .. i
     })
-    FW.cC(bar, 0.1)
     FW.cG(bar, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
     vbars[i] = bar
 end
@@ -346,7 +342,6 @@ local pf = FW.cF(vcf, {
     Position = UDim2.new(0.05, 0, 0.6, 0),
     Name = "ProgressFrame"
 })
-FW.cC(pf, 0.1)
 
 local pb = FW.cF(pf, {
     BackgroundColor3 = Color3.fromRGB(166, 190, 255),
@@ -354,7 +349,6 @@ local pb = FW.cF(pf, {
     Position = UDim2.new(0, 0, 0, 0),
     Name = "ProgressBar"
 })
-FW.cC(pb, 0.1)
 FW.cG(pb, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
 progressBar = pb
 
@@ -523,28 +517,28 @@ local mlf, mlfo = cUI(mp, "container", {
     Name = "MusicListFrame"
 })
 
-local mls = FW.cSF(mlf, {
-    BackgroundTransparency = 1,
-    Size = UDim2.new(0.98, 0, 0.95, 0),
-    Position = UDim2.new(0.01, 0, 0.025, 0),
-    ScrollBarThickness = 8,
-    CanvasSize = UDim2.new(0, 0, 0, 0),
-    Name = "MusicListScroll",
-    ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210),
-    Visible = true
-})
+local mls = Instance.new("ScrollingFrame")
+mls.Parent = mlf
+mls.BackgroundTransparency = 1
+mls.Size = UDim2.new(0.98, 0, 0.95, 0)
+mls.Position = UDim2.new(0.01, 0, 0.025, 0)
+mls.ScrollBarThickness = 8
+mls.CanvasSize = UDim2.new(0, 0, 0, 0)
+mls.Name = "MusicListScroll"
+mls.ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210)
+mls.Visible = true
 sr = mls
 
-local cmls = FW.cSF(mlf, {
-    BackgroundTransparency = 1,
-    Size = UDim2.new(0.98, 0, 0.95, 0),
-    Position = UDim2.new(0.01, 0, 0.025, 0),
-    ScrollBarThickness = 8,
-    CanvasSize = UDim2.new(0, 0, 0, 0),
-    Name = "CloudMusicListScroll",
-    ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210),
-    Visible = false
-})
+local cmls = Instance.new("ScrollingFrame")
+cmls.Parent = mlf
+cmls.BackgroundTransparency = 1
+cmls.Size = UDim2.new(0.98, 0, 0.95, 0)
+cmls.Position = UDim2.new(0.01, 0, 0.025, 0)
+cmls.ScrollBarThickness = 8
+cmls.CanvasSize = UDim2.new(0, 0, 0, 0)
+cmls.Name = "CloudMusicListScroll"
+cmls.ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210)
+cmls.Visible = false
 csr = cmls
 
 local function ensDir(dir)
@@ -658,7 +652,27 @@ end
 
 local function getLocalFiles()
     ensDir(md)
-    return scanLocalMusicFiles(md)
+    local allFiles = {}
+    local rootFiles = scanLocalMusicFiles(md)
+    for k, v in pairs(rootFiles) do
+        allFiles[k] = v
+    end
+    local success, directories = pcall(function()
+        return listfiles("/")
+    end)
+    if success and type(directories) == "table" then
+        for _, dirPath in ipairs(directories) do
+            if isfolder(dirPath) and dirPath ~= md and dirPath ~= cd then
+                local dirFiles = scanLocalMusicFiles(dirPath)
+                for k, v in pairs(dirFiles) do
+                    if not allFiles[k] then
+                        allFiles[k] = v
+                    end
+                end
+            end
+        end
+    end
+    return allFiles
 end
 
 local function getCloudFiles()
@@ -775,7 +789,7 @@ local function updateDropdowns()
         Name = "AllGenres",
         ZIndex = 201
     })
-    FW.cC(allGenreBtn, 0.15)
+    FW.cC(allGenreBtn, 6)
     FW.cTC(allGenreBtn, 11)
     yPos = yPos + 35
     allGenreBtn.MouseButton1Click:Connect(function()
@@ -797,7 +811,7 @@ local function updateDropdowns()
             Name = "Genre_" .. genre,
             ZIndex = 201
         })
-        FW.cC(genreBtn, 0.15)
+        FW.cC(genreBtn, 6)
         FW.cTC(genreBtn, 11)
         yPos = yPos + 35
         genreBtn.MouseButton1Click:Connect(function()
@@ -821,7 +835,7 @@ local function updateDropdowns()
         Name = "AllUsers",
         ZIndex = 201
     })
-    FW.cC(allUserBtn, 0.15)
+    FW.cC(allUserBtn, 6)
     FW.cTC(allUserBtn, 11)
     yPos = yPos + 35
     allUserBtn.MouseButton1Click:Connect(function()
@@ -843,7 +857,7 @@ local function updateDropdowns()
             Name = "User_" .. uploader,
             ZIndex = 201
         })
-        FW.cC(uploaderBtn, 0.15)
+        FW.cC(uploaderBtn, 6)
         FW.cTC(uploaderBtn, 11)
         yPos = yPos + 35
         uploaderBtn.MouseButton1Click:Connect(function()
@@ -988,47 +1002,42 @@ local function fetchCloudList()
     spawn(function()
         FW.showAlert("Info", "Fetching cloud music list...", 2)
         local success, response = pcall(function()
-            return game:HttpGet(CLOUD_TXT_URL)
+            return game:HttpGet(CLOUD_JSON_URL)
         end)
         if success then
-            local lines = {}
-            for line in response:gmatch("([^\n]+)") do
-                table.insert(lines, line)
-            end
-            local cachedFiles = getCloudFiles()
-            cl = {}
-            for _, line in ipairs(lines) do
-                local parts = {}
-                for part in line:gmatch("([^|]+)") do
-                    table.insert(parts, part:gsub("^%s*(.-)%s*$", "%1"))
+            local success2, data = pcall(function()
+                return hs:JSONDecode(response)
+            end)
+            if success2 and data and type(data) == "table" then
+                local cachedFiles = getCloudFiles()
+                cl = {}
+                for _, song in ipairs(data) do
+                    if song and song.url and song.name then
+                        local key = song.name
+                        local filename = song.name:gsub("[^%w%s%-_]", "") .. ".mp3"
+                        cl[key] = {
+                            name = key,
+                            title = song.name,
+                            url = song.url,
+                            filename = filename,
+                            genre = song.genre or "Unknown",
+                            uploader_name = song.uploader_name or "Unknown",
+                            isCloud = true,
+                            isCached = cachedFiles[key] ~= nil,
+                            path = cachedFiles[key] and cachedFiles[key].path or nil
+                        }
+                    end
                 end
-                if #parts >= 2 then
-                    local url = parts[1]
-                    local name = parts[2]
-                    local genre = parts[3] or "Unknown"
-                    local uploader_name = parts[4] or "Unknown"
-                    local key = name
-                    local filename = name:gsub("[^%w%s%-_]", "") .. ".mp3"
-                    cl[key] = {
-                        name = key,
-                        title = name,
-                        url = url,
-                        filename = filename,
-                        genre = genre,
-                        uploader_name = uploader_name,
-                        isCloud = true,
-                        isCached = cachedFiles[key] ~= nil,
-                        path = cachedFiles[key] and cachedFiles[key].path or nil
-                    }
-                end
+                fcl = cl
+                updateGenresAndUploaders()
+                updateDropdowns()
+                if currentSection == "cloud" then upML() end
+                local count = 0
+                for _ in pairs(cl) do count = count + 1 end
+                FW.showAlert("Success", "Cloud music list updated! Found " .. count .. " songs", 2)
+            else
+                FW.showAlert("Error", "Failed to parse cloud music list (Invalid JSON)", 3)
             end
-            fcl = cl
-            updateGenresAndUploaders()
-            updateDropdowns()
-            if currentSection == "cloud" then upML() end
-            local count = 0
-            for _ in pairs(cl) do count = count + 1 end
-            FW.showAlert("Success", "Cloud music list updated! Found " .. count .. " songs", 2)
         else
             FW.showAlert("Error", "Failed to fetch cloud music list", 3)
         end
@@ -1232,8 +1241,7 @@ function upML()
                 Position = UDim2.new(0.01, 0, 0, yp),
                 Name = "MusicCard_" .. idx
             })
-            FW.cC(mc, 0.15)
-            FW.cS(mc, 1, Color3.fromRGB(35, 39, 54))
+            FW.cC(mc, 6)
             if cp == nm then
                 FW.cG(mc, Color3.fromRGB(50, 130, 210), Color3.fromRGB(30, 80, 150))
                 local glow = FW.cF(mc, {
@@ -1244,7 +1252,7 @@ function upML()
                     ZIndex = -1,
                     Name = "Glow"
                 })
-                FW.cC(glow, 0.15)
+                FW.cC(glow, 6)
             end
             local ico = FW.cF(mc, {
                 BackgroundColor3 = Color3.fromRGB(166, 190, 255),
@@ -1252,7 +1260,7 @@ function upML()
                 Position = UDim2.new(0, 10, 0, 10),
                 Name = "MusicIcon"
             })
-            FW.cC(ico, 0.3)
+            FW.cC(ico, 15)
             FW.cG(ico, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
             cUI(ico, "text", {
                 Text = cp == nm and (cm and cm.IsPlaying and "♪" or "⏸") or (currentSection == "cloud" and "☁" or "♫"),
@@ -1322,8 +1330,6 @@ function upML()
                 Name = "PlayBtn"
             })
             local stb, sto = cUI(mc, "button", {
-                BackgroundColor3 = Color3.fromRGB(100, 100, 200),
-                Size = UDim2.new(0.13, 0, 
                 BackgroundColor3 = Color3.fromRGB(100, 100, 200),
                 Size = UDim2.new(0.13, 0, 0.4, 0),
                 Position = UDim2.new(0.63, 0, 0.55, 0),
@@ -1501,7 +1507,7 @@ if sb then
             Name = nm,
             BackgroundTransparency = sel and 0 or 1
         })
-        FW.cC(btn, 0.15)
+        FW.cC(btn, 12)
         local box = FW.cF(btn, {
             ZIndex = sel and 2 or 0,
             BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -1509,7 +1515,7 @@ if sb then
             Position = UDim2.new(0.08, 0, 0.2, 0),
             Name = "Box"
         })
-        FW.cC(box, 0.2)
+        FW.cC(box, 8)
         FW.cAR(box, 1)
         if sel then
             FW.cG(box, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
