@@ -4,11 +4,13 @@ spawn(function()
     local hs = game:GetService("HttpService")
     local ts = game:GetService("TweenService")
     local rs = game:GetService("RunService")
+
     local md = "FrostWare/Music/"
     local cd = "FrostWare/cloud_cache/"
-    local CLOUD_JSON_URL = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Music.txt"
+    local CLOUD_TXT_URL = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Music.txt"
     local PROXY_URL = "https://music.brunomatiastoledo2000.workers.dev/"
     local sf = {".mp3", ".ogg", ".wav", ".m4a", ".flac"}
+
     local cp, cv, cm = nil, 0.5, nil
     local ml, cl, fl, fcl = {}, {}, {}, {}
     local sr, csr = nil, nil
@@ -22,7 +24,6 @@ spawn(function()
     local currentGenreFilter = ""
     local currentUploaderFilter = ""
     local searchInput = nil
-    local cloudProgressBar, cloudProgressLabel, cloudProgressFrame = nil, nil, nil
 
     local mp = FW.cI(FW.getUI()["11"], {
         ImageTransparency = 1,
@@ -60,7 +61,8 @@ spawn(function()
                 Position = props.Position,
                 Name = (props.Name or "Button") .. "_Outer"
             })
-            FW.cC(of, 8)
+            FW.cC(of, 0.18)
+
             local btn = FW.cB(of, {
                 BackgroundColor3 = props.BackgroundColor3 or Color3.fromRGB(50, 130, 210),
                 Size = UDim2.new(1, -4, 1, -4),
@@ -71,7 +73,7 @@ spawn(function()
                 FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
                 Name = props.Name or "Button"
             })
-            FW.cC(btn, 6)
+            FW.cC(btn, 0.15)
             FW.cTC(btn, props.TextSize or 14)
             return btn, of
         elseif t == "input" then
@@ -81,21 +83,21 @@ spawn(function()
                 Position = props.Position,
                 Name = (props.Name or "Input") .. "_Outer"
             })
-            FW.cC(of, 8)
-            local inp = Instance.new("TextBox")
-            inp.Parent = of
-            inp.BackgroundColor3 = Color3.fromRGB(35, 40, 50)
-            inp.Size = UDim2.new(1, -8, 1, -8)
-            inp.Position = UDim2.new(0, 4, 0, 4)
-            inp.PlaceholderText = props.PlaceholderText or ""
-            inp.PlaceholderColor3 = Color3.fromRGB(120, 130, 150)
-            inp.Text = props.Text or ""
-            inp.TextSize = props.TextSize or 16
-            inp.TextColor3 = Color3.fromRGB(240, 245, 255)
-            inp.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
-            inp.Name = props.Name or "Input"
-            inp.ClearTextOnFocus = false
-            FW.cC(inp, 6)
+            FW.cC(of, 0.18)
+
+            local inp = FW.cTB(of, {
+                BackgroundColor3 = Color3.fromRGB(35, 40, 50),
+                Size = UDim2.new(1, -8, 1, -8),
+                Position = UDim2.new(0, 4, 0, 4),
+                PlaceholderText = props.PlaceholderText or "",
+                PlaceholderColor3 = Color3.fromRGB(120, 130, 150),
+                Text = props.Text or "",
+                TextSize = props.TextSize or 16,
+                TextColor3 = Color3.fromRGB(240, 245, 255),
+                FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+                Name = props.Name or "Input"
+            })
+            FW.cC(inp, 0.15)
             FW.cTC(inp, props.TextSize or 16)
             return inp, of
         elseif t == "container" then
@@ -105,14 +107,15 @@ spawn(function()
                 Position = props.Position,
                 Name = (props.Name or "Container") .. "_Outer"
             })
-            FW.cC(of, 8)
+            FW.cC(of, 0.18)
+
             local cont = FW.cF(of, {
                 BackgroundColor3 = props.BackgroundColor3 or Color3.fromRGB(20, 25, 35),
                 Size = UDim2.new(1, -8, 1, -8),
                 Position = UDim2.new(0, 4, 0, 4),
                 Name = props.Name or "Container"
             })
-            FW.cC(cont, 6)
+            FW.cC(cont, 0.15)
             return cont, of
         elseif t == "slider" then
             local sf = FW.cF(p, {
@@ -121,13 +124,17 @@ spawn(function()
                 Position = props.Position,
                 Name = (props.Name or "Slider") .. "_Track"
             })
+            FW.cC(sf, 0.1)
+
             local sh = FW.cF(sf, {
                 BackgroundColor3 = Color3.fromRGB(166, 190, 255),
                 Size = UDim2.new(props.Value or 0.5, 0, 1, 0),
                 Position = UDim2.new(0, 0, 0, 0),
                 Name = (props.Name or "Slider") .. "_Handle"
             })
+            FW.cC(sh, 0.1)
             FW.cG(sh, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
+
             local sb = FW.cB(sf, {
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 1, 0),
@@ -135,6 +142,7 @@ spawn(function()
                 Text = "",
                 Name = (props.Name or "Slider") .. "_Button"
             })
+
             return sf, sh, sb
         elseif t == "dropdown" then
             local df = FW.cF(p, {
@@ -144,7 +152,8 @@ spawn(function()
                 Name = (props.Name or "Dropdown") .. "_Frame",
                 ZIndex = props.ZIndex or 1
             })
-            FW.cC(df, 8)
+            FW.cC(df, 0.18)
+
             local db = FW.cB(df, {
                 BackgroundColor3 = Color3.fromRGB(35, 40, 50),
                 Size = UDim2.new(1, -4, 1, -4),
@@ -156,43 +165,23 @@ spawn(function()
                 Name = props.Name or "Dropdown",
                 ZIndex = props.ZIndex or 1
             })
-            FW.cC(db, 6)
+            FW.cC(db, 0.15)
             FW.cTC(db, props.TextSize or 14)
-            local dl = Instance.new("ScrollingFrame")
-            dl.Parent = p
-            dl.BackgroundColor3 = Color3.fromRGB(25, 30, 40)
-            dl.Size = UDim2.new(0, 200, 0, 150)
-            dl.Position = UDim2.new(0, 0, 0, 0)
-            dl.ScrollBarThickness = 6
-            dl.CanvasSize = UDim2.new(0, 0, 0, 0)
-            dl.Visible = false
-            dl.ZIndex = 200
-            dl.Name = (props.Name or "Dropdown") .. "_List"
-            FW.cC(dl, 6)
+
+            local dl = FW.cSF(p, {
+                BackgroundColor3 = Color3.fromRGB(25, 30, 40),
+                Size = UDim2.new(0, 200, 0, 150),
+                Position = UDim2.new(0, 0, 0, 0),
+                ScrollBarThickness = 6,
+                CanvasSize = UDim2.new(0, 0, 0, 0),
+                Visible = false,
+                ZIndex = 200,
+                Name = (props.Name or "Dropdown") .. "_List"
+            })
+            FW.cC(dl, 0.15)
+            FW.cS(dl, 2, Color3.fromRGB(50, 130, 210))
+
             return df, db, dl
-        end
-    end
-
-    local function fs(b)
-        if b < 1024 then
-            return string.format("%.1f B", b)
-        elseif b < 1024 * 1024 then
-            return string.format("%.1f KB", b / 1024)
-        elseif b < 1024 * 1024 * 1024 then
-            return string.format("%.1f MB", b / (1024 * 1024))
-        else
-            return string.format("%.1f GB", b / (1024 * 1024 * 1024))
-        end
-    end
-
-    local function updateCloudProgress(pr, sz, ts)
-        if cloudProgressBar and cloudProgressLabel then
-            cloudProgressBar.Size = UDim2.new(pr / 100, 0, 1, 0)
-            if sz and ts then
-                cloudProgressLabel.Text = math.floor(pr) .. "% - " .. fs(sz) .. "/" .. fs(ts)
-            else
-                cloudProgressLabel.Text = math.floor(pr) .. "%"
-            end
         end
     end
 
@@ -252,6 +241,7 @@ spawn(function()
             Position = UDim2.new((i-1) * 0.05, 0, 0.9, 0),
             Name = "Bar" .. i
         })
+        FW.cC(bar, 0.1)
         FW.cG(bar, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
         vbars[i] = bar
     end
@@ -286,6 +276,7 @@ spawn(function()
         Position = UDim2.new(0.05, 0, 0.6, 0),
         Name = "ProgressFrame"
     })
+    FW.cC(pf, 0.1)
 
     local pb = FW.cF(pf, {
         BackgroundColor3 = Color3.fromRGB(166, 190, 255),
@@ -293,6 +284,7 @@ spawn(function()
         Position = UDim2.new(0, 0, 0, 0),
         Name = "ProgressBar"
     })
+    FW.cC(pb, 0.1)
     FW.cG(pb, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
     progressBar = pb
 
@@ -454,47 +446,6 @@ spawn(function()
         Visible = false
     })
 
-    cloudProgressFrame = FW.cF(af, {
-        BackgroundColor3 = Color3.fromRGB(25, 30, 40),
-        Size = UDim2.new(0.76, 0, 0.6, 0),
-        Position = UDim2.new(0.22, 0, 0.2, 0),
-        Visible = false,
-        Name = "CloudProgressFrame"
-    })
-    FW.cC(cloudProgressFrame, 8)
-
-    cUI(cloudProgressFrame, "text", {
-        Text = "Downloading music...",
-        TextSize = 12,
-        TextColor3 = Color3.fromRGB(200, 200, 200),
-        Size = UDim2.new(1, 0, 0.4, 0),
-        Position = UDim2.new(0, 0, 0.1, 0),
-        Name = "CloudProgressText"
-    })
-
-    local cpf2 = FW.cF(cloudProgressFrame, {
-        BackgroundColor3 = Color3.fromRGB(30, 35, 45),
-        Size = UDim2.new(0.96, 0, 0.3, 0),
-        Position = UDim2.new(0.02, 0, 0.55, 0),
-        Name = "CloudProgressBarFrame"
-    })
-
-    cloudProgressBar = FW.cF(cpf2, {
-        BackgroundColor3 = Color3.fromRGB(0, 170, 90),
-        Size = UDim2.new(0, 0, 1, 0),
-        Position = UDim2.new(0, 0, 0, 0),
-        Name = "CloudProgressBar"
-    })
-
-    cloudProgressLabel = cUI(cpf2, "text", {
-        Text = "0%",
-        TextSize = 12,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        Size = UDim2.new(1, 0, 1, 0),
-        Position = UDim2.new(0, 0, 0, 0),
-        Name = "CloudProgressLabel"
-    })
-
     local mlf, mlfo = cUI(mp, "container", {
         BackgroundColor3 = Color3.fromRGB(20, 25, 35),
         Size = UDim2.new(0.95, 0, 0.58, 0),
@@ -502,28 +453,28 @@ spawn(function()
         Name = "MusicListFrame"
     })
 
-    local mls = Instance.new("ScrollingFrame")
-    mls.Parent = mlf
-    mls.BackgroundTransparency = 1
-    mls.Size = UDim2.new(0.98, 0, 0.95, 0)
-    mls.Position = UDim2.new(0.01, 0, 0.025, 0)
-    mls.ScrollBarThickness = 8
-    mls.CanvasSize = UDim2.new(0, 0, 0, 0)
-    mls.Name = "MusicListScroll"
-    mls.ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210)
-    mls.Visible = true
+    local mls = FW.cSF(mlf, {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0.98, 0, 0.95, 0),
+        Position = UDim2.new(0.01, 0, 0.025, 0),
+        ScrollBarThickness = 8,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        Name = "MusicListScroll",
+        ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210),
+        Visible = true
+    })
     sr = mls
 
-    local cmls = Instance.new("ScrollingFrame")
-    cmls.Parent = mlf
-    cmls.BackgroundTransparency = 1
-    cmls.Size = UDim2.new(0.98, 0, 0.95, 0)
-    cmls.Position = UDim2.new(0.01, 0, 0.025, 0)
-    cmls.ScrollBarThickness = 8
-    cmls.CanvasSize = UDim2.new(0, 0, 0, 0)
-    cmls.Name = "CloudMusicListScroll"
-    cmls.ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210)
-    cmls.Visible = false
+    local cmls = FW.cSF(mlf, {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0.98, 0, 0.95, 0),
+        Position = UDim2.new(0.01, 0, 0.025, 0),
+        ScrollBarThickness = 8,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        Name = "CloudMusicListScroll",
+        ScrollBarImageColor3 = Color3.fromRGB(50, 130, 210),
+        Visible = false
+    })
     csr = cmls
 
     local function ensDir(dir)
@@ -541,6 +492,7 @@ spawn(function()
     local function updateNowPlaying(trackName, status, statusColor)
         local cpt = cpf:FindFirstChild("CurrentTrack")
         local cps = cpf:FindFirstChild("PlayStatus")
+
         if cpt then
             cpt.Text = trackName or "No music selected"
         end
@@ -591,7 +543,6 @@ spawn(function()
             end
         end
     end
-
     local function safeListFiles(directory)
         local success, result = pcall(function()
             return listfiles(directory)
@@ -604,43 +555,33 @@ spawn(function()
             if isfile(filePath) then
                 local filename = filePath:match("([^/\\]+)$")
                 if filename then
-                    local ext = filename:match("%.([^%.]+)$")
-                    if ext then
-                        ext = "." .. ext:lower()
-                        for _, supportedExt in ipairs(sf) do
-                            if ext == supportedExt then
-                                local success, asset = pcall(function()
-                                    return getcustomasset(filePath)
-                                end)
-                                if success and asset then
-                                    files[filename] = {
-                                        name = filename,
-                                        path = asset,
-                                        filename = filename,
-                                        isLocal = true
-                                    }
-                                end
-                                break
-                            end
-                        end
+                    local success, asset = pcall(function()
+                        return getcustomasset(filePath)
+                    end)
+                    if success and asset then
+                        files[filename] = {
+                            name = filename,
+                            path = asset,
+                            filename = filename,
+                            isLocal = true
+                        }
                     end
                 end
             end
         end
         return files
     end
-
     local function getLocalFiles()
-        return safeListFiles(md)
+        return safeListFiles(md, { isLocal = true })
     end
-
     local function getCloudFiles()
-        return safeListFiles(cd)
+        return safeListFiles(cd, { isCloud = true, isCached = true })
     end
 
     local function updateGenresAndUploaders()
         availableGenres = {}
         availableUploaders = {}
+
         for _, song in pairs(cl) do
             if song.genre and song.genre ~= "" and song.genre ~= "Unknown" then
                 local found = false
@@ -654,6 +595,7 @@ spawn(function()
                     table.insert(availableGenres, song.genre)
                 end
             end
+
             if song.uploader_name and song.uploader_name ~= "" and song.uploader_name ~= "Unknown" then
                 local found = false
                 for _, u in pairs(availableUploaders) do
@@ -667,6 +609,7 @@ spawn(function()
                 end
             end
         end
+
         table.sort(availableGenres, function(a, b) return a:lower() < b:lower() end)
         table.sort(availableUploaders, function(a, b) return a:lower() < b:lower() end)
     end
@@ -689,11 +632,14 @@ spawn(function()
         else
             fcl = {}
             local searchQuery = qry:lower()
+
             for nm, dt in pairs(cl) do
                 local matchesSearch = qry == "" or nm:lower():find(searchQuery) or
                                      (dt.title and dt.title:lower():find(searchQuery))
+
                 local matchesGenre = currentGenreFilter == "" or (dt.genre and dt.genre:lower() == currentGenreFilter:lower())
                 local matchesUploader = currentUploaderFilter == "" or (dt.uploader_name and dt.uploader_name:lower() == currentUploaderFilter:lower())
+
                 if matchesSearch and matchesGenre and matchesUploader then
                     fcl[nm] = dt
                 end
@@ -706,6 +652,7 @@ spawn(function()
         if dropdownList and dropdownButtonFrame then
             local buttonFramePos = dropdownButtonFrame.Position
             local buttonFrameSize = dropdownButtonFrame.Size
+
             local maxHeight = 150
             local itemCount = 0
             for _, child in pairs(dropdownList:GetChildren()) do
@@ -713,11 +660,14 @@ spawn(function()
                     itemCount = itemCount + 1
                 end
             end
+
             local neededHeight = math.min(itemCount * 35 + 10, maxHeight)
+
             dropdownList.Position = UDim2.new(
                 buttonFramePos.X.Scale, buttonFramePos.X.Offset,
                 buttonFramePos.Y.Scale, buttonFramePos.Y.Offset - neededHeight - 10
             )
+
             dropdownList.Size = UDim2.new(buttonFrameSize.X.Scale, buttonFrameSize.X.Offset, 0, neededHeight)
         end
     end
@@ -729,6 +679,7 @@ spawn(function()
                 children[i]:Destroy()
             end
         end
+
         children = udl:GetChildren()
         for i = 1, #children do
             if children[i]:IsA("TextButton") then
@@ -748,9 +699,10 @@ spawn(function()
             Name = "AllGenres",
             ZIndex = 201
         })
-        FW.cC(allGenreBtn, 6)
+        FW.cC(allGenreBtn, 0.15)
         FW.cTC(allGenreBtn, 11)
         yPos = yPos + 35
+
         allGenreBtn.MouseButton1Click:Connect(function()
             currentGenreFilter = ""
             gdb.Text = "🎵 All Genres"
@@ -770,9 +722,10 @@ spawn(function()
                 Name = "Genre_" .. genre,
                 ZIndex = 201
             })
-            FW.cC(genreBtn, 6)
+            FW.cC(genreBtn, 0.15)
             FW.cTC(genreBtn, 11)
             yPos = yPos + 35
+
             genreBtn.MouseButton1Click:Connect(function()
                 currentGenreFilter = genre
                 gdb.Text = "🎵 " .. genre
@@ -780,6 +733,7 @@ spawn(function()
                 ftM(searchInput and searchInput.Text or "")
             end)
         end
+
         gdl.CanvasSize = UDim2.new(0, 0, 0, yPos)
 
         yPos = 0
@@ -794,9 +748,10 @@ spawn(function()
             Name = "AllUsers",
             ZIndex = 201
         })
-        FW.cC(allUserBtn, 6)
+        FW.cC(allUserBtn, 0.15)
         FW.cTC(allUserBtn, 11)
         yPos = yPos + 35
+
         allUserBtn.MouseButton1Click:Connect(function()
             currentUploaderFilter = ""
             udb.Text = "👤 All Users"
@@ -816,9 +771,10 @@ spawn(function()
                 Name = "User_" .. uploader,
                 ZIndex = 201
             })
-            FW.cC(uploaderBtn, 6)
+            FW.cC(uploaderBtn, 0.15)
             FW.cTC(uploaderBtn, 11)
             yPos = yPos + 35
+
             uploaderBtn.MouseButton1Click:Connect(function()
                 currentUploaderFilter = uploader
                 udb.Text = "👤 " .. uploader
@@ -826,6 +782,7 @@ spawn(function()
                 ftM(searchInput and searchInput.Text or "")
             end)
         end
+
         udl.CanvasSize = UDim2.new(0, 0, 0, yPos)
     end
 
@@ -834,27 +791,34 @@ spawn(function()
             FW.showAlert("Error", "Invalid sound path!", 3)
             return false
         end
+
         if cm then
             cm:Stop()
             cm:Destroy()
         end
+
         local snd = Instance.new("Sound")
         snd.SoundId = soundPath
         snd.Volume = cv
         snd.Parent = workspace
         snd.Looped = isLooped
+
         cm = snd
         cp = trackName
         currentPlayingIsCloud = isCloudTrack
         currentTime = 0
         totalTime = snd.TimeLength or 0
+
         updateNowPlaying("♪ " .. trackName, "🎵 Playing", Color3.fromRGB(100, 255, 100))
+
         snd:Play()
         FW.showAlert("Success", "♪ Playing: " .. trackName, 2)
         upML()
+
         if visualizer then
             stVis(visualizer)
         end
+
         spawn(function()
             while cm == snd and snd.IsPlaying do
                 currentTime = snd.TimePosition
@@ -863,6 +827,7 @@ spawn(function()
                 wait(0.5)
             end
         end)
+
         snd.Ended:Connect(function()
             if cm == snd then
                 cm = nil
@@ -875,12 +840,14 @@ spawn(function()
                 upProg()
             end
         end)
+
         return true
     end
 
     local function dlCloudFile(song, callback)
         ensDir(cd)
         local pt = cd .. song.filename
+
         if isfile(pt) then
             local success, asset = pcall(function()
                 return getcustomasset(pt)
@@ -896,52 +863,37 @@ spawn(function()
         spawn(function()
             downloadProgress[song.filename] = 0
             if callback then callback("downloading", 0) end
-            cloudProgressFrame.Visible = true
-            updateCloudProgress(0)
-            
+
             local proxyUrl = PROXY_URL .. song.url
             local success, data = pcall(function()
                 return game:HttpGet(proxyUrl)
             end)
-            
+
             if not success then
                 downloadProgress[song.filename] = nil
-                cloudProgressFrame.Visible = false
                 if callback then callback("error", 0) end
                 return
             end
 
-            local totalSize = #data
-            local chunkSize = 1024 * 100
-            local downloadedSize = 0
-            local position = 0
-            
-            while position < #data do
-                local endPos = math.min(position + chunkSize, #data)
-                local chunk = string.sub(data, position + 1, endPos)
-                downloadedSize = downloadedSize + #chunk
-                
-                local progress = (downloadedSize / totalSize) * 100
-                downloadProgress[song.filename] = progress
-                updateCloudProgress(progress, downloadedSize, totalSize)
-                if callback then callback("downloading", progress) end
-                
-                if position == 0 then
-                    writefile(pt, chunk)
-                else
-                    appendfile(pt, chunk)
-                end
-                
-                position = endPos
-                wait(0.01)
+            downloadProgress[song.filename] = 50
+            if callback then callback("downloading", 50) end
+
+            local writeSuccess = pcall(function()
+                writefile(pt, data)
+            end)
+
+            if not writeSuccess then
+                downloadProgress[song.filename] = nil
+                if callback then callback("error", 0) end
+                return
             end
 
             downloadProgress[song.filename] = 100
-            updateCloudProgress(100, totalSize, totalSize)
-            
+
             local success2, asset = pcall(function()
                 return getcustomasset(pt)
             end)
+
             if success2 and asset then
                 song.path = asset
                 song.isCached = true
@@ -949,10 +901,9 @@ spawn(function()
             else
                 if callback then callback("error", 0) end
             end
-            
+
             wait(0.5)
             downloadProgress[song.filename] = nil
-            cloudProgressFrame.Visible = false
         end)
         return "downloading"
     end
@@ -961,42 +912,55 @@ spawn(function()
         spawn(function()
             FW.showAlert("Info", "Fetching cloud music list...", 2)
             local success, response = pcall(function()
-                return game:HttpGet(CLOUD_JSON_URL)
+                return game:HttpGet(CLOUD_TXT_URL)
             end)
+
             if success then
-                local success2, data = pcall(function()
-                    return hs:JSONDecode(response)
-                end)
-                if success2 and data and type(data) == "table" then
-                    local cachedFiles = getCloudFiles()
-                    cl = {}
-                    for _, song in ipairs(data) do
-                        if song and song.url and song.name then
-                            local key = song.name
-                            local filename = song.name:gsub("[^%w%s%-_]", "") .. ".mp3"
-                            cl[key] = {
-                                name = key,
-                                title = song.name,
-                                url = song.url,
-                                filename = filename,
-                                genre = song.genre or "Unknown",
-                                uploader_name = song.uploader_name or "Unknown",
-                                isCloud = true,
-                                isCached = cachedFiles[key] ~= nil,
-                                path = cachedFiles[key] and cachedFiles[key].path or nil
-                            }
-                        end
-                    end
-                    fcl = cl
-                    updateGenresAndUploaders()
-                    updateDropdowns()
-                    if currentSection == "cloud" then upML() end
-                    local count = 0
-                    for _ in pairs(cl) do count = count + 1 end
-                    FW.showAlert("Success", "Cloud music list updated! Found " .. count .. " songs", 2)
-                else
-                    FW.showAlert("Error", "Failed to parse cloud music list (Invalid JSON)", 3)
+                local lines = {}
+                for line in response:gmatch("([^\n]+)") do
+                    table.insert(lines, line)
                 end
+
+                local cachedFiles = getCloudFiles()
+                cl = {}
+
+                for _, line in ipairs(lines) do
+                    local parts = {}
+                    for part in line:gmatch("([^|]+)") do
+                        table.insert(parts, part:gsub("^%s*(.-)%s*$", "%1"))
+                    end
+
+                    if #parts >= 2 then
+                        local url = parts[1]
+                        local name = parts[2]
+                        local genre = parts[3] or "Unknown"
+                        local uploader_name = parts[4] or "Unknown"
+
+                        local key = name
+                        local filename = name:gsub("[^%w%s%-_]", "") .. ".mp3"
+
+                        cl[key] = {
+                            name = key,
+                            title = name,
+                            url = url,
+                            filename = filename,
+                            genre = genre,
+                            uploader_name = uploader_name,
+                            isCloud = true,
+                            isCached = cachedFiles[key] ~= nil,
+                            path = cachedFiles[key] and cachedFiles[key].path or nil
+                        }
+                    end
+                end
+
+                fcl = cl
+                updateGenresAndUploaders()
+                updateDropdowns()
+                if currentSection == "cloud" then upML() end
+
+                local count = 0
+                for _ in pairs(cl) do count = count + 1 end
+                FW.showAlert("Success", "Cloud music list updated! Found " .. count .. " songs", 2)
             else
                 FW.showAlert("Error", "Failed to fetch cloud music list", 3)
             end
@@ -1015,8 +979,10 @@ spawn(function()
             FW.showAlert("Error", "Music file not found!", 2)
             return
         end
+
         if isCloud and not musicData.path then
             updateNowPlaying("⏳ Downloading: " .. nm, "📥 Downloading", Color3.fromRGB(100, 200, 255))
+
             dlCloudFile(musicData, function(status, progress, assetPath)
                 if status == "downloading" then
                     FW.showAlert("Info", "Downloading " .. nm .. " (" .. progress .. "%)", 1)
@@ -1084,8 +1050,10 @@ spawn(function()
             FW.showAlert("Error", "Music already exists!", 2)
             return false
         end
+
         local fn = nm:gsub("[^%w%s%-_]", "") .. ".mp3"
         FW.showAlert("Info", "Downloading: " .. nm, 1)
+
         spawn(function()
             local success, data = pcall(function()
                 return game:HttpGet(url)
@@ -1105,6 +1073,7 @@ spawn(function()
                 FW.showAlert("Error", "Failed to download: " .. nm, 3)
             end
         end)
+
         return true
     end
 
@@ -1136,33 +1105,39 @@ spawn(function()
         if section == "local" then
             localBtn.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
             cloudBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 150)
+
             ni.Visible = true
             nio.Visible = true
             ui.Visible = true
             uio.Visible = true
             ab.Visible = true
             abo.Visible = true
+
             sf.Visible = false
             sfo.Visible = false
             gdf.Visible = false
             udf.Visible = false
             gdl.Visible = false
             udl.Visible = false
+
             rfb.Text = "📁 SCAN"
             scb.Text = "📁 SCAN"
         else
             localBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 150)
             cloudBtn.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
+
             ni.Visible = false
             nio.Visible = false
             ui.Visible = false
             uio.Visible = false
             ab.Visible = false
             abo.Visible = false
+
             sf.Visible = true
             sfo.Visible = true
             gdf.Visible = true
             udf.Visible = true
+
             rfb.Text = "🔄 REFRESH"
             scb.Text = "🔄 REFRESH"
         end
@@ -1172,8 +1147,10 @@ spawn(function()
     function upML()
         local currentList = currentSection == "local" and fl or fcl
         local scrollFrame = currentSection == "local" and sr or csr
+
         sr.Visible = currentSection == "local"
         csr.Visible = currentSection == "cloud"
+
         if scrollFrame then
             local children = scrollFrame:GetChildren()
             for i = 1, #children do
@@ -1182,25 +1159,32 @@ spawn(function()
                     child:Destroy()
                 end
             end
+
             local yp = 0
             local idx = 0
             local sortedMusic = {}
+
             for nm, dt in pairs(currentList) do
                 table.insert(sortedMusic, {name = nm, data = dt})
             end
+
             table.sort(sortedMusic, function(a, b) return a.name:lower() < b.name:lower() end)
+
             for i = 1, #sortedMusic do
                 local entry = sortedMusic[i]
                 local nm = entry.name
                 local dt = entry.data
                 idx = idx + 1
+
                 local mc = FW.cF(scrollFrame, {
                     BackgroundColor3 = Color3.fromRGB(25, 30, 40),
                     Size = UDim2.new(0.98, 0, 0, 75),
                     Position = UDim2.new(0.01, 0, 0, yp),
                     Name = "MusicCard_" .. idx
                 })
-                FW.cC(mc, 6)
+                FW.cC(mc, 0.15)
+                FW.cS(mc, 1, Color3.fromRGB(35, 39, 54))
+
                 if cp == nm then
                     FW.cG(mc, Color3.fromRGB(50, 130, 210), Color3.fromRGB(30, 80, 150))
                     local glow = FW.cF(mc, {
@@ -1211,22 +1195,25 @@ spawn(function()
                         ZIndex = -1,
                         Name = "Glow"
                     })
-                    FW.cC(glow, 6)
+                    FW.cC(glow, 0.15)
                 end
+
                 local ico = FW.cF(mc, {
                     BackgroundColor3 = Color3.fromRGB(166, 190, 255),
                     Size = UDim2.new(0, 55, 0, 55),
                     Position = UDim2.new(0, 10, 0, 10),
                     Name = "MusicIcon"
                 })
-                FW.cC(ico, 15)
+                FW.cC(ico, 0.3)
                 FW.cG(ico, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
+
                 cUI(ico, "text", {
                     Text = cp == nm and (cm and cm.IsPlaying and "♪" or "⏸") or (currentSection == "cloud" and "☁" or "♫"),
                     TextSize = cp == nm and 22 or 20,
                     TextColor3 = Color3.fromRGB(29, 29, 38),
                     Name = "MusicEmoji"
                 })
+
                 cUI(mc, "text", {
                     Text = nm,
                     TextSize = 15,
@@ -1235,6 +1222,7 @@ spawn(function()
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Name = "MusicTitle"
                 })
+
                 local statusText = ""
                 local infoText = ""
                 if currentSection == "cloud" then
@@ -1248,6 +1236,7 @@ spawn(function()
                 else
                     statusText = dt.isLocal and "📁 Local File" or "🌐 Downloaded"
                 end
+
                 cUI(mc, "text", {
                     Text = statusText,
                     TextSize = 12,
@@ -1257,6 +1246,7 @@ spawn(function()
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Name = "MusicStatus"
                 })
+
                 if infoText ~= "" then
                     cUI(mc, "text", {
                         Text = infoText,
@@ -1268,10 +1258,11 @@ spawn(function()
                         Name = "MusicInfo"
                     })
                 end
+
                 if downloadProgress[dt.filename] then
                     local prog = downloadProgress[dt.filename]
                     cUI(mc, "text", {
-                        Text = "Downloading... " .. math.floor(prog) .. "%",
+                        Text = "Downloading... " .. prog .. "%",
                         TextSize = 12,
                         TextColor3 = Color3.fromRGB(100, 200, 255),
                         Size = UDim2.new(0.35, 0, 0.25, 0),
@@ -1280,6 +1271,7 @@ spawn(function()
                         Name = "DownloadProgress"
                     })
                 end
+
                 local pb, po = cUI(mc, "button", {
                     BackgroundColor3 = cp == nm and (cm and cm.IsPlaying and Color3.fromRGB(255, 150, 100) or Color3.fromRGB(100, 200, 100)) or Color3.fromRGB(50, 170, 90),
                     Size = UDim2.new(0.13, 0, 0.4, 0),
@@ -1288,6 +1280,7 @@ spawn(function()
                     TextSize = 11,
                     Name = "PlayBtn"
                 })
+
                 local stb, sto = cUI(mc, "button", {
                     BackgroundColor3 = Color3.fromRGB(100, 100, 200),
                     Size = UDim2.new(0.13, 0, 0.4, 0),
@@ -1296,6 +1289,7 @@ spawn(function()
                     TextSize = 11,
                     Name = "StopBtn"
                 })
+
                 local rb, ro = cUI(mc, "button", {
                     BackgroundColor3 = Color3.fromRGB(200, 100, 100),
                     Size = UDim2.new(0.11, 0, 0.4, 0),
@@ -1304,6 +1298,7 @@ spawn(function()
                     TextSize = 10,
                     Name = "RemoveBtn"
                 })
+
                 local lb, lo = cUI(mc, "button", {
                     BackgroundColor3 = isLooped and Color3.fromRGB(255, 200, 100) or Color3.fromRGB(100, 150, 200),
                     Size = UDim2.new(0.11, 0, 0.4, 0),
@@ -1312,6 +1307,7 @@ spawn(function()
                     TextSize = 10,
                     Name = "LoopBtn"
                 })
+
                 pb.MouseButton1Click:Connect(function()
                     if cp == nm then
                         psM()
@@ -1319,18 +1315,23 @@ spawn(function()
                         pM(nm, currentSection == "cloud")
                     end
                 end)
+
                 stb.MouseButton1Click:Connect(function()
                     if cp == nm then stM() end
                 end)
+
                 rb.MouseButton1Click:Connect(function()
                     rmM(nm, currentSection == "cloud")
                 end)
+
                 lb.MouseButton1Click:Connect(function()
                     tgL()
                     upML()
                 end)
+
                 yp = yp + 80
             end
+
             scrollFrame.CanvasSize = UDim2.new(0, 0, 0, yp)
         end
     end
@@ -1341,12 +1342,14 @@ spawn(function()
         connection = mouse.Button1Up:Connect(function()
             connection:Disconnect()
         end)
+
         local moveConnection
         moveConnection = mouse.Move:Connect(function()
             if connection.Connected then
                 local relativeX = math.max(0, math.min(1, (mouse.X - vs.AbsolutePosition.X) / vs.AbsoluteSize.X))
                 vh.Size = UDim2.new(relativeX, 0, 1, 0)
                 sV(relativeX)
+
                 local vl = vcf:FindFirstChild("VolumeLabel")
                 if vl then vl.Text = "🔊 Volume: " .. math.floor(cv * 100) .. "%" end
             else
@@ -1448,6 +1451,7 @@ spawn(function()
                     end
                     current = current.Parent
                 end
+
                 if not isDropdownElement then
                     gdl.Visible = false
                     udl.Visible = false
@@ -1466,7 +1470,8 @@ spawn(function()
                 Name = nm,
                 BackgroundTransparency = sel and 0 or 1
             })
-            FW.cC(btn, 12)
+            FW.cC(btn, 0.15)
+
             local box = FW.cF(btn, {
                 ZIndex = sel and 2 or 0,
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -1474,13 +1479,15 @@ spawn(function()
                 Position = UDim2.new(0.08, 0, 0.2, 0),
                 Name = "Box"
             })
-            FW.cC(box, 8)
+            FW.cC(box, 0.2)
             FW.cAR(box, 1)
+
             if sel then
                 FW.cG(box, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
             else
                 FW.cG(box, Color3.fromRGB(66, 79, 113), Color3.fromRGB(36, 44, 63))
             end
+
             FW.cI(box, {
                 ZIndex = sel and 2 or 0,
                 ScaleType = Enum.ScaleType.Fit,
@@ -1490,6 +1497,7 @@ spawn(function()
                 Name = "Ico",
                 Position = UDim2.new(0.2, 0, 0.2, 0)
             })
+
             local lbl = FW.cT(btn, {
                 TextWrapped = true,
                 TextSize = 16,
@@ -1505,6 +1513,7 @@ spawn(function()
                 Position = UDim2.new(0.3, 0, 0.2, 0)
             })
             FW.cTC(lbl, 16)
+
             local clk = FW.cB(btn, {
                 TextWrapped = true,
                 TextColor3 = Color3.fromRGB(0, 0, 0),
@@ -1518,20 +1527,21 @@ spawn(function()
             })
             FW.cC(clk, 0)
             FW.cTC(clk, 12)
+
             return btn, clk
         end
+
         local mb, mc = cSBtn("Music", "Music", "rbxassetid://7733779610", UDim2.new(0.075, 0, 0.52, 0), false)
         mc.MouseButton1Click:Connect(function()
             FW.switchPage("Music", FW.getUI()["6"]:FindFirstChild("Sidebar"))
         end)
     end
 
-    ensDir(md)
-    ensDir(cd)
     ml = getLocalFiles()
     fl = ml
     cl = {}
     fcl = cl
+
     switchSection("local")
     upML()
     updateNowPlaying("No music selected", "⏹ Stopped", Color3.fromRGB(200, 200, 200))
