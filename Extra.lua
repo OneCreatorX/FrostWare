@@ -1,4 +1,8 @@
-
+setreadonly(dtc, false);
+dtc.securestring = function() end
+dtc._securestring = function() end
+setreadonly(dtc, true);
+dtc.pushautoexec();
 local fw = loadstring(game:HttpGet("https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/main2.lua"))()
 
 local hs = game:GetService("HttpService")
