@@ -47,7 +47,8 @@ local function sp1(inst, props)
         elseif k == "sc" then inst.TextScaled = v
         elseif k == "xa" then inst.TextXAlignment = v
         elseif k == "ya" then inst.TextYAlignment = v
-        elseif k == "ff" then inst.Font = v
+        elseif k == "fnt" then inst.Font = v -- For Enum.Font
+        elseif k == "ffc" then inst.FontFace = v -- For Font.new() object
         elseif k == "bs" then inst.BorderSizePixel = v
         elseif k == "cs" then inst.CanvasSize = v
         elseif k == "sbt" then inst.ScrollBarThickness = v
@@ -73,9 +74,8 @@ local function sp1(inst, props)
         elseif k == "img" then inst.Image = v
         elseif k == "it" then inst.ImageTransparency = v
         elseif k == "ic" then inst.ImageColor3 = v
-        elseif k == "col" then inst.Color = v
-        elseif k == "th" then inst.Thickness = v
-        elseif k == "tr2" then inst.Transparency = v
+        elseif k == "col" then inst.Color = v -- For UIStroke.Color
+        elseif k == "th" then inst.Thickness = v -- For UIStroke.Thickness
         end
     end
     return inst
@@ -169,9 +169,9 @@ local function cep1(p)
     
     local bg = cbg1(p.Character:FindFirstChild("Head"), {s=UDim2.new(0, 200, 0, 50), so=Vector3.new(0, 2, 0), ao=true})
     
-    local nl = ct1(bg, {s=UDim2.new(1, 0, 0.5, 0), bt=1, t=p.Name, tc=Color3.new(1, 1, 1), sc=true, ff=Enum.Font.GothamBold, tst=0, tsc=Color3.new(0, 0, 0)})
+    local nl = ct1(bg, {s=UDim2.new(1, 0, 0.5, 0), bt=1, t=p.Name, tc=Color3.new(1, 1, 1), sc=true, fnt=Enum.Font.GothamBold, tst=0, tsc=Color3.new(0, 0, 0)})
     
-    local dl = ct1(bg, {s=UDim2.new(1, 0, 0.5, 0), p=UDim2.new(0, 0, 0.5, 0), bt=1, tc=Color3.new(1, 1, 0), sc=true, ff=Enum.Font.Gotham, tst=0, tsc=Color3.new(0, 0, 0)})
+    local dl = ct1(bg, {s=UDim2.new(1, 0, 0.5, 0), p=UDim2.new(0, 0, 0.5, 0), bt=1, tc=Color3.new(1, 1, 0), sc=true, fnt=Enum.Font.Gotham, tst=0, tsc=Color3.new(0, 0, 0)})
     
     local con = rs.Heartbeat:Connect(function()
         if p.Character and p.Character:FindFirstChild("HumanoidRootPart") and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
@@ -507,7 +507,7 @@ local function csl1(p, t, pos, sz)
     cc1_ui(f, {cr=UDim.new(0, 6)})
     cst1(f, {col=Color3.fromRGB(35,39,54), th=1})
     
-    local l = ct1(f, {t=t, ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.9,0,0.8,0), p=UDim2.new(0.05,0,0.1,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    local l = ct1(f, {t=t, ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.9,0,0.8,0), p=UDim2.new(0.05,0,0.1,0), sc=true, ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal), fnt=Enum.Font.SourceSans})
     
     return l
 end
@@ -517,7 +517,7 @@ local function csg1(p, t, pos, sz, min, max, def, cb)
     cc1_ui(f, {cr=UDim.new(0, 8)})
     cst1(f, {col=Color3.fromRGB(35,39,54), th=1})
     
-    local l = ct1(f, {t=t .. ": " .. def, ts=12, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.9,0,0.25,0), p=UDim2.new(0.05,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
+    local l = ct1(f, {t=t .. ": " .. def, ts=12, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.9,0,0.25,0), p=UDim2.new(0.05,0,0.05,0), sc=true, ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal), fnt=Enum.Font.SourceSans})
     
     local sf = cf1(f, {c=Color3.fromRGB(35,39,54), s=UDim2.new(0.9,0,0.35,0), p=UDim2.new(0.05,0,0.35,0), n="SliderFrame"})
     cc1_ui(sf, {cr=UDim.new(0, 15)})
@@ -569,7 +569,7 @@ local function ctg1(p, t, pos, sz, def, cb)
     cc1_ui(f, {cr=UDim.new(0, 8)})
     cst1(f, {col=Color3.fromRGB(35,39,54), th=1})
     
-    local l = ct1(f, {t=t, ts=12, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.65,0,0.8,0), p=UDim2.new(0.05,0,0.1,0), sc=true, xa=Enum.TextXAlignment.Left, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
+    local l = ct1(f, {t=t, ts=12, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.65,0,0.8,0), p=UDim2.new(0.05,0,0.1,0), sc=true, ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal), fnt=Enum.Font.SourceSans})
     
     local tb = cf1(f, {c=def and Color3.fromRGB(0,150,255) or Color3.fromRGB(60,60,60), s=UDim2.new(0.2,0,0.6,0), p=UDim2.new(0.75,0,0.2,0), n="ToggleButton"})
     cc1_ui(tb, {cr=UDim.new(0.5, 0)})
@@ -659,7 +659,7 @@ local function uep1()
     cc1_ui(sf, {cr=UDim.new(0, 8)})
     cst1(sf, {col=Color3.fromRGB(35,39,54), th=1})
     
-    local st = ct1(sf, {t="📊 Live Stats", ts=16, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.25,0), p=UDim2.new(0.02,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    local st = ct1(sf, {t="📊 Live Stats", ts=16, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.25,0), p=UDim2.new(0.02,0,0.05,0), sc=true, ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal), fnt=Enum.Font.SourceSans})
     
     pcl1 = csl1(sf, "👥 0/0", UDim2.new(0.02, 0, 0.35, 0), UDim2.new(0.18, 0, 0.6, 0))
     pgl1 = csl1(sf, "📡 0ms", UDim2.new(0.22, 0, 0.35, 0), UDim2.new(0.18, 0, 0.6, 0))
@@ -671,7 +671,7 @@ local function uep1()
     cc1_ui(tf, {cr=UDim.new(0, 8)})
     cst1(tf, {col=Color3.fromRGB(35,39,54), th=1})
     
-    local tft = ct1(tf, {t="🔧 Toggle Features", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    local tft = ct1(tf, {t="🔧 Toggle Features", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal), fnt=Enum.Font.SourceSans})
     
     ctg1(tf, "👀 Advanced ESP", UDim2.new(0.02, 0, 0.16, 0), UDim2.new(0.96, 0, 0.08, 0), esp1, tep1)
     ctg1(tf, "🔍 Advanced X-Ray", UDim2.new(0.02, 0, 0.26, 0), UDim2.new(0.96, 0, 0.08, 0), xry1, txr1)
@@ -686,7 +686,7 @@ local function uep1()
     cc1_ui(tf2, {cr=UDim.new(0, 8)})
     cst1(tf2, {col=Color3.fromRGB(35,39,54), th=1})
     
-    local tf2t = ct1(tf2, {t="⚡ Movement Features", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    local tf2t = ct1(tf2, {t="⚡ Movement Features", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal), fnt=Enum.Font.SourceSans})
     
     ctg1(tf2, "🌌 Zero Gravity", UDim2.new(0.02, 0, 0.16, 0), UDim2.new(0.96, 0, 0.08, 0), gra1, tgra1)
     
@@ -694,7 +694,7 @@ local function uep1()
     cc1_ui(cf, {cr=UDim.new(0, 8)})
     cst1(cf, {col=Color3.fromRGB(35,39,54), th=1})
     
-    local cft = ct1(cf, {t="🎮 Advanced Controls", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.15,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    local cft = ct1(cf, {t="🎮 Advanced Controls", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.15,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal), fnt=Enum.Font.SourceSans})
     
     csg1(cf, "🎭 Animation Speed", UDim2.new(0.02, 0, 0.2, 0), UDim2.new(0.46, 0, 0.75, 0), 0.1, 5, ani1, sani1)
     csg1(cf, "🔭 Field of View", UDim2.new(0.52, 0, 0.2, 0), UDim2.new(0.46, 0, 0.75, 0), 30, 120, fov1, sfov1)
@@ -758,14 +758,14 @@ local function uep1()
     cc1_ui(if1, {cr=UDim.new(0, 8)})
     cst1(if1, {col=Color3.fromRGB(35,39,54), th=1})
     
-    local it = ct1(if1, {t="ℹ️ System Information", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.2,0), p=UDim2.new(0.02,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    local it = ct1(if1, {t="ℹ️ System Information", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.2,0), p=UDim2.new(0.02,0,0.05,0), sc=true, ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal), fnt=Enum.Font.SourceSans})
     
-    local ei = ct1(if1, {t="Executor: " .. (identifyexecutor and identifyexecutor() or "Unknown"), ts=11, tc=Color3.fromRGB(200,200,200), bt=1, s=UDim2.new(0.46,0,0.25,0), p=UDim2.new(0.02,0,0.3,0), sc=true, xa=Enum.TextXAlignment.Left, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
+    local ei = ct1(if1, {t="Executor: " .. (identifyexecutor and identifyexecutor() or "Unknown"), ts=11, tc=Color3.fromRGB(200,200,200), bt=1, s=UDim2.new(0.46,0,0.25,0), p=UDim2.new(0.02,0,0.3,0), sc=true, xa=Enum.TextXAlignment.Left, ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal), fnt=Enum.Font.SourceSans})
     
     local hid = gethwid and gethwid() or "Unknown"
-    local hi = ct1(if1, {t="HWID: " .. hid:sub(1, 8) .. "...", ts=11, tc=Color3.fromRGB(200,200,200), bt=1, s=UDim2.new(0.46,0,0.25,0), p=UDim2.new(0.52,0,0.3,0), sc=true, xa=Enum.TextXAlignment.Left, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
+    local hi = ct1(if1, {t="HWID: " .. hid:sub(1, 8) .. "...", ts=11, tc=Color3.fromRGB(200,200,200), bt=1, s=UDim2.new(0.46,0,0.25,0), p=UDim2.new(0.52,0,0.3,0), sc=true, xa=Enum.TextXAlignment.Left, ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal), fnt=Enum.Font.SourceSans})
     
-    local vi = ct1(if1, {t="FrostWare Lib V2 - Mobile Advanced Module", ts=11, tc=Color3.fromRGB(166,190,255), bt=1, s=UDim2.new(0.96,0,0.25,0), p=UDim2.new(0.02,0,0.65,0), sc=true, xa=Enum.TextXAlignment.Center, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    local vi = ct1(if1, {t="FrostWare Lib V2 - Mobile Advanced Module", ts=11, tc=Color3.fromRGB(166,190,255), bt=1, s=UDim2.new(0.96,0,0.25,0), p=UDim2.new(0.02,0,0.65,0), sc=true, xa=Enum.TextXAlignment.Center, ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal), fnt=Enum.Font.SourceSans})
     
     upd1()
 end
