@@ -31,15 +31,16 @@ end
 local lv = {}
 local cv = {}
 local ci = 1
-local cu = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/videos.json"
+local cu = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/videos.txt"
 local dp = 0
 local cs = "local"
 local cc = "all"
 local ct = {}
 local sf = ""
+local dh = {}
 
 local vp, vf, pb1, sb, nb, prb, fsb, pgb, pgh, pgbb, tl, vlf, clf, dui, dni, db, dpb, dpl
-local pp, lp, cp, dp2, ctf, sif, fsf
+local pp, lp, cp, dp2, ctf, sif, fsf, dhf, dps
 
 local function fv(d)
     local v = {}
@@ -60,6 +61,132 @@ local function ft(s)
     local m = math.floor(s / 60)
     local sc = math.floor(s % 60)
     return string.format("%02d:%02d", m, sc)
+end
+
+local function fs(b)
+    if b < 1024 then
+        return string.format("%.1f B", b)
+    elseif b < 1024 * 1024 then
+        return string.format("%.1f KB", b / 1024)
+    elseif b < 1024 * 1024 * 1024 then
+        return string.format("%.1f MB", b / (1024 * 1024))
+    else
+        return string.format("%.1f GB", b / (1024 * 1024 * 1024))
+    end
+end
+
+local function gdt()
+    local t = os.date("*t")
+    return string.format("%02d/%02d/%04d %02d:%02d", t.day, t.month, t.year, t.hour, t.min)
+end
+
+local function ldh()
+    if isfile("synapse/download_history.json") then
+        local s, d = pcall(function()
+            return http:JSONDecode(readfile("synapse/download_history.json"))
+        end)
+        if s and d then
+            dh = d
+        end
+    end
+end
+
+local function sdh()
+    local s = pcall(function()
+        writefile("synapse/download_history.json", http:JSONEncode(dh))
+    end)
+end
+
+local function adh(u, n)
+    table.insert(dh, {
+        url = u,
+        name = n,
+        date = gdt()
+    })
+    sdh()
+    rdh()
+end
+
+local function rdh()
+    dhf.CanvasSize = UDim2.new(0,0,0,0)
+    for _, ch in pairs(dhf:GetChildren()) do
+        if ch:IsA("Frame") then ch:Destroy() end
+    end
+    
+    local yo = 5
+    for i = #dh, 1, -1 do
+        local h = dh[i]
+        local hf = FW.cF(dhf, {
+            Size = UDim2.new(0.96, 0, 0, 60),
+            Position = UDim2.new(0.02, 0, 0, yo),
+            BackgroundColor3 = Color3.fromRGB(30, 35, 45),
+            Name = "HF" .. i
+        })
+        
+        local nt = FW.cT(hf, {
+            Text = h.name,
+            TextSize = 14,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            Size = UDim2.new(0.7, 0, 0.4, 0),
+            Position = UDim2.new(0.02, 0, 0.05, 0),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            BackgroundTransparency = 1
+        })
+        FW.cTC(nt, 14)
+        
+        local ut = FW.cT(hf, {
+            Text = h.url,
+            TextSize = 11,
+            TextColor3 = Color3.fromRGB(150, 150, 150),
+            Size = UDim2.new(0.7, 0, 0.3, 0),
+            Position = UDim2.new(0.02, 0, 0.4, 0),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            BackgroundTransparency = 1
+        })
+        FW.cTC(ut, 11)
+        
+        local dt = FW.cT(hf, {
+            Text = h.date,
+            TextSize = 10,
+            TextColor3 = Color3.fromRGB(120, 120, 120),
+            Size = UDim2.new(0.7, 0, 0.25, 0),
+            Position = UDim2.new(0.02, 0, 0.7, 0),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            BackgroundTransparency = 1
+        })
+        FW.cTC(dt, 10)
+        
+        local cb = FW.cB(hf, {
+            Size = UDim2.new(0.25, 0, 0.8, 0),
+            Position = UDim2.new(0.73, 0, 0.1, 0),
+            Text = "Copy URL",
+            TextSize = 12,
+            BackgroundColor3 = Color3.fromRGB(50, 130, 210),
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            Name = "CopyBtn"
+        })
+        FW.cC(cb, 6)
+        FW.cTC(cb, 12)
+        cb.MouseButton1Click:Connect(function()
+            setclipboard(h.url)
+            FW.showAlert("Success", "URL copied to clipboard", 1)
+        end)
+        
+        yo = yo + 65
+    end
+    dhf.CanvasSize = UDim2.new(0,0,0,yo)
+end
+
+local function gfs(u)
+    spawn(function()
+        local s, r = pcall(function()
+            return game:HttpGet(u, true)
+        end)
+        if s and r then
+            local sz = #r
+            dps.Text = "Size: " .. fs(sz)
+        end
+    end)
 end
 
 local function upb()
@@ -91,31 +218,68 @@ end
 local function pclv(u, n)
     vf.Playing = false
     wait(0.1)
-    FW.showAlert("Info", "Loading video...", 2)
+    
+    local fn = n or u:match(".*/([^/%.]+)%.mp4$") or http:GenerateGUID(false)
+    if not fn:match("%.mp4$") then
+        fn = fn .. ".mp4"
+    end
+    
+    local cp = "synapse/cache/" .. fn
+    
+    if isfile(cp) then
+        FW.showAlert("Info", "Playing from cache: " .. fn, 1)
+        vf.Video = getsynasset(cp)
+        wait(0.1)
+        vf.Playing = true
+        cs = "cloud"
+        return
+    end
+    
+    FW.showAlert("Info", "Downloading video...", 2)
     spawn(function()
+        local ts = 0
+        local ds = 0
         local s, c = pcall(function()
             return game:HttpGet(u)
         end)
         if s and c and #c > 0 then
-            local fn = n or u:match(".*/([^/%.]+)%.mp4$") or http:GenerateGUID(false)
-            if not fn:match("%.mp4$") then
-                fn = fn .. ".mp4"
-            end
-            local tp = "synapse/temp_videos/" .. fn
+            ts = #c
             if not isfolder("synapse") then makefolder("synapse") end
-            if not isfolder("synapse/temp_videos") then makefolder("synapse/temp_videos") end
-            local ws = pcall(function()
-                writefile(tp, c)
-            end)
-            if ws then
-                wait(0.1)
-                vf.Video = getsynasset(tp)
-                wait(0.1)
-                vf.Playing = true
-                FW.showAlert("Success", "Playing: " .. fn, 1)
-                cs = "cloud"
-            else
-                FW.showAlert("Error", "Error saving video", 2)
+            if not isfolder("synapse/cache") then makefolder("synapse/cache") end
+            
+            local cs = 1024 * 100
+            local p = 0
+            while p < #c do
+                local ep = math.min(p + cs, #c)
+                local ch = string.sub(c, p + 1, ep)
+                ds = ds + #ch
+                
+                local pr = (ds / ts) * 100
+                if dpb and dpl then
+                    dpb.Size = UDim2.new(pr / 100, 0, 1, 0)
+                    dpl.Text = math.floor(pr) .. "% - " .. fs(ds) .. "/" .. fs(ts)
+                end
+                
+                if p == 0 then
+                    writefile(cp, ch)
+                else
+                    appendfile(cp, ch)
+                end
+                
+                p = ep
+                wait(0.01)
+            end
+            
+            wait(0.1)
+            vf.Video = getsynasset(cp)
+            wait(0.1)
+            vf.Playing = true
+            FW.showAlert("Success", "Playing: " .. fn, 1)
+            cs = "cloud"
+            
+            if dpb and dpl then
+                dpb.Size = UDim2.new(0, 0, 1, 0)
+                dpl.Text = "0%"
             end
         else
             FW.showAlert("Error", "Error loading video", 2)
@@ -384,11 +548,15 @@ local function lcv()
     end)
 end
 
-local function udp(pr)
+local function udp(pr, sz, ts)
     dp = pr
     if dpb and dpl then
         dpb.Size = UDim2.new(pr / 100, 0, 1, 0)
-        dpl.Text = math.floor(pr) .. "%"
+        if sz and ts then
+            dpl.Text = math.floor(pr) .. "% - " .. fs(sz) .. "/" .. fs(ts)
+        else
+            dpl.Text = math.floor(pr) .. "%"
+        end
     end
 end
 
@@ -410,33 +578,46 @@ local function dv()
     udp(0)
     
     spawn(function()
+        local ts = 0
+        local ds = 0
         local s, c = pcall(function()
             return game:HttpGet(u)
         end)
         if s and c and #c > 0 then
+            ts = #c
             if not isfolder("synapse") then makefolder("synapse") end
             if not isfolder("synapse/videos") then makefolder("synapse/videos") end
             
-            for i = 1, 100, 5 do
-                udp(i)
-                wait(0.05)
+            local cs = 1024 * 50
+            local p = 0
+            local fp = "synapse/videos/" .. n
+            
+            while p < #c do
+                local ep = math.min(p + cs, #c)
+                local ch = string.sub(c, p + 1, ep)
+                ds = ds + #ch
+                
+                local pr = (ds / ts) * 100
+                udp(pr, ds, ts)
+                
+                if p == 0 then
+                    writefile(fp, ch)
+                else
+                    appendfile(fp, ch)
+                end
+                
+                p = ep
+                wait(0.02)
             end
             
-            local ws = pcall(function()
-                writefile("synapse/videos/" .. n, c)
-            end)
-            if ws then
-                udp(100)
-                FW.showAlert("Success", n .. " downloaded!", 2)
-                dui.Text = ""
-                dni.Text = ""
-                wait(1)
-                udp(0)
-                rlv()
-            else
-                FW.showAlert("Error", "Error saving file", 3)
-                udp(0)
-            end
+            udp(100, ts, ts)
+            FW.showAlert("Success", n .. " downloaded!", 2)
+            adh(u, n)
+            dui.Text = ""
+            dni.Text = ""
+            wait(1)
+            udp(0)
+            rlv()
         else
             FW.showAlert("Error", "Error downloading video", 3)
             udp(0)
@@ -460,6 +641,7 @@ local function sp(pn)
         lcv()
     elseif pn == "download" then
         dp2.Visible = true
+        rdh()
     end
 end
 
@@ -824,10 +1006,26 @@ dni, _ = cui(dp2, "textbox", {
     Name = "DNI"
 })
 
+dps = cui(dp2, "text", {
+    Text = "Size: Unknown",
+    TextSize = 12,
+    TextColor3 = Color3.fromRGB(150, 150, 150),
+    Size = UDim2.new(0.94, 0, 0.04, 0),
+    Position = UDim2.new(0.03, 0, 0.37, 0),
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Name = "DPS"
+})
+
+dui.Changed:Connect(function(prop)
+    if prop == "Text" and dui.Text ~= "" then
+        gfs(dui.Text)
+    end
+end)
+
 local pf = FW.cF(dp2, {
     BackgroundColor3 = Color3.fromRGB(30, 35, 45),
     Size = UDim2.new(0.94, 0, 0.06, 0),
-    Position = UDim2.new(0.03, 0, 0.38, 0),
+    Position = UDim2.new(0.03, 0, 0.42, 0),
     Name = "PF"
 })
 
@@ -849,11 +1047,27 @@ dpl = cui(pf, "text", {
 
 db = cui(dp2, "button", {
     Size = UDim2.new(0.94, 0, 0.1, 0),
-    Position = UDim2.new(0.03, 0, 0.48, 0),
+    Position = UDim2.new(0.03, 0, 0.52, 0),
     Text = "Download Video",
     TextSize = 16,
     BackgroundColor3 = Color3.fromRGB(0, 170, 90),
     Name = "DB"
+})
+
+cui(dp2, "text", {
+    Text = "Download History:",
+    TextSize = 16,
+    TextColor3 = Color3.fromRGB(200, 200, 200),
+    Size = UDim2.new(1, 0, 0.05, 0),
+    Position = UDim2.new(0, 0, 0.64, 0),
+    TextXAlignment = Enum.TextXAlignment.Left,
+    Name = "DHT"
+})
+
+dhf, _ = cui(dp2, "scrollingframe", {
+    Size = UDim2.new(0.96, 0, 0.3, 0),
+    Position = UDim2.new(0.02, 0, 0.69, 0),
+    Name = "DHF"
 })
 
 pb1.MouseButton1Click:Connect(tpp)
@@ -962,9 +1176,9 @@ end
 
 if not isfolder("synapse") then makefolder("synapse") end
 if not isfolder("synapse/videos") then makefolder("synapse/videos") end
-if not isfolder("synapse/temp_videos") then makefolder("synapse/temp_videos") end
+if not isfolder("synapse/cache") then makefolder("synapse/cache") end
 
+ldh()
 lv = fv("/")
 sp("player")
-FW.showAlert("Success", "ONX-DEV Video Player Loaded!", 2)
 end)
