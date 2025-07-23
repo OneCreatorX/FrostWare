@@ -28,13 +28,94 @@ local gc1 = nil
 local fc1 = nil
 local sc1 = nil
 
+local function ci1(t, p)
+    local inst = Instance.new(t)
+    if p then inst.Parent = p end
+    return inst
+end
+
+local function sp1(inst, props)
+    for k, v in pairs(props) do
+        if k == "c" then inst.BackgroundColor3 = v
+        elseif k == "s" then inst.Size = v
+        elseif k == "p" then inst.Position = v
+        elseif k == "n" then inst.Name = v
+        elseif k == "t" then inst.Text = v
+        elseif k == "ts" then inst.TextSize = v
+        elseif k == "tc" then inst.TextColor3 = v
+        elseif k == "bt" then inst.BackgroundTransparency = v
+        elseif k == "sc" then inst.TextScaled = v
+        elseif k == "xa" then inst.TextXAlignment = v
+        elseif k == "ya" then inst.TextYAlignment = v
+        elseif k == "ff" then inst.Font = v
+        elseif k == "bs" then inst.BorderSizePixel = v
+        elseif k == "cs" then inst.CanvasSize = v
+        elseif k == "sbt" then inst.ScrollBarThickness = v
+        elseif k == "sbc" then inst.ScrollBarImageColor3 = v
+        elseif k == "vis" then inst.Visible = v
+        elseif k == "anc" then inst.Anchored = v
+        elseif k == "cc" then inst.CanCollide = v
+        elseif k == "tr" then inst.Transparency = v
+        elseif k == "mat" then inst.Material = v
+        elseif k == "ref" then inst.Reflectance = v
+        elseif k == "fc" then inst.FillColor = v
+        elseif k == "oc" then inst.OutlineColor = v
+        elseif k == "ft" then inst.FillTransparency = v
+        elseif k == "ot" then inst.OutlineTransparency = v
+        elseif k == "dm" then inst.DepthMode = v
+        elseif k == "so" then inst.StudsOffset = v
+        elseif k == "ao" then inst.AlwaysOnTop = v
+        elseif k == "tst" then inst.TextStrokeTransparency = v
+        elseif k == "tsc" then inst.TextStrokeColor3 = v
+        elseif k == "cr" then inst.CornerRadius = v
+        elseif k == "ss" then inst.SliceScale = v
+        elseif k == "st" then inst.SliceCenter = v
+        elseif k == "img" then inst.Image = v
+        elseif k == "it" then inst.ImageTransparency = v
+        elseif k == "ic" then inst.ImageColor3 = v
+        end
+    end
+    return inst
+end
+
+local function cf1(parent, props)
+    return sp1(ci1("Frame", parent), props)
+end
+
+local function ct1(parent, props)
+    return sp1(ci1("TextLabel", parent), props)
+end
+
+local function cb1(parent, props)
+    return sp1(ci1("TextButton", parent), props)
+end
+
+local function cs1(parent, props)
+    return sp1(ci1("ScrollingFrame", parent), props)
+end
+
+local function cc1_ui(parent, props)
+    return sp1(ci1("UICorner", parent), props)
+end
+
+local function cst1(parent, props)
+    return sp1(ci1("UIStroke", parent), props)
+end
+
+local function ch1(parent, props)
+    return sp1(ci1("Highlight", parent), props)
+end
+
+local function cbg1(parent, props)
+    return sp1(ci1("BillboardGui", parent), props)
+end
+
 local function us1()
     return game:GetService("UserInputService")
 end
 
 local function gs1()
-    local uis = us1()
-    return uis and uis:GetService("UserGameSettings")
+    return game:GetService("UserGameSettings")
 end
 
 local function upd1()
@@ -81,41 +162,13 @@ end
 local function cep1(p)
     if p == lp or not p.Character or not p.Character:FindFirstChild("HumanoidRootPart") then return end
     
-    local h = Instance.new("Highlight")
-    h.Parent = p.Character
-    h.FillColor = Color3.new(1, 0.2, 0.2)
-    h.OutlineColor = Color3.new(1, 1, 1)
-    h.FillTransparency = 0.6
-    h.OutlineTransparency = 0
-    h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    local h = ch1(p.Character, {fc=Color3.new(1, 0.2, 0.2), oc=Color3.new(1, 1, 1), ft=0.6, ot=0, dm=Enum.HighlightDepthMode.AlwaysOnTop})
     
-    local bg = Instance.new("BillboardGui")
-    bg.Parent = p.Character:FindFirstChild("Head")
-    bg.Size = UDim2.new(0, 200, 0, 50)
-    bg.StudsOffset = Vector3.new(0, 2, 0)
-    bg.AlwaysOnTop = true
+    local bg = cbg1(p.Character:FindFirstChild("Head"), {s=UDim2.new(0, 200, 0, 50), so=Vector3.new(0, 2, 0), ao=true})
     
-    local nl = Instance.new("TextLabel")
-    nl.Parent = bg
-    nl.Size = UDim2.new(1, 0, 0.5, 0)
-    nl.BackgroundTransparency = 1
-    nl.Text = p.Name
-    nl.TextColor3 = Color3.new(1, 1, 1)
-    nl.TextScaled = true
-    nl.Font = Enum.Font.GothamBold
-    nl.TextStrokeTransparency = 0
-    nl.TextStrokeColor3 = Color3.new(0, 0, 0)
+    local nl = ct1(bg, {s=UDim2.new(1, 0, 0.5, 0), bt=1, t=p.Name, tc=Color3.new(1, 1, 1), sc=true, ff=Enum.Font.GothamBold, tst=0, tsc=Color3.new(0, 0, 0)})
     
-    local dl = Instance.new("TextLabel")
-    dl.Parent = bg
-    dl.Size = UDim2.new(1, 0, 0.5, 0)
-    dl.Position = UDim2.new(0, 0, 0.5, 0)
-    dl.BackgroundTransparency = 1
-    dl.TextColor3 = Color3.new(1, 1, 0)
-    dl.TextScaled = true
-    dl.Font = Enum.Font.Gotham
-    dl.TextStrokeTransparency = 0
-    dl.TextStrokeColor3 = Color3.new(0, 0, 0)
+    local dl = ct1(bg, {s=UDim2.new(1, 0, 0.5, 0), p=UDim2.new(0, 0, 0.5, 0), bt=1, tc=Color3.new(1, 1, 0), sc=true, ff=Enum.Font.Gotham, tst=0, tsc=Color3.new(0, 0, 0)})
     
     local con = rs.Heartbeat:Connect(function()
         if p.Character and p.Character:FindFirstChild("HumanoidRootPart") and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
@@ -189,22 +242,21 @@ local function tctp1()
     
     if ctp1 then
         cc1 = us1().InputBegan:Connect(function(input, gp)
-            if not gp and input.UserInputType == Enum.UserInputType.MouseButton1 and us1():IsKeyDown(Enum.KeyCode.LeftControl) then
+            if not gp and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
                 local mouse = lp:GetMouse()
                 if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
                     local cf = CFrame.new(mouse.Hit.Position + Vector3.new(0, 5, 0))
                     lp.Character.HumanoidRootPart.CFrame = cf
                     
-                    local beam = Instance.new("Beam")
-                    local a0 = Instance.new("Attachment", lp.Character.HumanoidRootPart)
-                    local a1 = Instance.new("Attachment", workspace.Terrain)
+                    local beam = ci1("Beam", workspace)
+                    local a0 = ci1("Attachment", lp.Character.HumanoidRootPart)
+                    local a1 = ci1("Attachment", workspace.Terrain)
                     a1.WorldPosition = mouse.Hit.Position
                     beam.Attachment0 = a0
                     beam.Attachment1 = a1
                     beam.Color = ColorSequence.new(Color3.new(0, 1, 1))
                     beam.Width0 = 1
                     beam.Width1 = 1
-                    beam.Parent = workspace
                     
                     spawn(function()
                         wait(0.5)
@@ -222,7 +274,7 @@ local function tctp1()
         end
     end
     
-    fw.sa("Success", "Click TP " .. (ctp1 and "ON (Ctrl+Click)" or "OFF") .. "!", 2)
+    fw.sa("Success", "Touch TP " .. (ctp1 and "ON" or "OFF") .. "!", 2)
 end
 
 local function tfbr1()
@@ -304,30 +356,30 @@ local function tcam1()
         cam.CameraType = Enum.CameraType.Custom
         
         ac1 = us1().InputBegan:Connect(function(input)
-            if input.KeyCode == Enum.KeyCode.W then
+            if input.KeyCode == Enum.KeyCode.W or input.KeyCode == Enum.KeyCode.ButtonY then
                 spawn(function()
-                    while us1():IsKeyDown(Enum.KeyCode.W) and cam1 do
+                    while (us1():IsKeyDown(Enum.KeyCode.W) or us1():IsKeyDown(Enum.KeyCode.ButtonY)) and cam1 do
                         cam.CFrame = cam.CFrame * CFrame.new(0, 0, -2)
                         wait()
                     end
                 end)
-            elseif input.KeyCode == Enum.KeyCode.S then
+            elseif input.KeyCode == Enum.KeyCode.S or input.KeyCode == Enum.KeyCode.ButtonA then
                 spawn(function()
-                    while us1():IsKeyDown(Enum.KeyCode.S) and cam1 do
+                    while (us1():IsKeyDown(Enum.KeyCode.S) or us1():IsKeyDown(Enum.KeyCode.ButtonA)) and cam1 do
                         cam.CFrame = cam.CFrame * CFrame.new(0, 0, 2)
                         wait()
                     end
                 end)
-            elseif input.KeyCode == Enum.KeyCode.A then
+            elseif input.KeyCode == Enum.KeyCode.A or input.KeyCode == Enum.KeyCode.ButtonX then
                 spawn(function()
-                    while us1():IsKeyDown(Enum.KeyCode.A) and cam1 do
+                    while (us1():IsKeyDown(Enum.KeyCode.A) or us1():IsKeyDown(Enum.KeyCode.ButtonX)) and cam1 do
                         cam.CFrame = cam.CFrame * CFrame.new(-2, 0, 0)
                         wait()
                     end
                 end)
-            elseif input.KeyCode == Enum.KeyCode.D then
+            elseif input.KeyCode == Enum.KeyCode.D or input.KeyCode == Enum.KeyCode.ButtonB then
                 spawn(function()
-                    while us1():IsKeyDown(Enum.KeyCode.D) and cam1 do
+                    while (us1():IsKeyDown(Enum.KeyCode.D) or us1():IsKeyDown(Enum.KeyCode.ButtonB)) and cam1 do
                         cam.CFrame = cam.CFrame * CFrame.new(2, 0, 0)
                         wait()
                     end
@@ -340,7 +392,7 @@ local function tcam1()
         cam.CameraType = Enum.CameraType.Custom
     end
     
-    fw.sa("Success", "Free Camera " .. (cam1 and "ON (WASD)" or "OFF") .. "!", 2)
+    fw.sa("Success", "Free Camera " .. (cam1 and "ON" or "OFF") .. "!", 2)
 end
 
 local function tgra1()
@@ -349,21 +401,20 @@ local function tgra1()
     if gra1 then
         workspace.Gravity = 0
         if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-            local bv = Instance.new("BodyVelocity")
+            local bv = ci1("BodyVelocity", lp.Character.HumanoidRootPart)
             bv.MaxForce = Vector3.new(4000, 4000, 4000)
             bv.Velocity = Vector3.new(0, 0, 0)
-            bv.Parent = lp.Character.HumanoidRootPart
             
             gc1 = us1().InputBegan:Connect(function(input)
-                if input.KeyCode == Enum.KeyCode.Space then
+                if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonR1 then
                     bv.Velocity = Vector3.new(0, 50, 0)
-                elseif input.KeyCode == Enum.KeyCode.LeftShift then
+                elseif input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.ButtonL1 then
                     bv.Velocity = Vector3.new(0, -50, 0)
                 end
             end)
             
             us1().InputEnded:Connect(function(input)
-                if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.LeftShift then
+                if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonR1 or input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.ButtonL1 then
                     bv.Velocity = Vector3.new(0, 0, 0)
                 end
             end)
@@ -377,7 +428,7 @@ local function tgra1()
         end
     end
     
-    fw.sa("Success", "Zero Gravity " .. (gra1 and "ON (Space/Shift)" or "OFF") .. "!", 2)
+    fw.sa("Success", "Zero Gravity " .. (gra1 and "ON" or "OFF") .. "!", 2)
 end
 
 local function sani1(val)
@@ -454,81 +505,87 @@ local function ceb1(p, e, t, pos, sz, cb)
 end
 
 local function csl1(p, t, pos, sz)
-    local f = nf(p, {c=Color3.fromRGB(16,19,27), s=sz, p=pos, n=t:gsub(" ","")})
-    nc(f, 0.06)
-    ns(f, 1, Color3.fromRGB(35,39,54))
+    local f = cf1(p, {c=Color3.fromRGB(16,19,27), s=sz, p=pos, n=t:gsub(" ","")})
+    cc1_ui(f, {cr=UDim.new(0, 6)})
+    cst1(f, {c=Color3.fromRGB(35,39,54), t=1})
     
-    local l = nt(f, {t=t, ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.9,0,0.8,0), p=UDim2.new(0.05,0,0.1,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(l, 14)
+    local l = ct1(f, {t=t, ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.9,0,0.8,0), p=UDim2.new(0.05,0,0.1,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
     return l
 end
 
 local function csg1(p, t, pos, sz, min, max, def, cb)
-    local f = nf(p, {c=Color3.fromRGB(16,19,27), s=sz, p=pos, n=t:gsub(" ","")})
-    nc(f, 0.06)
-    ns(f, 1, Color3.fromRGB(35,39,54))
+    local f = cf1(p, {c=Color3.fromRGB(16,19,27), s=sz, p=pos, n=t:gsub(" ","")})
+    cc1_ui(f, {cr=UDim.new(0, 8)})
+    cst1(f, {c=Color3.fromRGB(35,39,54), t=1})
     
-    local l = nt(f, {t=t .. ": " .. def, ts=12, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.9,0,0.3,0), p=UDim2.new(0.05,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
-    ntc(l, 12)
+    local l = ct1(f, {t=t .. ": " .. def, ts=12, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.9,0,0.25,0), p=UDim2.new(0.05,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
     
-    local sf = nf(f, {c=Color3.fromRGB(35,39,54), s=UDim2.new(0.9,0,0.4,0), p=UDim2.new(0.05,0,0.4,0), n="SliderFrame"})
-    nc(sf, 0.04)
+    local sf = cf1(f, {c=Color3.fromRGB(35,39,54), s=UDim2.new(0.9,0,0.35,0), p=UDim2.new(0.05,0,0.35,0), n="SliderFrame"})
+    cc1_ui(sf, {cr=UDim.new(0, 15)})
     
-    local sb = nf(sf, {c=Color3.fromRGB(0,150,255), s=UDim2.new(0.05,0,0.8,0), p=UDim2.new(0,0,0.1,0), n="SliderButton"})
-    nc(sb, 0.02)
+    local sb = cf1(sf, {c=Color3.fromRGB(0,150,255), s=UDim2.new(0.08,0,0.8,0), p=UDim2.new(0,0,0.1,0), n="SliderButton"})
+    cc1_ui(sb, {cr=UDim.new(0, 10)})
     
     local dragging = false
     local val = def
     
+    local function updateSlider(input)
+        if dragging then
+            local relativeX = (input.Position.X - sf.AbsolutePosition.X) / sf.AbsoluteSize.X
+            relativeX = math.clamp(relativeX, 0, 1)
+            val = min + (max - min) * relativeX
+            sb.Position = UDim2.new(relativeX - 0.04, 0, 0.1, 0)
+            l.Text = t .. ": " .. math.floor(val * 100) / 100
+            cb(val)
+        end
+    end
+    
     sb.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
         end
     end)
     
     us1().InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
         end
     end)
     
     us1().InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local mouse = lp:GetMouse()
-            local rel = (mouse.X - sf.AbsolutePosition.X) / sf.AbsoluteSize.X
-            rel = math.clamp(rel, 0, 1)
-            val = min + (max - min) * rel
-            sb.Position = UDim2.new(rel - 0.025, 0, 0.1, 0)
-            l.Text = t .. ": " .. math.floor(val * 100) / 100
-            cb(val)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            updateSlider(input)
         end
+    end)
+    
+    us1().TouchMoved:Connect(function(input)
+        updateSlider(input)
     end)
     
     return f
 end
 
 local function ctg1(p, t, pos, sz, def, cb)
-    local f = nf(p, {c=Color3.fromRGB(16,19,27), s=sz, p=pos, n=t:gsub(" ","")})
-    nc(f, 0.06)
-    ns(f, 1, Color3.fromRGB(35,39,54))
+    local f = cf1(p, {c=Color3.fromRGB(16,19,27), s=sz, p=pos, n=t:gsub(" ","")})
+    cc1_ui(f, {cr=UDim.new(0, 8)})
+    cst1(f, {c=Color3.fromRGB(35,39,54), t=1})
     
-    local l = nt(f, {t=t, ts=12, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.7,0,0.8,0), p=UDim2.new(0.05,0,0.1,0), sc=true, xa=Enum.TextXAlignment.Left, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
-    ntc(l, 12)
+    local l = ct1(f, {t=t, ts=12, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.65,0,0.8,0), p=UDim2.new(0.05,0,0.1,0), sc=true, xa=Enum.TextXAlignment.Left, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
     
-    local tb = nf(f, {c=def and Color3.fromRGB(0,150,255) or Color3.fromRGB(60,60,60), s=UDim2.new(0.15,0,0.6,0), p=UDim2.new(0.8,0,0.2,0), n="ToggleButton"})
-    nc(tb, 0.3)
+    local tb = cf1(f, {c=def and Color3.fromRGB(0,150,255) or Color3.fromRGB(60,60,60), s=UDim2.new(0.2,0,0.6,0), p=UDim2.new(0.75,0,0.2,0), n="ToggleButton"})
+    cc1_ui(tb, {cr=UDim.new(0.5, 0)})
     
-    local tc = nf(tb, {c=Color3.fromRGB(255,255,255), s=UDim2.new(0.4,0,0.8,0), p=def and UDim2.new(0.55,0,0.1,0) or UDim2.new(0.05,0,0.1,0), n="ToggleCircle"})
-    nc(tc, 0.5)
+    local tc = cf1(tb, {c=Color3.fromRGB(255,255,255), s=UDim2.new(0.35,0,0.8,0), p=def and UDim2.new(0.6,0,0.1,0) or UDim2.new(0.05,0,0.1,0), n="ToggleCircle"})
+    cc1_ui(tc, {cr=UDim.new(0.5, 0)})
     
     local state = def
     
     tb.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             state = not state
             tb.BackgroundColor3 = state and Color3.fromRGB(0,150,255) or Color3.fromRGB(60,60,60)
-            tc:TweenPosition(state and UDim2.new(0.55,0,0.1,0) or UDim2.new(0.05,0,0.1,0), "Out", "Quad", 0.2, true)
+            tc:TweenPosition(state and UDim2.new(0.6,0,0.1,0) or UDim2.new(0.05,0,0.1,0), "Out", "Quad", 0.2, true)
             cb(state)
         end
     end)
@@ -592,20 +649,19 @@ local function uep1()
     local tt = ep:FindFirstChild("TextLabel")
     if tt then
         tt.Text = "🛠️ Advanced System Tools"
-        tt.Size = UDim2.new(1, 0, 0.05, 0)
+        tt.Size = UDim2.new(1, 0, 0.04, 0)
         tt.Position = UDim2.new(0, 0, 0.01, 0)
     end
     
-    local mf = nf(ep, {c=Color3.fromRGB(20,25,32), s=UDim2.new(0.95,0,0.93,0), p=UDim2.new(0.025,0,0.06,0), n="MainFrame"})
-    nc(mf, 0.08)
-    ns(mf, 2, Color3.fromRGB(35,39,54))
+    local mf = cs1(ep, {c=Color3.fromRGB(20,25,32), s=UDim2.new(0.95,0,0.94,0), p=UDim2.new(0.025,0,0.05,0), n="MainFrame", cs=UDim2.new(0, 0, 2.2, 0), sbt=8, sbc=Color3.fromRGB(166,190,255), bs=0})
+    cc1_ui(mf, {cr=UDim.new(0, 12)})
+    cst1(mf, {c=Color3.fromRGB(35,39,54), t=2})
     
-    local sf = nf(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.02,0), n="StatsFrame"})
-    nc(sf, 0.08)
-    ns(sf, 1, Color3.fromRGB(35,39,54))
+    local sf = cf1(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.96,0,0.08,0), p=UDim2.new(0.02,0,0.01,0), n="StatsFrame"})
+    cc1_ui(sf, {cr=UDim.new(0, 8)})
+    cst1(sf, {c=Color3.fromRGB(35,39,54), t=1})
     
-    local st = nt(sf, {t="📊 Live Stats", ts=16, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.25,0), p=UDim2.new(0.02,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(st, 16)
+    local st = ct1(sf, {t="📊 Live Stats", ts=16, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.25,0), p=UDim2.new(0.02,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
     pcl1 = csl1(sf, "👥 0/0", UDim2.new(0.02, 0, 0.35, 0), UDim2.new(0.18, 0, 0.6, 0))
     pgl1 = csl1(sf, "📡 0ms", UDim2.new(0.22, 0, 0.35, 0), UDim2.new(0.18, 0, 0.6, 0))
@@ -613,82 +669,79 @@ local function uep1()
     mml1 = csl1(sf, "💾 0MB", UDim2.new(0.62, 0, 0.35, 0), UDim2.new(0.18, 0, 0.6, 0))
     tml1 = csl1(sf, "⏱️ 0:00", UDim2.new(0.82, 0, 0.35, 0), UDim2.new(0.16, 0, 0.6, 0))
     
-    local tf = nf(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.46,0,0.25,0), p=UDim2.new(0.02,0,0.16,0), n="ToggleFrame"})
-    nc(tf, 0.08)
-    ns(tf, 1, Color3.fromRGB(35,39,54))
+    local tf = cf1(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.46,0,0.18,0), p=UDim2.new(0.02,0,0.11,0), n="ToggleFrame"})
+    cc1_ui(tf, {cr=UDim.new(0, 8)})
+    cst1(tf, {c=Color3.fromRGB(35,39,54), t=1})
     
-    local tft = nt(tf, {t="🔧 Toggle Features", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.15,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(tft, 14)
+    local tft = ct1(tf, {t="🔧 Toggle Features", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
-    ctg1(tf, "👀 Advanced ESP", UDim2.new(0.02, 0, 0.2, 0), UDim2.new(0.96, 0, 0.12, 0), esp1, tep1)
-    ctg1(tf, "🔍 Advanced X-Ray", UDim2.new(0.02, 0, 0.34, 0), UDim2.new(0.96, 0, 0.12, 0), xry1, txr1)
-    ctg1(tf, "🖱️ Click Teleport", UDim2.new(0.02, 0, 0.48, 0), UDim2.new(0.96, 0, 0.12, 0), ctp1, tctp1)
-    ctg1(tf, "💡 Advanced Fullbright", UDim2.new(0.02, 0, 0.62, 0), UDim2.new(0.96, 0, 0.12, 0), fbr1, tfbr1)
-    ctg1(tf, "😴 Anti-AFK (Always ON)", UDim2.new(0.02, 0, 0.76, 0), UDim2.new(0.96, 0, 0.12, 0), true, function() end)
+    ctg1(tf, "👀 Advanced ESP", UDim2.new(0.02, 0, 0.16, 0), UDim2.new(0.96, 0, 0.08, 0), esp1, tep1)
+    ctg1(tf, "🔍 Advanced X-Ray", UDim2.new(0.02, 0, 0.26, 0), UDim2.new(0.96, 0, 0.08, 0), xry1, txr1)
+    ctg1(tf, "📱 Touch Teleport", UDim2.new(0.02, 0, 0.36, 0), UDim2.new(0.96, 0, 0.08, 0), ctp1, tctp1)
+    ctg1(tf, "💡 Advanced Fullbright", UDim2.new(0.02, 0, 0.46, 0), UDim2.new(0.96, 0, 0.08, 0), fbr1, tfbr1)
+    ctg1(tf, "😴 Anti-AFK (Always ON)", UDim2.new(0.02, 0, 0.56, 0), UDim2.new(0.96, 0, 0.08, 0), true, function() end)
+    ctg1(tf, "🧊 Freeze Character", UDim2.new(0.02, 0, 0.66, 0), UDim2.new(0.96, 0, 0.08, 0), frz1, tfrz1)
+    ctg1(tf, "👻 NoClip Mode", UDim2.new(0.02, 0, 0.76, 0), UDim2.new(0.96, 0, 0.08, 0), ncp1, tncp1)
+    ctg1(tf, "📷 Free Camera", UDim2.new(0.02, 0, 0.86, 0), UDim2.new(0.96, 0, 0.08, 0), cam1, tcam1)
     
-    local tf2 = nf(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.46,0,0.25,0), p=UDim2.new(0.5,0,0.16,0), n="ToggleFrame2"})
-    nc(tf2, 0.08)
-    ns(tf2, 1, Color3.fromRGB(35,39,54))
+    local tf2 = cf1(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.46,0,0.18,0), p=UDim2.new(0.5,0,0.11,0), n="ToggleFrame2"})
+    cc1_ui(tf2, {cr=UDim.new(0, 8)})
+    cst1(tf2, {c=Color3.fromRGB(35,39,54), t=1})
     
-    local tf2t = nt(tf2, {t="⚡ Movement Features", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.15,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(tf2t, 14)
+    local tf2t = ct1(tf2, {t="⚡ Movement Features", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
-    ctg1(tf2, "🧊 Freeze Character", UDim2.new(0.02, 0, 0.2, 0), UDim2.new(0.96, 0, 0.12, 0), frz1, tfrz1)
-    ctg1(tf2, "👻 NoClip Mode", UDim2.new(0.02, 0, 0.34, 0), UDim2.new(0.96, 0, 0.12, 0), ncp1, tncp1)
-    ctg1(tf2, "📷 Free Camera", UDim2.new(0.02, 0, 0.48, 0), UDim2.new(0.96, 0, 0.12, 0), cam1, tcam1)
-    ctg1(tf2, "🌌 Zero Gravity", UDim2.new(0.02, 0, 0.62, 0), UDim2.new(0.96, 0, 0.12, 0), gra1, tgra1)
+    ctg1(tf2, "🌌 Zero Gravity", UDim2.new(0.02, 0, 0.16, 0), UDim2.new(0.96, 0, 0.08, 0), gra1, tgra1)
     
-    local cf = nf(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.96,0,0.18,0), p=UDim2.new(0.02,0,0.43,0), n="ControlFrame"})
-    nc(cf, 0.08)
-    ns(cf, 1, Color3.fromRGB(35,39,54))
+    local cf = cf1(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.31,0), n="ControlFrame"})
+    cc1_ui(cf, {cr=UDim.new(0, 8)})
+    cst1(cf, {c=Color3.fromRGB(35,39,54), t=1})
     
-    local cft = nt(cf, {t="🎮 Advanced Controls", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.2,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(cft, 14)
+    local cft = ct1(cf, {t="🎮 Advanced Controls", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.15,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
-    csg1(cf, "🎭 Animation Speed", UDim2.new(0.02, 0, 0.25, 0), UDim2.new(0.46, 0, 0.7, 0), 0.1, 5, ani1, sani1)
-    csg1(cf, "🔭 Field of View", UDim2.new(0.52, 0, 0.25, 0), UDim2.new(0.46, 0, 0.7, 0), 30, 120, fov1, sfov1)
+    csg1(cf, "🎭 Animation Speed", UDim2.new(0.02, 0, 0.2, 0), UDim2.new(0.46, 0, 0.75, 0), 0.1, 5, ani1, sani1)
+    csg1(cf, "🔭 Field of View", UDim2.new(0.52, 0, 0.2, 0), UDim2.new(0.46, 0, 0.75, 0), 30, 120, fov1, sfov1)
     
-    local bsz = UDim2.new(0.19, 0, 0.06, 0)
+    local bsz = UDim2.new(0.18, 0, 0.04, 0)
     
-    ceb1(mf, "🔄", "Rejoin", UDim2.new(0.02, 0, 0.63, 0), bsz, function()
+    ceb1(mf, "🔄", "Rejoin", UDim2.new(0.02, 0, 0.45, 0), bsz, function()
         game:GetService("TeleportService"):Teleport(game.PlaceId, lp)
     end)
     
-    ceb1(mf, "🌐", "Server Hop", UDim2.new(0.22, 0, 0.63, 0), bsz, function()
+    ceb1(mf, "🌐", "Server Hop", UDim2.new(0.22, 0, 0.45, 0), bsz, function()
         sh1()
     end)
     
-    ceb1(mf, "📋", "Copy ID", UDim2.new(0.42, 0, 0.63, 0), bsz, function()
+    ceb1(mf, "📋", "Copy ID", UDim2.new(0.42, 0, 0.45, 0), bsz, function()
         if e.sc then
             e.sc(tostring(lp.UserId))
             fw.sa("Success", "ID copied!", 2)
         end
     end)
     
-    ceb1(mf, "👁️", "Hide UI", UDim2.new(0.62, 0, 0.63, 0), bsz, function()
+    ceb1(mf, "👁️", "Hide UI", UDim2.new(0.62, 0, 0.45, 0), bsz, function()
         hui1()
     end)
     
-    ceb1(mf, "⚡", "Anti-Lag", UDim2.new(0.82, 0, 0.63, 0), bsz, function()
+    ceb1(mf, "⚡", "Anti-Lag", UDim2.new(0.82, 0, 0.45, 0), bsz, function()
         eal1()
     end)
     
-    ceb1(mf, "🧹", "Clear WS", UDim2.new(0.02, 0, 0.71, 0), bsz, function()
+    ceb1(mf, "🧹", "Clear WS", UDim2.new(0.02, 0, 0.51, 0), bsz, function()
         cws1()
     end)
     
-    ceb1(mf, "🎵", "Sound", UDim2.new(0.22, 0, 0.71, 0), bsz, function()
+    ceb1(mf, "🎵", "Sound", UDim2.new(0.22, 0, 0.51, 0), bsz, function()
         ts1()
     end)
     
-    ceb1(mf, "🔄", "Refresh", UDim2.new(0.42, 0, 0.71, 0), bsz, function()
+    ceb1(mf, "🔄", "Refresh", UDim2.new(0.42, 0, 0.51, 0), bsz, function()
         fw.hd()
         wait(0.5)
         fw.sh()
         fw.sa("Success", "UI refreshed!", 2)
     end)
     
-    ceb1(mf, "📊", "Game Info", UDim2.new(0.62, 0, 0.71, 0), bsz, function()
+    ceb1(mf, "📊", "Game Info", UDim2.new(0.62, 0, 0.51, 0), bsz, function()
         local inf = "Game: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name .. "\nPlace ID: " .. game.PlaceId .. "\nJob ID: " .. game.JobId
         if e.sc then
             e.sc(inf)
@@ -698,27 +751,23 @@ local function uep1()
         end
     end)
     
-    ceb1(mf, "🔧", "Console", UDim2.new(0.82, 0, 0.71, 0), bsz, function()
+    ceb1(mf, "🔧", "Console", UDim2.new(0.82, 0, 0.51, 0), bsz, function()
         game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
         fw.sa("Info", "Console opened!", 2)
     end)
     
-    local if1 = nf(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.96,0,0.18,0), p=UDim2.new(0.02,0,0.8,0), n="InfoFrame"})
-    nc(if1, 0.08)
-    ns(if1, 1, Color3.fromRGB(35,39,54))
+    local if1 = cf1(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.58,0), n="InfoFrame"})
+    cc1_ui(if1, {cr=UDim.new(0, 8)})
+    cst1(if1, {c=Color3.fromRGB(35,39,54), t=1})
     
-    local it = nt(if1, {t="ℹ️ System Information", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.25,0), p=UDim2.new(0.02,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(it, 14)
+    local it = ct1(if1, {t="ℹ️ System Information", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.2,0), p=UDim2.new(0.02,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
-    local ei = nt(if1, {t="Executor: " .. (identifyexecutor and identifyexecutor() or "Unknown"), ts=11, tc=Color3.fromRGB(200,200,200), bt=1, s=UDim2.new(0.46,0,0.3,0), p=UDim2.new(0.02,0,0.35,0), sc=true, xa=Enum.TextXAlignment.Left, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
-    ntc(ei, 11)
+    local ei = ct1(if1, {t="Executor: " .. (identifyexecutor and identifyexecutor() or "Unknown"), ts=11, tc=Color3.fromRGB(200,200,200), bt=1, s=UDim2.new(0.46,0,0.25,0), p=UDim2.new(0.02,0,0.3,0), sc=true, xa=Enum.TextXAlignment.Left, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
     
     local hid = gethwid and gethwid() or "Unknown"
-    local hi = nt(if1, {t="HWID: " .. hid:sub(1, 8) .. "...", ts=11, tc=Color3.fromRGB(200,200,200), bt=1, s=UDim2.new(0.46,0,0.3,0), p=UDim2.new(0.52,0,0.35,0), sc=true, xa=Enum.TextXAlignment.Left, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
-    ntc(hi, 11)
+    local hi = ct1(if1, {t="HWID: " .. hid:sub(1, 8) .. "...", ts=11, tc=Color3.fromRGB(200,200,200), bt=1, s=UDim2.new(0.46,0,0.25,0), p=UDim2.new(0.52,0,0.3,0), sc=true, xa=Enum.TextXAlignment.Left, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
     
-    local vi = nt(if1, {t="FrostWare Lib V2 - Advanced Module Loaded", ts=11, tc=Color3.fromRGB(166,190,255), bt=1, s=UDim2.new(0.96,0,0.3,0), p=UDim2.new(0.02,0,0.65,0), sc=true, xa=Enum.TextXAlignment.Center, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(vi, 11)
+    local vi = ct1(if1, {t="FrostWare Lib V2 - Mobile Advanced Module", ts=11, tc=Color3.fromRGB(166,190,255), bt=1, s=UDim2.new(0.96,0,0.25,0), p=UDim2.new(0.02,0,0.65,0), sc=true, xa=Enum.TextXAlignment.Center, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
     upd1()
 end
