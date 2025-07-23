@@ -22,8 +22,7 @@ local lr = nil
 local co = {}
 local csr = nil
 local ce = true
-local op, ow, oe
-local ss = tick()
+local op, ow, oelocal ss = tick()
 local tbr = nil
 local tsr = nil
 local pbr = nil
@@ -38,16 +37,16 @@ local ctp = nil
 local ia = false
 local ctw = {}
 local pm = {
-    s = "Size", p = "Position", c = "BackgroundColor3", t = "Text", ts = "TextSize", 
+    s = "Size", p = "Position", c = "BackgroundColor3", t = "Text", ts = "TextSize",
     tc = "TextColor3", bt = "BackgroundTransparency", v = "Visible", n = "Name",
-    i = "Image", ic = "ImageColor3", z = "ZIndex", sc = "TextScaled", 
+    i = "Image", ic = "ImageColor3", z = "ZIndex", sc = "TextScaled",
     xa = "TextXAlignment", ya = "TextYAlignment", tw = "TextWrapped",
     ff = "FontFace", st = "ScaleType", cs = "CanvasSize", sb = "ScrollBarThickness",
     cl = "ClipsDescendants", ml = "MultiLine", cf = "ClearTextOnFocus", cp = "CursorPosition",
-    rt = "RichText", tt = "TextTransparency", pc = "PlaceholderColor3", 
+    rt = "RichText", tt = "TextTransparency", pc = "PlaceholderColor3",
     ac = "Active", dr = "Draggable", ro = "Rotation", eb = "ElasticBehavior",
     ti = "TopImage", mi = "MidImage", bi = "BottomImage", vs = "VerticalScrollBarInset",
-    hs = "HorizontalScrollBarInset", sit = "ScrollBarImageTransparency", 
+    hs = "HorizontalScrollBarInset", sit = "ScrollBarImageTransparency",
     sic = "ScrollBarImageColor3", fd = "FillDirection", so = "SortOrder", pd = "Padding"
 }
 local function ap(o, pr)
@@ -277,7 +276,7 @@ local function csb(p, nm, txt, ico, pos, sz)
     local btn = nf(p, {c=Color3.fromRGB(255,255,255), s=sz, p=pos, n=nm})
     nc(btn, 0.2)
     ng(btn, Color3.fromRGB(166,190,255), Color3.fromRGB(93,117,160))
-    local lbl = nt(btn, {tw=true, ts=16, xa=Enum.TextXAlignment.Left, ya=Enum.TextYAlignment.Top, 
+    local lbl = nt(btn, {tw=true, ts=16, xa=Enum.TextXAlignment.Left, ya=Enum.TextYAlignment.Top,
         sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),
         tc=Color3.fromRGB(29,29,38), bt=1, s=UDim2.new(0.65,0,0.4,0), t=txt, n="Lbl", p=UDim2.new(0.25,0,0.3,0)})
     ntc(lbl, 16)
@@ -469,6 +468,27 @@ function fw.cbu()
     pgr = g["11"]
     return g, oc
 end
+
+function fw.createSidebarButton(p, nm, txt, ico, pos, sel)
+    local btn = nf(p, {c=sel and Color3.fromRGB(30,36,51) or Color3.fromRGB(31,34,50), s=UDim2.new(0.68,0,0.064,0), p=pos, n=nm, bt=sel and 0 or 1})
+    nc(btn, 0.15)
+    local bx = nf(btn, {z=sel and 2 or 0, c=Color3.fromRGB(255,255,255), s=UDim2.new(0.15,0,0.6,0), p=UDim2.new(0.08,0,0.2,0), n="Box"})
+    nc(bx, 0.2)
+    nar(bx, 1)
+    if sel then
+        ng(bx, Color3.fromRGB(166,190,255), Color3.fromRGB(93,117,160))
+    else
+        ng(bx, Color3.fromRGB(66,79,113), Color3.fromRGB(36,44,63))
+    end
+    nim(bx, {z=sel and 2 or 0, st=Enum.ScaleType.Fit, i=ico, s=UDim2.new(0.6,0,0.6,0), bt=1, n="Ico", p=UDim2.new(0.2,0,0.2,0)})
+    local lbl = nt(btn, {tw=true, ts=16, xa=Enum.TextXAlignment.Left, ya=Enum.TextYAlignment.Top, sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal), tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.6,0,0.6,0), t=txt, n="Lbl", p=UDim2.new(0.3,0,0.2,0)})
+    ntc(lbl, 16)
+    local clk = nb(btn, {tw=true, tc=Color3.fromRGB(0,0,0), ts=12, sc=true, bt=1, s=UDim2.new(1,0,1,0), n="Clk", t="  ", z=5})
+    nc(clk, 0)
+    ntc(clk, 12)
+    return btn, clk
+end
+
 function fw.csid()
     local sb = nim(g["6"], {ImageTransparency=1, ic=Color3.fromRGB(13,15,20), i="rbxassetid://133862668499122", s=UDim2.new(0.25,0,1,0), bt=1, n="Sidebar"})
     sbr = sb
@@ -499,30 +519,11 @@ function fw.csid()
     nc(uc, 0)
     ntc(uc, 12)
     uc.MouseButton1Click:Connect(function() e.sc("https://discord.gg/getfrost") end)
-    
-    local function csbn(nm, txt, ico, pos, sel)
-        local btn = nf(sb, {c=sel and Color3.fromRGB(30,36,51) or Color3.fromRGB(31,34,50), s=UDim2.new(0.68,0,0.064,0), p=pos, n=nm, bt=sel and 0 or 1})
-        nc(btn, 0.15)
-        local bx = nf(btn, {z=sel and 2 or 0, c=Color3.fromRGB(255,255,255), s=UDim2.new(0.15,0,0.6,0), p=UDim2.new(0.08,0,0.2,0), n="Box"})
-        nc(bx, 0.2)
-        nar(bx, 1)
-        if sel then
-            ng(bx, Color3.fromRGB(166,190,255), Color3.fromRGB(93,117,160))
-        else
-            ng(bx, Color3.fromRGB(66,79,113), Color3.fromRGB(36,44,63))
-        end
-        nim(bx, {z=sel and 2 or 0, st=Enum.ScaleType.Fit, i=ico, s=UDim2.new(0.6,0,0.6,0), bt=1, n="Ico", p=UDim2.new(0.2,0,0.2,0)})
-        local lbl = nt(btn, {tw=true, ts=16, xa=Enum.TextXAlignment.Left, ya=Enum.TextYAlignment.Top, sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal), tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.6,0,0.6,0), t=txt, n="Lbl", p=UDim2.new(0.3,0,0.2,0)})
-        ntc(lbl, 16)
-        local clk = nb(btn, {tw=true, tc=Color3.fromRGB(0,0,0), ts=12, sc=true, bt=1, s=UDim2.new(1,0,1,0), n="Clk", t="  ", z=5})
-        nc(clk, 0)
-        ntc(clk, 12)
-        return btn, clk
-    end
-    
-    local ed, edc = csbn("Editor", "Editor", "rbxassetid://94595204123047", UDim2.new(0.075,0,0.2,0), true)
-    local co, coc = csbn("Console", "Console", "rbxassetid://107390243416427", UDim2.new(0.075,0,0.28,0), false)
-    local ex, exc = csbn("Extra", "Extra", "rbxassetid://128679881757557", UDim2.new(0.075,0,0.36,0), false)
+
+    local edBtn, edc = fw.createSidebarButton(sb, "Editor", "Editor", "rbxassetid://94595204123047", UDim2.new(0.075,0,0.2,0), true)
+    local coBtn, coc = fw.createSidebarButton(sb, "Console", "Console", "rbxassetid://107390243416427", UDim2.new(0.075,0,0.28,0), false)
+    local exBtn, exc = fw.createSidebarButton(sb, "Extra", "Extra", "rbxassetid://128679881757557", UDim2.new(0.075,0,0.36,0), false)
+
     local lg = nim(sb, {st=Enum.ScaleType.Fit, i="rbxassetid://102761807757832", s=UDim2.new(0.2,0,0.08,0), bt=1, n="Logo", p=UDim2.new(0.4,0,0.05,0)})
     nc(lg, 0)
     local cl = nim(sb, {z=2, ic=Color3.fromRGB(34,41,58), i="rbxassetid://124705542662472", s=UDim2.new(0.13,0,1,0), bt=1, n="Close", p=UDim2.new(0.891,0,0,0)})
@@ -757,6 +758,38 @@ function fw.gct() return ct end
 function fw.gt() return tb end
 function fw.sh() fw.aio() end
 function fw.hd() fw.aic() end
+
+function fw.cscp()
+    local scp = nim(g["11"], {ImageTransparency=1, ic=Color3.fromRGB(13,15,20), i="rbxassetid://76734110237026", s=UDim2.new(1.001,0,1,0), v=false, cl=true, bt=1, n="ScriptsPage", p=UDim2.new(-0.001,0,0,0)})
+    local tit = nt(scp, {t="Scripts", ts=48, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(1,0,0.2,0), p=UDim2.new(0,0,0.3,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    ntc(tit, 48)
+    local info = nt(scp, {t="Aquí podrás gestionar tus scripts.", ts=24, tc=Color3.fromRGB(180,180,180), bt=1, s=UDim2.new(1,0,0.1,0), p=UDim2.new(0,0,0.5,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Regular,Enum.FontStyle.Normal)})
+    ntc(info, 24)
+    return scp
+end
+
+function fw.cstp()
+    local testp = nim(g["11"], {ImageTransparency=1, ic=Color3.fromRGB(13,15,20), i="rbxassetid://76734110237026", s=UDim2.new(1.001,0,1,0), v=false, cl=true, bt=1, n="TestPage", p=UDim2.new(-0.001,0,0,0)})
+    local tit = nt(testp, {t="Test Page", ts=48, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(1,0,0.2,0), p=UDim2.new(0,0,0.3,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    ntc(tit, 48)
+    local info = nt(testp, {t="Esta es una página de prueba.", ts=24, tc=Color3.fromRGB(180,180,180), bt=1, s=UDim2.new(1,0,0.1,0), p=UDim2.new(0,0,0.5,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Regular,Enum.FontStyle.Normal)})
+    ntc(info, 24)
+    return testp
+end
+
+function fw.addTab(tabName, tabText, iconId, position, pageCreationFunction)
+    local sb = sbr
+    if not sb then return end
+
+    local tabButtonFrame, tabClickDetector = fw.createSidebarButton(sb, tabName, tabText, iconId, position, false)
+
+    local page = pageCreationFunction()
+
+    tabClickDetector.MouseButton1Click:Connect(function()
+        fw.sp(tabName, sb)
+    end)
+end
+
 function fw.iwa()
     ha = true
     local sb, uc, edc, coc, exc, sl = fw.csid()
@@ -767,7 +800,7 @@ function fw.iwa()
         local cop = fw.ccp()
         if not da then wait(0.5) end
         local exp = fw.cep()
-        
+
         local function se()
             local tr = fw.rt(tscr)
             if not tr then
@@ -795,7 +828,7 @@ function fw.iwa()
                 fw.swt(ni)
             end)
         end
-        
+
         local function sbt()
             eb.MouseButton1Click:Connect(function()
                 local cd = src.Text
@@ -857,14 +890,14 @@ function fw.iwa()
                 end
             end)
         end
-        
+
         local function sn()
             edc.MouseButton1Click:Connect(function() fw.sp("Editor", sb) end)
             coc.MouseButton1Click:Connect(function() fw.sp("Console", sb) end)
             exc.MouseButton1Click:Connect(function() fw.sp("Extra", sb) end)
             sl.MouseButton1Click:Connect(function() fw.hd() end)
         end
-        
+
         se()
         sbt()
         sn()
