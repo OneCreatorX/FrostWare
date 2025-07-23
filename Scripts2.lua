@@ -113,15 +113,15 @@ local function ldS2()
 end
 
 local function createScriptCard2(parent, name, content, yPos)
-    local scd = e.nf(parent, {
+    local scd = fw.nf(parent, {
         c = Color3.fromRGB(25, 30, 40),
         s = UDim2.new(1, -20, 0, 55),
         p = UDim2.new(0, 10, 0, yPos),
         n = "ScriptCard_" .. name
     })
-    e.nc(scd, 0.15)
+    fw.nc(scd, 0.15)
     
-    local title = e.nt(scd, {
+    local title = fw.nt(scd, {
         t = name,
         ts = 16,
         s = UDim2.new(0.4, 0, 0.6, 0),
@@ -132,17 +132,17 @@ local function createScriptCard2(parent, name, content, yPos)
         ff = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
         n = "ScriptTitle"
     })
-    e.ntc(title, 16)
+    fw.ntc(title, 16)
     
     if ds2[name] then
-        local vb = e.nf(scd, {
+        local vb = fw.nf(scd, {
             c = Color3.fromRGB(20, 60, 110),
             s = UDim2.new(0, 84, 0, 24),
             p = UDim2.new(0, 13, 0, 28)
         })
-        e.nc(vb, 0.18)
+        fw.nc(vb, 0.18)
         
-        local vt = e.nt(vb, {
+        local vt = fw.nt(vb, {
             t = "VERIFIED",
             ts = 10,
             tc = Color3.fromRGB(255, 255, 255),
@@ -150,10 +150,10 @@ local function createScriptCard2(parent, name, content, yPos)
             bt = 1,
             n = "VerifiedText"
         })
-        e.ntc(vt, 10)
+        fw.ntc(vt, 10)
     end
     
-    local aeb = e.nb(scd, {
+    local aeb = fw.nb(scd, {
         c = aes2[name] and Color3.fromRGB(50, 170, 90) or Color3.fromRGB(65, 75, 90),
         s = UDim2.new(0, 80, 0, 25),
         p = UDim2.new(0.45, 0, 0, 15),
@@ -162,10 +162,10 @@ local function createScriptCard2(parent, name, content, yPos)
         ts = 10,
         n = "AutoExecBtn"
     })
-    e.nc(aeb, 0.15)
-    e.ntc(aeb, 10)
+    fw.nc(aeb, 0.15)
+    fw.ntc(aeb, 10)
     
-    local exb = e.nb(scd, {
+    local exb = fw.nb(scd, {
         c = Color3.fromRGB(50, 170, 90),
         s = UDim2.new(0, 80, 0, 25),
         p = UDim2.new(0.65, 0, 0, 15),
@@ -174,10 +174,10 @@ local function createScriptCard2(parent, name, content, yPos)
         ts = 11,
         n = "ExecuteBtn"
     })
-    e.nc(exb, 0.15)
-    e.ntc(exb, 11)
+    fw.nc(exb, 0.15)
+    fw.ntc(exb, 11)
     
-    local mrb = e.nb(scd, {
+    local mrb = fw.nb(scd, {
         c = Color3.fromRGB(50, 130, 210),
         s = UDim2.new(0, 60, 0, 25),
         p = UDim2.new(0.85, 0, 0, 15),
@@ -186,8 +186,8 @@ local function createScriptCard2(parent, name, content, yPos)
         ts = 11,
         n = "MoreBtn"
     })
-    e.nc(mrb, 0.15)
-    e.ntc(mrb, 11)
+    fw.nc(mrb, 0.15)
+    fw.ntc(mrb, 11)
     
     exb.MouseEnter:Connect(function() exb.BackgroundColor3 = Color3.fromRGB(60, 180, 100) end)
     exb.MouseLeave:Connect(function() exb.BackgroundColor3 = Color3.fromRGB(50, 170, 90) end)
@@ -267,7 +267,7 @@ function shSO2(nm, cont)
     local ui = fw.gu()
     local mui = ui["11"]
     
-    sf2 = e.nf(mui, {
+    sf2 = fw.nf(mui, {
         c = Color3.fromRGB(0, 0, 0),
         bt = 0.4,
         s = UDim2.new(1, 0, 1, 0),
@@ -276,22 +276,22 @@ function shSO2(nm, cont)
         z = 10
     })
     
-    local op = e.nf(sf2, {
+    local op = fw.nf(sf2, {
         c = Color3.fromRGB(20, 25, 35),
         s = UDim2.new(0, 400, 0, ds2[nm] and 350 or 400),
         p = UDim2.new(0.5, -200, 0.5, ds2[nm] and -175 or -200),
         n = "OptionsPanel"
     })
-    e.nc(op, 0.18)
+    fw.nc(op, 0.18)
     
-    local tb = e.nf(op, {
+    local tb = fw.nf(op, {
         c = Color3.fromRGB(30, 35, 45),
         s = UDim2.new(1, 0, 0, 50),
         p = UDim2.new(0, 0, 0, 0),
         n = "TitleBar"
     })
     
-    local title = e.nt(tb, {
+    local title = fw.nt(tb, {
         t = "Script Options",
         ts = 18,
         tc = Color3.fromRGB(255, 255, 255),
@@ -300,9 +300,9 @@ function shSO2(nm, cont)
         bt = 1,
         n = "Title"
     })
-    e.ntc(title, 18)
+    fw.ntc(title, 18)
     
-    local cb = e.nb(tb, {
+    local cb = fw.nb(tb, {
         c = Color3.fromRGB(190, 60, 60),
         s = UDim2.new(0, 30, 0, 30),
         p = UDim2.new(1, -40, 0, 10),
@@ -311,14 +311,14 @@ function shSO2(nm, cont)
         ts = 16,
         n = "CloseBtn"
     })
-    e.nc(cb, 0.15)
-    e.ntc(cb, 16)
+    fw.nc(cb, 0.15)
+    fw.ntc(cb, 16)
     
     cb.MouseButton1Click:Connect(function()
         if sf2 then sf2:Destroy() sf2 = nil end
     end)
     
-    local subtitle = e.nt(op, {
+    local subtitle = fw.nt(op, {
         t = "Choose an action for: " .. nm,
         ts = 12,
         tc = Color3.fromRGB(190, 200, 220),
@@ -328,7 +328,7 @@ function shSO2(nm, cont)
         bt = 1,
         n = "Subtitle"
     })
-    e.ntc(subtitle, 12)
+    fw.ntc(subtitle, 12)
     
     local btns = {
         {text = "EXECUTE SCRIPT", color = Color3.fromRGB(50, 170, 90), pos = UDim2.new(0.1, 0, 0, 120)},
@@ -342,7 +342,7 @@ function shSO2(nm, cont)
     end
     
     for i, bd in pairs(btns) do
-        local btn = e.nb(op, {
+        local btn = fw.nb(op, {
             c = bd.color,
             s = UDim2.new(0.8, 0, 0, 35),
             p = bd.pos,
@@ -351,8 +351,8 @@ function shSO2(nm, cont)
             ts = 12,
             n = "OptionBtn" .. i
         })
-        e.nc(btn, 0.15)
-        e.ntc(btn, 12)
+        fw.nc(btn, 0.15)
+        fw.ntc(btn, 12)
         
         btn.MouseEnter:Connect(function()
             if bd.text == "DELETE SCRIPT" then
@@ -439,15 +439,15 @@ end
 local function createCloudCard2(parent, data, index)
     local yp = (index - 1) * 65 + 10
     
-    local cc = e.nf(parent, {
+    local cc = fw.nf(parent, {
         c = Color3.fromRGB(25, 30, 40),
         s = UDim2.new(1, -20, 0, 55),
         p = UDim2.new(0, 10, 0, yp),
         n = "CloudCard"
     })
-    e.nc(cc, 0.15)
+    fw.nc(cc, 0.15)
     
-    local title = e.nt(cc, {
+    local title = fw.nt(cc, {
         t = data.title or "Unknown Script",
         ts = 16,
         s = UDim2.new(0.35, 0, 0.6, 0),
@@ -457,25 +457,25 @@ local function createCloudCard2(parent, data, index)
         bt = 1,
         n = "ScriptTitle"
     })
-    e.ntc(title, 16)
+    fw.ntc(title, 16)
     
-    local vb = e.nf(cc, {
+    local vb = fw.nf(cc, {
         c = Color3.fromRGB(20, 60, 110),
         s = UDim2.new(0, 84, 0, 24),
         p = UDim2.new(0, 13, 0, 28)
     })
-    e.nc(vb, 0.18)
+    fw.nc(vb, 0.18)
     
-    local vt = e.nt(vb, {
+    local vt = fw.nt(vb, {
         t = "VERIFIED",
         ts = 10,
         tc = Color3.fromRGB(255, 255, 255),
         s = UDim2.new(1, 0, 1, 0),
         bt = 1
     })
-    e.ntc(vt, 10)
+    fw.ntc(vt, 10)
     
-    local views = e.nt(cc, {
+    local views = fw.nt(cc, {
         t = (data.views or "0") .. " Views",
         ts = 12,
         tc = Color3.fromRGB(160, 170, 190),
@@ -485,9 +485,9 @@ local function createCloudCard2(parent, data, index)
         bt = 1,
         n = "ViewsLabel"
     })
-    e.ntc(views, 12)
+    fw.ntc(views, 12)
     
-    local sb = e.nb(cc, {
+    local sb = fw.nb(cc, {
         c = Color3.fromRGB(50, 130, 210),
         s = UDim2.new(0, 100, 0, 35),
         p = UDim2.new(1, -110, 0, 10),
@@ -496,8 +496,8 @@ local function createCloudCard2(parent, data, index)
         ts = 12,
         n = "SelectBtn"
     })
-    e.nc(sb, 0.15)
-    e.ntc(sb, 12)
+    fw.nc(sb, 0.15)
+    fw.ntc(sb, 12)
     
     sb.MouseEnter:Connect(function() sb.BackgroundColor3 = Color3.fromRGB(60, 140, 220) end)
     sb.MouseLeave:Connect(function() sb.BackgroundColor3 = Color3.fromRGB(50, 130, 210) end)
@@ -514,7 +514,7 @@ function shCO2(dt)
     local ui = fw.gu()
     local mui = ui["11"]
     
-    sf2 = e.nf(mui, {
+    sf2 = fw.nf(mui, {
         c = Color3.fromRGB(0, 0, 0),
         bt = 0.4,
         s = UDim2.new(1, 0, 1, 0),
@@ -523,22 +523,22 @@ function shCO2(dt)
         z = 10
     })
     
-    local op = e.nf(sf2, {
+    local op = fw.nf(sf2, {
         c = Color3.fromRGB(20, 25, 35),
         s = UDim2.new(0, 400, 0, 350),
         p = UDim2.new(0.5, -200, 0.5, -175),
         n = "OptionsPanel"
     })
-    e.nc(op, 0.18)
+    fw.nc(op, 0.18)
     
-    local tb = e.nf(op, {
+    local tb = fw.nf(op, {
         c = Color3.fromRGB(30, 35, 45),
         s = UDim2.new(1, 0, 0, 50),
         p = UDim2.new(0, 0, 0, 0),
         n = "TitleBar"
     })
     
-    local title = e.nt(tb, {
+    local title = fw.nt(tb, {
         t = "Cloud Script Options",
         ts = 18,
         tc = Color3.fromRGB(255, 255, 255),
@@ -547,9 +547,9 @@ function shCO2(dt)
         bt = 1,
         n = "Title"
     })
-    e.ntc(title, 18)
+    fw.ntc(title, 18)
     
-    local cb = e.nb(tb, {
+    local cb = fw.nb(tb, {
         c = Color3.fromRGB(190, 60, 60),
         s = UDim2.new(0, 30, 0, 30),
         p = UDim2.new(1, -40, 0, 10),
@@ -558,14 +558,14 @@ function shCO2(dt)
         ts = 16,
         n = "CloseBtn"
     })
-    e.nc(cb, 0.15)
-    e.ntc(cb, 16)
+    fw.nc(cb, 0.15)
+    fw.ntc(cb, 16)
     
     cb.MouseButton1Click:Connect(function()
         if sf2 then sf2:Destroy() sf2 = nil end
     end)
     
-    local subtitle = e.nt(op, {
+    local subtitle = fw.nt(op, {
         t = "Choose an action for: " .. (dt.title or "Unknown Script"),
         ts = 12,
         tc = Color3.fromRGB(190, 200, 220),
@@ -575,7 +575,7 @@ function shCO2(dt)
         bt = 1,
         n = "Subtitle"
     })
-    e.ntc(subtitle, 12)
+    fw.ntc(subtitle, 12)
     
     local btns = {
         {text = "EXECUTE SCRIPT", color = Color3.fromRGB(50, 170, 90), pos = UDim2.new(0.1, 0, 0, 120)},
@@ -585,7 +585,7 @@ function shCO2(dt)
     }
     
     for i, bd in pairs(btns) do
-        local btn = e.nb(op, {
+        local btn = fw.nb(op, {
             c = bd.color,
             s = UDim2.new(0.8, 0, 0, 35),
             p = bd.pos,
@@ -594,8 +594,8 @@ function shCO2(dt)
             ts = 12,
             n = "CloudOptionBtn" .. i
         })
-        e.nc(btn, 0.15)
-        e.ntc(btn, 12)
+        fw.nc(btn, 0.15)
+        fw.ntc(btn, 12)
         
         btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(bd.color.R * 255 + 20, bd.color.G * 255 + 20, bd.color.B * 255 + 20) end)
         btn.MouseLeave:Connect(function() btn.BackgroundColor3 = bd.color end)
@@ -751,8 +751,9 @@ local function performSearch2()
     end
 end
 
-function fw.cstp2()
-    local sp2 = e.nim(fw.gu()["11"], {
+function fw.cstp()
+    local g = fw.gu()
+    local sp2 = fw.nim(g["11"], {
         it = 1,
         ic = Color3.fromRGB(15, 18, 25),
         i = "rbxassetid://18665679839",
@@ -764,23 +765,23 @@ function fw.cstp2()
         p = UDim2.new(-0.001, 0, 0, 0)
     })
 
-    local tb2 = e.nf(sp2, {
+    local tb2 = fw.nf(sp2, {
         c = Color3.fromRGB(25, 30, 40),
         s = UDim2.new(1, -20, 0, 60),
         p = UDim2.new(0, 10, 0, 10),
         n = "TopBar"
     })
-    e.nc(tb2, 0.18)
+    fw.nc(tb2, 0.18)
 
-    local sbo2 = e.nf(tb2, {
+    local sbo2 = fw.nf(tb2, {
         c = Color3.fromRGB(18, 22, 32),
         s = UDim2.new(0.5, -10, 0, 35),
         p = UDim2.new(0, 15, 0, 12),
         n = "SearchBox_Outer"
     })
-    e.nc(sbo2, 0.18)
+    fw.nc(sbo2, 0.18)
 
-    searchBox2 = e.ntb(sbo2, {
+    searchBox2 = fw.ntb(sbo2, {
         c = Color3.fromRGB(35, 40, 50),
         s = UDim2.new(1, -8, 1, -8),
         p = UDim2.new(0, 4, 0, 4),
@@ -791,10 +792,10 @@ function fw.cstp2()
         ff = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
         n = "SearchBox"
     })
-    e.nc(searchBox2, 0.15)
-    e.ntc(searchBox2, 14)
+    fw.nc(searchBox2, 0.15)
+    fw.ntc(searchBox2, 14)
 
-    local lt2 = e.nb(tb2, {
+    local lt2 = fw.nb(tb2, {
         c = Color3.fromRGB(50, 130, 210),
         s = UDim2.new(0.2, -5, 0, 35),
         p = UDim2.new(0.55, 5, 0, 12),
@@ -803,10 +804,10 @@ function fw.cstp2()
         ts = 14,
         n = "LocalTab"
     })
-    e.nc(lt2, 0.15)
-    e.ntc(lt2, 14)
+    fw.nc(lt2, 0.15)
+    fw.ntc(lt2, 14)
 
-    local ct2 = e.nb(tb2, {
+    local ct2 = fw.nb(tb2, {
         c = Color3.fromRGB(65, 75, 90),
         s = UDim2.new(0.2, -5, 0, 35),
         p = UDim2.new(0.78, 5, 0, 12),
@@ -815,10 +816,10 @@ function fw.cstp2()
         ts = 14,
         n = "CloudTab"
     })
-    e.nc(ct2, 0.15)
-    e.ntc(ct2, 14)
+    fw.nc(ct2, 0.15)
+    fw.ntc(ct2, 14)
 
-    lf2 = e.nf(sp2, {
+    lf2 = fw.nf(sp2, {
         bt = 1,
         s = UDim2.new(1, 0, 1, -80),
         p = UDim2.new(0, 0, 0, 80),
@@ -826,7 +827,7 @@ function fw.cstp2()
         v = true
     })
 
-    cf2 = e.nf(sp2, {
+    cf2 = fw.nf(sp2, {
         bt = 1,
         s = UDim2.new(1, 0, 1, -80),
         p = UDim2.new(0, 0, 0, 80),
@@ -834,23 +835,23 @@ function fw.cstp2()
         v = false
     })
 
-    local ap2 = e.nf(lf2, {
+    local ap2 = fw.nf(lf2, {
         c = Color3.fromRGB(25, 30, 40),
         s = UDim2.new(1, -20, 0, 80),
         p = UDim2.new(0, 10, 0, 10),
         n = "AddPanel"
     })
-    e.nc(ap2, 0.18)
+    fw.nc(ap2, 0.18)
 
-    local nio2 = e.nf(ap2, {
+    local nio2 = fw.nf(ap2, {
         c = Color3.fromRGB(18, 22, 32),
         s = UDim2.new(0.25, -5, 0, 30),
         p = UDim2.new(0, 10, 0, 10),
         n = "NameInput_Outer"
     })
-    e.nc(nio2, 0.18)
+    fw.nc(nio2, 0.18)
 
-    local ni2 = e.ntb(nio2, {
+    local ni2 = fw.ntb(nio2, {
         c = Color3.fromRGB(35, 40, 50),
         s = UDim2.new(1, -8, 1, -8),
         p = UDim2.new(0, 4, 0, 4),
@@ -861,18 +862,18 @@ function fw.cstp2()
         ff = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
         n = "NameInput"
     })
-    e.nc(ni2, 0.15)
-    e.ntc(ni2, 12)
+    fw.nc(ni2, 0.15)
+    fw.ntc(ni2, 12)
 
-    local cio2 = e.nf(ap2, {
+    local cio2 = fw.nf(ap2, {
         c = Color3.fromRGB(18, 22, 32),
         s = UDim2.new(0.45, -5, 0, 30),
         p = UDim2.new(0.27, 5, 0, 10),
         n = "ContentInput_Outer"
     })
-    e.nc(cio2, 0.18)
+    fw.nc(cio2, 0.18)
 
-    local ci2 = e.ntb(cio2, {
+    local ci2 = fw.ntb(cio2, {
         c = Color3.fromRGB(35, 40, 50),
         s = UDim2.new(1, -8, 1, -8),
         p = UDim2.new(0, 4, 0, 4),
@@ -883,10 +884,10 @@ function fw.cstp2()
         ff = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
         n = "ContentInput"
     })
-    e.nc(ci2, 0.15)
-    e.ntc(ci2, 12)
+    fw.nc(ci2, 0.15)
+    fw.ntc(ci2, 12)
 
-    local svb2 = e.nb(ap2, {
+    local svb2 = fw.nb(ap2, {
         c = Color3.fromRGB(50, 170, 90),
         s = UDim2.new(0.12, -5, 0, 30),
         p = UDim2.new(0.74, 5, 0, 10),
@@ -895,10 +896,10 @@ function fw.cstp2()
         ts = 12,
         n = "SaveBtn"
     })
-    e.nc(svb2, 0.15)
-    e.ntc(svb2, 12)
+    fw.nc(svb2, 0.15)
+    fw.ntc(svb2, 12)
 
-    local pb2 = e.nb(ap2, {
+    local pb2 = fw.nb(ap2, {
         c = Color3.fromRGB(50, 130, 210),
         s = UDim2.new(0.12, -5, 0, 30),
         p = UDim2.new(0.88, 5, 0, 10),
@@ -907,18 +908,18 @@ function fw.cstp2()
         ts = 12,
         n = "PasteBtn"
     })
-    e.nc(pb2, 0.15)
-    e.ntc(pb2, 12)
+    fw.nc(pb2, 0.15)
+    fw.ntc(pb2, 12)
 
-    local sc2 = e.nf(lf2, {
+    local sc2 = fw.nf(lf2, {
         c = Color3.fromRGB(20, 25, 35),
         s = UDim2.new(1, -20, 1, -110),
         p = UDim2.new(0, 10, 0, 100),
         n = "ScriptsContainer"
     })
-    e.nc(sc2, 0.18)
+    fw.nc(sc2, 0.18)
 
-    local ss2_scroll = e.nsf(sc2, {
+    local ss2_scroll = fw.nsf(sc2, {
         bt = 1,
         s = UDim2.new(1, -10, 1, -10),
         p = UDim2.new(0, 5, 0, 5),
@@ -929,15 +930,15 @@ function fw.cstp2()
     })
     ssr2 = ss2_scroll
 
-    local cc2 = e.nf(cf2, {
+    local cc2 = fw.nf(cf2, {
         c = Color3.fromRGB(20, 25, 35),
         s = UDim2.new(1, -20, 1, -20),
         p = UDim2.new(0, 10, 0, 10),
         n = "CloudContainer"
     })
-    e.nc(cc2, 0.18)
+    fw.nc(cc2, 0.18)
 
-    local cs2_scroll = e.nsf(cc2, {
+    local cs2_scroll = fw.nsf(cc2, {
         bt = 1,
         s = UDim2.new(1, -10, 1, -10),
         p = UDim2.new(0, 5, 0, 5),
@@ -1011,6 +1012,6 @@ function fw.cstp2()
     return sp2
 end
 
-fw.addTab("Scripts", "Scripts", "rbxassetid://7733779610", UDim2.new(0.075, 0, 0.44, 0), fw.cstp2)
+fw.addTab("Scripts", "Scripts", "rbxassetid://7733779610", UDim2.new(0.075, 0, 0.44, 0), fw.cstp)
 
 return true
