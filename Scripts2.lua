@@ -14,72 +14,12 @@ local ds2 = {
     ["Remote Spy"] = "loadstring(game:HttpGet('https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua'))()"
 }
 
-function fw.cscp()
-    local g = fw.gu()
-    local sp2 = nim(g["11"], {it=1, ic=Color3.fromRGB(15,18,25), i="rbxassetid://18665679839", s=UDim2.new(1.001,0,1,0), v=false, cl=true, bt=1, n="ScriptsPage", p=UDim2.new(-0.001,0,0,0)})
-    
-    local tit = nt(sp2, {t="Scripts", ts=48, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(1,0,0.2,0), p=UDim2.new(0,0,0.1,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(tit, 48)
-    
-    local info = nt(sp2, {t="Administra y ejecuta scripts locales y de la nube.", ts=24, tc=Color3.fromRGB(180,180,180), bt=1, s=UDim2.new(1,0,0.1,0), p=UDim2.new(0,0,0.25,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Regular,Enum.FontStyle.Normal)})
-    ntc(info, 24)
+fw.addTab("Scripts", "Scripts", "rbxassetid://107390243416427", UDim2.new(0.075, 0, 0.44, 0), fw.cscp)
 
-    local tb2 = nf(sp2, {c=Color3.fromRGB(25,30,40), s=UDim2.new(1,-20,0,60), p=UDim2.new(0,10,0,200), n="TopBar"})
-    nc(tb2, 0.18)
+local pagesContainer = fw.gu()["11"]
+local scriptsPageFrame = pagesContainer:FindFirstChild("ScriptsPage")
 
-    local sbo2 = nf(tb2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.5,-10,0,35), p=UDim2.new(0,15,0,12), n="SearchBox_Outer"})
-    nc(sbo2, 0.18)
-
-    searchBox2 = ntb(sbo2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(1,-8,1,-8), p=UDim2.new(0,4,0,4), pc=Color3.fromRGB(120,130,150), t="", ts=14, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="SearchBox"})
-    nc(searchBox2, 0.15)
-    ntc(searchBox2, 14)
-
-    local lt2 = nb(tb2, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0.2,-5,0,35), p=UDim2.new(0.55,5,0,12), t="LOCAL", tc=Color3.fromRGB(255,255,255), ts=14, n="LocalTab"})
-    nc(lt2, 0.15)
-    ntc(lt2, 14)
-
-    local ct2 = nb(tb2, {c=Color3.fromRGB(65,75,90), s=UDim2.new(0.2,-5,0,35), p=UDim2.new(0.78,5,0,12), t="CLOUD", tc=Color3.fromRGB(190,200,220), ts=14, n="CloudTab"})
-    nc(ct2, 0.15)
-    ntc(ct2, 14)
-
-    lf2 = nf(sp2, {bt=1, s=UDim2.new(1,0,1,-280), p=UDim2.new(0,0,0,270), n="LocalFrame", v=true})
-    cf2 = nf(sp2, {bt=1, s=UDim2.new(1,0,1,-280), p=UDim2.new(0,0,0,270), n="CloudFrame", v=false})
-
-    local ap2 = nf(lf2, {c=Color3.fromRGB(25,30,40), s=UDim2.new(1,-20,0,80), p=UDim2.new(0,10,0,10), n="AddPanel"})
-    nc(ap2, 0.18)
-
-    local nio2 = nf(ap2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.25,-5,0,30), p=UDim2.new(0,10,0,10), n="NameInput_Outer"})
-    nc(nio2, 0.18)
-
-    local ni2 = ntb(nio2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(1,-8,1,-8), p=UDim2.new(0,4,0,4), pc=Color3.fromRGB(120,130,150), t="", ts=12, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="NameInput"})
-    nc(ni2, 0.15)
-    ntc(ni2, 12)
-
-    local cio2 = nf(ap2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.45,-5,0,30), p=UDim2.new(0.27,5,0,10), n="ContentInput_Outer"})
-    nc(cio2, 0.18)
-
-    local ci2 = ntb(cio2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(1,-8,1,-8), p=UDim2.new(0,4,0,4), pc=Color3.fromRGB(120,130,150), t="", ts=12, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="ContentInput"})
-    nc(ci2, 0.15)
-    ntc(ci2, 12)
-
-    local svb2 = nb(ap2, {c=Color3.fromRGB(50,170,90), s=UDim2.new(0.12,-5,0,30), p=UDim2.new(0.74,5,0,10), t="SAVE", tc=Color3.fromRGB(255,255,255), ts=12, n="SaveBtn"})
-    nc(svb2, 0.15)
-    ntc(svb2, 12)
-
-    local pb2 = nb(ap2, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0.12,-5,0,30), p=UDim2.new(0.88,5,0,10), t="PASTE", tc=Color3.fromRGB(255,255,255), ts=12, n="PasteBtn"})
-    nc(pb2, 0.15)
-    ntc(pb2, 12)
-
-    local sc2 = nf(lf2, {c=Color3.fromRGB(20,25,35), s=UDim2.new(1,-20,1,-110), p=UDim2.new(0,10,0,100), n="ScriptsContainer"})
-    nc(sc2, 0.18)
-
-    ssr2 = nsf(sc2, {bt=1, s=UDim2.new(1,-10,1,-10), p=UDim2.new(0,5,0,5), sb=8, cs=UDim2.new(0,0,0,0), n="ScriptsScroll", sic=Color3.fromRGB(50,130,210)})
-
-    local cc2 = nf(cf2, {c=Color3.fromRGB(20,25,35), s=UDim2.new(1,-20,1,-20), p=UDim2.new(0,10,0,10), n="CloudContainer"})
-    nc(cc2, 0.18)
-
-    csr2 = nsf(cc2, {bt=1, s=UDim2.new(1,-10,1,-10), p=UDim2.new(0,5,0,5), cs=UDim2.new(0,0,0,0), sb=8, n="CloudScroll", sic=Color3.fromRGB(50,130,210)})
-
+if scriptsPageFrame then
     local function swS2(sec)
         cs2 = sec
         if lf2 and cf2 then
@@ -370,6 +310,68 @@ function fw.cscp()
         end
     end
 
+    local tit = nt(scriptsPageFrame, {t="Scripts", ts=48, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(1,0,0.2,0), p=UDim2.new(0,0,0.1,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    ntc(tit, 48)
+    
+    local info = nt(scriptsPageFrame, {t="Administra y ejecuta scripts locales y de la nube.", ts=24, tc=Color3.fromRGB(180,180,180), bt=1, s=UDim2.new(1,0,0.1,0), p=UDim2.new(0,0,0.25,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Regular,Enum.FontStyle.Normal)})
+    ntc(info, 24)
+
+    local tb2 = nf(scriptsPageFrame, {c=Color3.fromRGB(25,30,40), s=UDim2.new(1,-20,0,60), p=UDim2.new(0,10,0,200), n="TopBar"})
+    nc(tb2, 0.18)
+
+    local sbo2 = nf(tb2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.5,-10,0,35), p=UDim2.new(0,15,0,12), n="SearchBox_Outer"})
+    nc(sbo2, 0.18)
+
+    searchBox2 = ntb(sbo2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(1,-8,1,-8), p=UDim2.new(0,4,0,4), pc=Color3.fromRGB(120,130,150), t="", ts=14, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="SearchBox"})
+    nc(searchBox2, 0.15)
+    ntc(searchBox2, 14)
+
+    local lt2 = nb(tb2, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0.2,-5,0,35), p=UDim2.new(0.55,5,0,12), t="LOCAL", tc=Color3.fromRGB(255,255,255), ts=14, n="LocalTab"})
+    nc(lt2, 0.15)
+    ntc(lt2, 14)
+
+    local ct2 = nb(tb2, {c=Color3.fromRGB(65,75,90), s=UDim2.new(0.2,-5,0,35), p=UDim2.new(0.78,5,0,12), t="CLOUD", tc=Color3.fromRGB(190,200,220), ts=14, n="CloudTab"})
+    nc(ct2, 0.15)
+    ntc(ct2, 14)
+
+    lf2 = nf(scriptsPageFrame, {bt=1, s=UDim2.new(1,0,1,-280), p=UDim2.new(0,0,0,270), n="LocalFrame", v=true})
+    cf2 = nf(scriptsPageFrame, {bt=1, s=UDim2.new(1,0,1,-280), p=UDim2.new(0,0,0,270), n="CloudFrame", v=false})
+
+    local ap2 = nf(lf2, {c=Color3.fromRGB(25,30,40), s=UDim2.new(1,-20,0,80), p=UDim2.new(0,10,0,10), n="AddPanel"})
+    nc(ap2, 0.18)
+
+    local nio2 = nf(ap2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.25,-5,0,30), p=UDim2.new(0,10,0,10), n="NameInput_Outer"})
+    nc(nio2, 0.18)
+
+    local ni2 = ntb(nio2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(1,-8,1,-8), p=UDim2.new(0,4,0,4), pc=Color3.fromRGB(120,130,150), t="", ts=12, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="NameInput"})
+    nc(ni2, 0.15)
+    ntc(ni2, 12)
+
+    local cio2 = nf(ap2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.45,-5,0,30), p=UDim2.new(0.27,5,0,10), n="ContentInput_Outer"})
+    nc(cio2, 0.18)
+
+    local ci2 = ntb(cio2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(1,-8,1,-8), p=UDim2.new(0,4,0,4), pc=Color3.fromRGB(120,130,150), t="", ts=12, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="ContentInput"})
+    nc(ci2, 0.15)
+    ntc(ci2, 12)
+
+    local svb2 = nb(ap2, {c=Color3.fromRGB(50,170,90), s=UDim2.new(0.12,-5,0,30), p=UDim2.new(0.74,5,0,10), t="SAVE", tc=Color3.fromRGB(255,255,255), ts=12, n="SaveBtn"})
+    nc(svb2, 0.15)
+    ntc(svb2, 12)
+
+    local pb2 = nb(ap2, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0.12,-5,0,30), p=UDim2.new(0.88,5,0,10), t="PASTE", tc=Color3.fromRGB(255,255,255), ts=12, n="PasteBtn"})
+    nc(pb2, 0.15)
+    ntc(pb2, 12)
+
+    local sc2 = nf(lf2, {c=Color3.fromRGB(20,25,35), s=UDim2.new(1,-20,1,-110), p=UDim2.new(0,10,0,100), n="ScriptsContainer"})
+    nc(sc2, 0.18)
+
+    ssr2 = nsf(sc2, {bt=1, s=UDim2.new(1,-10,1,-10), p=UDim2.new(0,5,0,5), sb=8, cs=UDim2.new(0,0,0,0), n="ScriptsScroll", sic=Color3.fromRGB(50,130,210)})
+
+    local cc2 = nf(cf2, {c=Color3.fromRGB(20,25,35), s=UDim2.new(1,-20,1,-20), p=UDim2.new(0,10,0,10), n="CloudContainer"})
+    nc(cc2, 0.18)
+
+    csr2 = nsf(cc2, {bt=1, s=UDim2.new(1,-10,1,-10), p=UDim2.new(0,5,0,5), cs=UDim2.new(0,0,0,0), sb=8, n="CloudScroll", sic=Color3.fromRGB(50,130,210)})
+
     svb2.MouseButton1Click:Connect(function()
         local nm = ni2.Text
         local cont = ci2.Text
@@ -427,22 +429,6 @@ function fw.cscp()
             dsCS2(ps, csr2)
         end
     end)
-
-    return sp2
 end
-
-function fw.cstp()
-    local g = fw.gu()
-    local testp = nim(g["11"], {it=1, ic=Color3.fromRGB(13,15,20), i="rbxassetid://76734110237026", s=UDim2.new(1.001,0,1,0), v=false, cl=true, bt=1, n="TestPage", p=UDim2.new(-0.001,0,0,0)})
-    local tit = nt(testp, {t="Test", ts=48, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(1,0,0.2,0), p=UDim2.new(0,0,0.3,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(tit, 48)
-    local info = nt(testp, {t="Esta es una página de prueba.", ts=24, tc=Color3.fromRGB(180,180,180), bt=1, s=UDim2.new(1,0,0.1,0), p=UDim2.new(0,0,0.5,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Regular,Enum.FontStyle.Normal)})
-    ntc(info, 24)
-    return testp
-end
-
-fw.addTab("Scripts", "Scripts", "rbxassetid://107390243416427", UDim2.new(0.075, 0, 0.44, 0), fw.cscp)
-
-fw.addTab("Test", "Test", "rbxassetid://128679881757557", UDim2.new(0.075, 0, 0.52, 0), fw.cstp)
 
 return true
