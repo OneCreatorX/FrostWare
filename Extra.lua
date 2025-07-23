@@ -426,7 +426,7 @@ spawn(function()
     wait(2)
     uep()
     
-    local mods = {}
+    local mods = {"https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Scripts.lua"}
     
     for i, mu in pairs(mods) do
         spawn(function()
