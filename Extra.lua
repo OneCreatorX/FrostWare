@@ -1,19 +1,6 @@
-setreadonly(dtc, false);
-dtc.securestring = function() end
-dtc._securestring = function() end
-setreadonly(dtc, true);
-dtc.pushautoexec();
 
-if not getgenv()._FW then
-    local ok, fw = pcall(function()
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/main.lua"))()
-    end)
-    if ok and fw then
-        getgenv()._FW = fw
-    end
-end
+local fw = loadstring(game:HttpGet("https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/main2.lua"))()
 
-local FW = getgenv()._FW or {}
 local hs = game:GetService("HttpService")
 local rs = game:GetService("RunService")
 local st = game:GetService("Stats")
@@ -26,6 +13,7 @@ local pcl, pgl, fpl, mml, tml = nil, nil, nil, nil, nil
 local stt = tick()
 local fpc = 0
 local lfu = tick()
+local da = false
 
 local function us_()
     return typeof(us) == "function" and us() or us
@@ -77,16 +65,14 @@ local function upd()
 end
 
 local function hui()
-    local ui = FW.getUI()
+    local ui = fw.gu()
     if ui and ui["3"] then
         ui["3"].Visible = false
-        ui["2"].Visible = false
         
         spawn(function()
             wait(5)
             ui["3"].Visible = true
-            ui["2"].Visible = true
-            FW.showAlert("Success", "UI restored!", 2)
+            fw.sa("Success", "UI restored!", 2)
         end)
     end
 end
@@ -139,82 +125,49 @@ local function eal()
     
     for _, eff in pairs(lt:GetChildren()) do
         pcall(function()
-            if eff:IsA("BloomEffect") or eff:IsA("BlurEffect") or 
+            if eff:IsA("BloomEffect") or eff:IsA("BlurEffect") or
                eff:IsA("ColorCorrectionEffect") or eff:IsA("SunRaysEffect") then
                 eff.Enabled = false
             end
         end)
     end
     
-    FW.showAlert("Success", "Extreme anti-lag applied!", 2)
+    fw.sa("Success", "Extreme anti-lag applied!", 2)
 end
 
 local function ceb(p, e, t, pos, sz, cb)
-    local btn = FW.cF(p, {
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        Size = sz,
-        Position = pos,
-        Name = t:gsub(" ", "")
-    })
-    FW.cC(btn, 0.2)
-    FW.cG(btn, Color3.fromRGB(166, 190, 255), Color3.fromRGB(93, 117, 160))
-    
-    local el = FW.cT(btn, {
-        Text = e,
-        TextSize = 24,
-        TextColor3 = Color3.fromRGB(29, 29, 38),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0.3, 0, 0.6, 0),
-        Position = UDim2.new(0.05, 0, 0.2, 0),
-        TextScaled = true,
-        FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-    })
-    
-    local tl = FW.cT(btn, {
-        Text = t,
-        TextSize = 16,
-        TextColor3 = Color3.fromRGB(29, 29, 38),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0.6, 0, 0.6, 0),
-        Position = UDim2.new(0.35, 0, 0.2, 0),
-        TextScaled = true,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-    })
-    FW.cTC(tl, 16)
-    
-    local cb_ = FW.cB(btn, {
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0),
-        Text = "",
-        ZIndex = 5
-    })
-    
-    cb_.MouseButton1Click:Connect(cb)
+    local btn = fw.csb(p, t:gsub(" ", ""), t, e, pos, sz)
+    btn.MouseButton1Click:Connect(cb)
     return btn
 end
 
 local function csl(p, t, pos, sz)
-    local f = FW.cF(p, {
-        BackgroundColor3 = Color3.fromRGB(16, 19, 27),
-        Size = sz,
-        Position = pos,
-        Name = t:gsub(" ", "")
-    })
-    FW.cC(f, 0.15)
-    FW.cS(f, 1, Color3.fromRGB(35, 39, 54))
+    local f = Instance.new("Frame", p)
+    f.BackgroundColor3 = Color3.fromRGB(16, 19, 27)
+    f.Size = sz
+    f.Position = pos
+    f.Name = t:gsub(" ", "")
     
-    local l = FW.cT(f, {
-        Text = t,
-        TextSize = 14,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0.9, 0, 0.8, 0),
-        Position = UDim2.new(0.05, 0, 0.1, 0),
-        TextScaled = true,
-        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-    })
-    FW.cTC(l, 14)
+    local corner = Instance.new("UICorner", f)
+    corner.CornerRadius = UDim.new(0, 6)
+    
+    local stroke = Instance.new("UIStroke", f)
+    stroke.Thickness = 1
+    stroke.Color = Color3.fromRGB(35, 39, 54)
+    
+    local l = Instance.new("TextLabel", f)
+    l.Text = t
+    l.TextSize = 14
+    l.TextColor3 = Color3.fromRGB(255, 255, 255)
+    l.BackgroundTransparency = 1
+    l.Size = UDim2.new(0.9, 0, 0.8, 0)
+    l.Position = UDim2.new(0.05, 0, 0.1, 0)
+    l.TextScaled = true
+    l.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    
+    local constraint = Instance.new("UITextSizeConstraint", l)
+    constraint.MaxTextSize = 14
+    
     return l
 end
 
@@ -230,7 +183,7 @@ local function sh()
             end
         end
     else
-        FW.showAlert("Error", "Failed to get servers!", 2)
+        fw.sa("Error", "Failed to get servers!", 2)
     end
 end
 
@@ -239,27 +192,28 @@ local function cws()
     for _, obj in pairs(workspace:GetChildren()) do
         if not obj:IsA("Terrain") and not obj:IsA("Camera") and obj ~= workspace.CurrentCamera and not game.Players:GetPlayerFromCharacter(obj) then
             pcall(function()
-                 obj:Destroy()
-                 c = c + 1
+                obj:Destroy()
+                c = c + 1
             end)
         end
     end
-    FW.showAlert("Success", "Cleared " .. c .. " objects!", 2)
+    fw.sa("Success", "Cleared " .. c .. " objects!", 2)
 end
 
 local function ts_()
     local uset = gs_()
     if uset.MasterVolume > 0 then
         uset.MasterVolume = 0
-        FW.showAlert("Info", "Sound disabled!", 2)
+        fw.sa("Info", "Sound disabled!", 2)
     else
         uset.MasterVolume = 1
-        FW.showAlert("Info", "Sound enabled!", 2)
+        fw.sa("Info", "Sound enabled!", 2)
     end
 end
 
 local function uep()
-    local ep = FW.getUI()["11"]:FindFirstChild("ExtraPage")
+    local ui = fw.gu()
+    local ep = ui["11"]:FindFirstChild("ExtraPage")
     if not ep then return end
     
     for _, ch in pairs(ep:GetChildren()) do
@@ -269,41 +223,50 @@ local function uep()
     end
     
     local tt = ep:FindFirstChild("TextLabel")
-    if tt then 
+    if tt then
         tt.Text = "🛠️ System Tools"
         tt.Size = UDim2.new(1, 0, 0.08, 0)
         tt.Position = UDim2.new(0, 0, 0.02, 0)
     end
     
-    local mf = FW.cF(ep, {
-        BackgroundColor3 = Color3.fromRGB(20, 25, 32),
-        Size = UDim2.new(0.95, 0, 0.88, 0),
-        Position = UDim2.new(0.025, 0, 0.1, 0),
-        Name = "MainFrame"
-    })
-    FW.cC(mf, 0.02)
-    FW.cS(mf, 2, Color3.fromRGB(35, 39, 54))
+    local mf = Instance.new("Frame", ep)
+    mf.BackgroundColor3 = Color3.fromRGB(20, 25, 32)
+    mf.Size = UDim2.new(0.95, 0, 0.88, 0)
+    mf.Position = UDim2.new(0.025, 0, 0.1, 0)
+    mf.Name = "MainFrame"
     
-    local sf = FW.cF(mf, {
-        BackgroundColor3 = Color3.fromRGB(16, 19, 27),
-        Size = UDim2.new(0.96, 0, 0.18, 0),
-        Position = UDim2.new(0.02, 0, 0.02, 0),
-        Name = "StatsFrame"
-    })
-    FW.cC(sf, 0.02)
-    FW.cS(sf, 1, Color3.fromRGB(35, 39, 54))
+    local corner = Instance.new("UICorner", mf)
+    corner.CornerRadius = UDim.new(0, 8)
     
-    local st_ = FW.cT(sf, {
-        Text = "📊 Live Stats",
-        TextSize = 18,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0.96, 0, 0.25, 0),
-        Position = UDim2.new(0.02, 0, 0.05, 0),
-        TextScaled = true,
-        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-    })
-    FW.cTC(st_, 18)
+    local stroke = Instance.new("UIStroke", mf)
+    stroke.Thickness = 2
+    stroke.Color = Color3.fromRGB(35, 39, 54)
+    
+    local sf = Instance.new("Frame", mf)
+    sf.BackgroundColor3 = Color3.fromRGB(16, 19, 27)
+    sf.Size = UDim2.new(0.96, 0, 0.18, 0)
+    sf.Position = UDim2.new(0.02, 0, 0.02, 0)
+    sf.Name = "StatsFrame"
+    
+    local sfCorner = Instance.new("UICorner", sf)
+    sfCorner.CornerRadius = UDim.new(0, 8)
+    
+    local sfStroke = Instance.new("UIStroke", sf)
+    sfStroke.Thickness = 1
+    sfStroke.Color = Color3.fromRGB(35, 39, 54)
+    
+    local st_ = Instance.new("TextLabel", sf)
+    st_.Text = "📊 Live Stats"
+    st_.TextSize = 18
+    st_.TextColor3 = Color3.fromRGB(255, 255, 255)
+    st_.BackgroundTransparency = 1
+    st_.Size = UDim2.new(0.96, 0, 0.25, 0)
+    st_.Position = UDim2.new(0.02, 0, 0.05, 0)
+    st_.TextScaled = true
+    st_.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    
+    local stConstraint = Instance.new("UITextSizeConstraint", st_)
+    stConstraint.MaxTextSize = 18
     
     pcl = csl(sf, "👥 0/0", UDim2.new(0.02, 0, 0.35, 0), UDim2.new(0.18, 0, 0.6, 0))
     pgl = csl(sf, "📡 0ms", UDim2.new(0.22, 0, 0.35, 0), UDim2.new(0.18, 0, 0.6, 0))
@@ -313,10 +276,10 @@ local function uep()
     
     local bsz = UDim2.new(0.31, 0, 0.1, 0)
     
-    ceb(mf, "🗄️", "Animation UI", UDim2.new(0.02, 0, 0.25, 0), bsz, function()
-    getgenv()._FW_DISABLE_ANIMATIONS = not getgenv()._FW_DISABLE_ANIMATIONS
-    FW.showAlert("Success", "Animations " .. (getgenv()._FW_DISABLE_ANIMATIONS and "disabled" or "enabled") .. "!", 2)
-end)
+    ceb(mf, "🗄️", "Toggle Animations", UDim2.new(0.02, 0, 0.25, 0), bsz, function()
+        da = not da
+        fw.sa("Success", "Animations " .. (da and "disabled" or "enabled") .. "!", 2)
+    end)
     
     ceb(mf, "🔄", "Rejoin Server", UDim2.new(0.345, 0, 0.25, 0), bsz, function()
         ts:Teleport(game.PlaceId, game.Players.LocalPlayer)
@@ -327,17 +290,17 @@ end)
     end)
     
     ceb(mf, "📋", "Copy User ID", UDim2.new(0.02, 0, 0.37, 0), bsz, function()
-        if getgenv().setclipboard then
-            getgenv().setclipboard(tostring(game.Players.LocalPlayer.UserId))
-            FW.showAlert("Success", "User ID copied!", 2)
+        if setclipboard then
+            setclipboard(tostring(game.Players.LocalPlayer.UserId))
+            fw.sa("Success", "User ID copied!", 2)
         else
-            FW.showAlert("Error", "Clipboard not supported!", 2)
+            fw.sa("Error", "Clipboard not supported!", 2)
         end
     end)
     
     ceb(mf, "👁️", "Hide UI (5s)", UDim2.new(0.345, 0, 0.37, 0), bsz, function()
         hui()
-        FW.showAlert("Info", "UI hidden for 5 seconds!", 1)
+        fw.sa("Info", "UI hidden for 5 seconds!", 1)
     end)
     
     ceb(mf, "⚡", "Extreme Anti-Lag", UDim2.new(0.67, 0, 0.37, 0), bsz, function()
@@ -353,96 +316,104 @@ end)
     end)
     
     ceb(mf, "🔄", "Refresh UI", UDim2.new(0.67, 0, 0.49, 0), bsz, function()
-        FW.hide()
+        fw.hd()
         wait(0.5)
-        FW.show()
-        FW.showAlert("Success", "UI refreshed!", 2)
+        fw.sh()
+        fw.sa("Success", "UI refreshed!", 2)
     end)
     
     ceb(mf, "📊", "Game Info", UDim2.new(0.02, 0, 0.61, 0), bsz, function()
         local inf = "Game: " .. ms:GetProductInfo(game.PlaceId).Name .. "\nPlace ID: " .. game.PlaceId .. "\nJob ID: " .. game.JobId
-        if getgenv().setclipboard then
-            getgenv().setclipboard(inf)
-            FW.showAlert("Success", "Game info copied!", 2)
+        if setclipboard then
+            setclipboard(inf)
+            fw.sa("Success", "Game info copied!", 2)
         else
-            FW.showAlert("Info", inf, 4)
+            fw.sa("Info", inf, 4)
         end
     end)
     
     ceb(mf, "🔧", "Developer Console", UDim2.new(0.345, 0, 0.61, 0), bsz, function()
         sg:SetCore("DevConsoleVisible", true)
-        FW.showAlert("Info", "Developer console opened!", 2)
+        fw.sa("Info", "Developer console opened!", 2)
     end)
     
     ceb(mf, "💾", "Save Place", UDim2.new(0.67, 0, 0.61, 0), bsz, function()
         if saveinstance then
             saveinstance()
-            FW.showAlert("Success", "Place saved!", 2)
+            fw.sa("Success", "Place saved!", 2)
         else
-            FW.showAlert("Error", "Save instance not supported!", 2)
+            fw.sa("Error", "Save instance not supported!", 2)
         end
     end)
     
-    local if_ = FW.cF(mf, {
-        BackgroundColor3 = Color3.fromRGB(16, 19, 27),
-        Size = UDim2.new(0.96, 0, 0.2, 0),
-        Position = UDim2.new(0.02, 0, 0.75, 0),
-        Name = "InfoFrame"
-    })
-    FW.cC(if_, 0.02)
-    FW.cS(if_, 1, Color3.fromRGB(35, 39, 54))
+    local if_ = Instance.new("Frame", mf)
+    if_.BackgroundColor3 = Color3.fromRGB(16, 19, 27)
+    if_.Size = UDim2.new(0.96, 0, 0.2, 0)
+    if_.Position = UDim2.new(0.02, 0, 0.75, 0)
+    if_.Name = "InfoFrame"
     
-    local it = FW.cT(if_, {
-        Text = "ℹ️ System Information",
-        TextSize = 16,
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0.96, 0, 0.25, 0),
-        Position = UDim2.new(0.02, 0, 0.05, 0),
-        TextScaled = true,
-        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-    })
-    FW.cTC(it, 16)
+    local ifCorner = Instance.new("UICorner", if_)
+    ifCorner.CornerRadius = UDim.new(0, 8)
     
-    local ei = FW.cT(if_, {
-        Text = "Executor: " .. (identifyexecutor and identifyexecutor() or "Unknown"),
-        TextSize = 12,
-        TextColor3 = Color3.fromRGB(200, 200, 200),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0.46, 0, 0.3, 0),
-        Position = UDim2.new(0.02, 0, 0.35, 0),
-        TextScaled = true,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
-    })
-    FW.cTC(ei, 12)
+    local ifStroke = Instance.new("UIStroke", if_)
+    ifStroke.Thickness = 1
+    ifStroke.Color = Color3.fromRGB(35, 39, 54)
     
-    local hid = getgenv()._e and getgenv()._e.gethwid and getgenv()._e.gethwid() or "Unknown"
-    local hi = FW.cT(if_, {
-        Text = "HWID: " .. hid:sub(1, 8) .. "...",
-        TextSize = 12,
-        TextColor3 = Color3.fromRGB(200, 200, 200),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0.46, 0, 0.3, 0),
-        Position = UDim2.new(0.52, 0, 0.35, 0),
-        TextScaled = true,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
-    })
-    FW.cTC(hi, 12)
+    local it = Instance.new("TextLabel", if_)
+    it.Text = "ℹ️ System Information"
+    it.TextSize = 16
+    it.TextColor3 = Color3.fromRGB(255, 255, 255)
+    it.BackgroundTransparency = 1
+    it.Size = UDim2.new(0.96, 0, 0.25, 0)
+    it.Position = UDim2.new(0.02, 0, 0.05, 0)
+    it.TextScaled = true
+    it.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
     
-    local vi = FW.cT(if_, {
-        Text = "FrostWare Lib V2 - Module Loaded",
-        TextSize = 12,
-        TextColor3 = Color3.fromRGB(166, 190, 255),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0.96, 0, 0.3, 0),
-        Position = UDim2.new(0.02, 0, 0.65, 0),
-        TextScaled = true,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-    })
-    FW.cTC(vi, 12)
+    local itConstraint = Instance.new("UITextSizeConstraint", it)
+    itConstraint.MaxTextSize = 16
+    
+    local ei = Instance.new("TextLabel", if_)
+    ei.Text = "Executor: " .. (identifyexecutor and identifyexecutor() or "Unknown")
+    ei.TextSize = 12
+    ei.TextColor3 = Color3.fromRGB(200, 200, 200)
+    ei.BackgroundTransparency = 1
+    ei.Size = UDim2.new(0.46, 0, 0.3, 0)
+    ei.Position = UDim2.new(0.02, 0, 0.35, 0)
+    ei.TextScaled = true
+    ei.TextXAlignment = Enum.TextXAlignment.Left
+    ei.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
+    
+    local eiConstraint = Instance.new("UITextSizeConstraint", ei)
+    eiConstraint.MaxTextSize = 12
+    
+    local hid = gethwid and gethwid() or "Unknown"
+    local hi = Instance.new("TextLabel", if_)
+    hi.Text = "HWID: " .. hid:sub(1, 8) .. "..."
+    hi.TextSize = 12
+    hi.TextColor3 = Color3.fromRGB(200, 200, 200)
+    hi.BackgroundTransparency = 1
+    hi.Size = UDim2.new(0.46, 0, 0.3, 0)
+    hi.Position = UDim2.new(0.52, 0, 0.35, 0)
+    hi.TextScaled = true
+    hi.TextXAlignment = Enum.TextXAlignment.Left
+    hi.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
+    
+    local hiConstraint = Instance.new("UITextSizeConstraint", hi)
+    hiConstraint.MaxTextSize = 12
+    
+    local vi = Instance.new("TextLabel", if_)
+    vi.Text = "FrostWare Lib V2 - Module Loaded"
+    vi.TextSize = 12
+    vi.TextColor3 = Color3.fromRGB(166, 190, 255)
+    vi.BackgroundTransparency = 1
+    vi.Size = UDim2.new(0.96, 0, 0.3, 0)
+    vi.Position = UDim2.new(0.02, 0, 0.65, 0)
+    vi.TextScaled = true
+    vi.TextXAlignment = Enum.TextXAlignment.Center
+    vi.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    
+    local viConstraint = Instance.new("UITextSizeConstraint", vi)
+    viConstraint.MaxTextSize = 12
     
     upd()
 end
@@ -451,11 +422,7 @@ spawn(function()
     wait(2)
     uep()
     
-    local mods = {
-        "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Scripts.lua",
-            "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/M.lua",
-            "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/p"
-    }
+    local mods = {}
     
     for i, mu in pairs(mods) do
         spawn(function()
@@ -464,19 +431,19 @@ spawn(function()
             end)
             
             if ok then
-                FW.addLog("Module " .. i .. " downloaded successfully", "info")
+                fw.al("Module " .. i .. " downloaded successfully", "info")
                 
                 local ok2, err = pcall(function()
                     loadstring(mc)()
                 end)
                 
                 if ok2 then
-                    FW.addLog("Module " .. i .. " executed successfully", "info")
+                    fw.al("Module " .. i .. " executed successfully", "info")
                 else
-                    FW.addLog("Error executing module " .. i .. ": " .. tostring(err), "error")
+                    fw.al("Error executing module " .. i .. ": " .. tostring(err), "error")
                 end
             else
-                FW.addLog("Error downloading module " .. i .. ": " .. tostring(mc), "error")
+                fw.al("Error downloading module " .. i .. ": " .. tostring(mc), "error")
             end
         end)
         
