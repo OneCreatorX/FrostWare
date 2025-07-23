@@ -7,14 +7,14 @@ local pcl, pgl, fpl, mml, tml = nil, nil, nil, nil, nil
 local stt = tick()
 local fpc = 0
 local lfu = tick()
-local da = false
 
 local function us_()
-    return typeof(uis) == "function" and uis() or uis
+    return game:GetService("UserInputService")
 end
 
 local function gs_()
-    return us_() and us_():GetService("UserGameSettings")
+    local userInputService = us_()
+    return userInputService and userInputService:GetService("UserGameSettings")
 end
 
 local function upd()
@@ -25,8 +25,8 @@ local function upd()
         
         while task.wait(1) do
             if pcl and pcl.Parent then
-                local cp = #ps:GetPlayers()
-                local mp = ps.MaxPlayers
+                local cp = #game:GetService("Players"):GetPlayers()
+                local mp = game:GetService("Players").MaxPlayers
                 pcl.Text = "👥 " .. cp .. "/" .. mp
             end
             
@@ -77,9 +77,11 @@ local function eal()
     local ws = workspace
     
     pcall(function()
-        uset.MasterVolume = 0
-        uset.GraphicsQualityLevel = 1
-        uset.SavedQualityLevel = 1
+        if uset then
+            uset.MasterVolume = 0
+            uset.GraphicsQualityLevel = 1
+            uset.SavedQualityLevel = 1
+        end
     end)
     
     pcall(function()
@@ -148,7 +150,7 @@ end
 
 local function sh()
     local ok, svs = pcall(function()
-        return hs:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+        return game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
     end)
     if ok and svs.data then
         for _, sv in pairs(svs.data) do
@@ -165,7 +167,7 @@ end
 local function cws()
     local c = 0
     for _, obj in pairs(workspace:GetChildren()) do
-        if not obj:IsA("Terrain") and not obj:IsA("Camera") and obj ~= workspace.CurrentCamera and not ps:GetPlayerFromCharacter(obj) then
+        if not obj:IsA("Terrain") and not obj:IsA("Camera") and obj ~= workspace.CurrentCamera and not game:GetService("Players"):GetPlayerFromCharacter(obj) then
             pcall(function()
                 obj:Destroy()
                 c = c + 1
@@ -177,12 +179,16 @@ end
 
 local function ts_()
     local uset = gs_()
-    if uset.MasterVolume > 0 then
-        uset.MasterVolume = 0
-        fw.sa("Info", "Sound disabled!", 2)
+    if uset then
+        if uset.MasterVolume > 0 then
+            uset.MasterVolume = 0
+            fw.sa("Info", "Sound disabled!", 2)
+        else
+            uset.MasterVolume = 1
+            fw.sa("Info", "Sound enabled!", 2)
+        end
     else
-        uset.MasterVolume = 1
-        fw.sa("Info", "Sound enabled!", 2)
+        fw.sa("Error", "Cannot access sound settings!", 2)
     end
 end
 
@@ -270,7 +276,7 @@ local function uep()
     end)
     
     ceb(mf, "📊", "Game Info", UDim2.new(0.02, 0, 0.61, 0), bsz, function()
-        local inf = "Game: " .. ms:GetProductInfo(game.PlaceId).Name .. "\nPlace ID: " .. game.PlaceId .. "\nJob ID: " .. game.JobId
+        local inf = "Game: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name .. "\nPlace ID: " .. game.PlaceId .. "\nJob ID: " .. game.JobId
         if e.sc then
             e.sc(inf)
             fw.sa("Success", "Game info copied!", 2)
@@ -280,7 +286,7 @@ local function uep()
     end)
     
     ceb(mf, "🔧", "Developer Console", UDim2.new(0.345, 0, 0.61, 0), bsz, function()
-        sg:SetCore("DevConsoleVisible", true)
+        game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
         fw.sa("Info", "Developer console opened!", 2)
     end)
     
