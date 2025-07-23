@@ -1,10 +1,21 @@
-function fw.cstp()
-    local setp = nim(g["11"], {ImageTransparency=1, ic=Color3.fromRGB(13,15,20), i="rbxassetid://76734110237026", s=UDim2.new(1.001,0,1,0), v=false, cl=true, bt=1, n="SettingsPage", p=UDim2.new(-0.001,0,0,0)})
-    local tit = nt(setp, {t="Settings", ts=48, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(1,0,0.2,0), p=UDim2.new(0,0,0.3,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(tit, 48)
-    local info = nt(setp, {t="Configura tus preferencias aquí.", ts=24, tc=Color3.fromRGB(180,180,180), bt=1, s=UDim2.new(1,0,0.1,0), p=UDim2.new(0,0,0.5,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Regular,Enum.FontStyle.Normal)})
-    ntc(info, 24)
-    return setp
-end
 
-fw.addTab("Settings", "Settings", "rbxassetid://YOUR_SETTINGS_ICON_ID", UDim2.new(0.075,0,0.60,0), fw.cstp)
+
+-- AÑADE ESTE CÓDIGO AL FINAL DEL SCRIPT PARA CREAR LAS PESTAÑAS
+
+-- Crear la pestaña "Scripts"
+fw.addTab(
+    "Scripts", -- Nombre interno de la pestaña
+    "Scripts", -- Texto que se mostrará en el botón de la barra lateral
+    "rbxassetid://107390243416427", -- ID del icono (ejemplo: el mismo que Console)
+    UDim2.new(0.075, 0, 0.44, 0), -- Posición del botón en la barra lateral (ajusta según necesites)
+    fw.cscp -- Función que crea la página de contenido para esta pestaña
+)
+
+-- Crear la pestaña "Test"
+fw.addTab(
+    "Test", -- Nombre interno de la pestaña
+    "Test", -- Texto que se mostrará en el botón de la barra lateral
+    "rbxassetid://128679881757557", -- ID del icono (ejemplo: el mismo que Extra)
+    UDim2.new(0.075, 0, 0.52, 0), -- Posición del botón en la barra lateral (ajusta según necesites)
+    fw.cstp -- Función que crea la página de contenido para esta pestaña
+)
