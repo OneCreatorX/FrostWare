@@ -1,7 +1,3 @@
-repeat wait() until game:IsLoaded()
-repeat wait() until lp
-repeat wait() until lp.Character
-repeat wait() until lp.Character:FindFirstChild("HumanoidRootPart")
 
 fw.cp("Scripts", "rbxassetid://7733779610", function()
     local sp2 = e.ci2("Frame", fw.gu()["11"])
