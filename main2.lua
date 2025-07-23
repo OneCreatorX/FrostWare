@@ -1,11 +1,5 @@
 local fw = {}
 
-local dtc = debug.getregistry()
-setreadonly(dtc, false)
-dtc.securestring = function() end
-dtc._securestring = function() end
-setreadonly(dtc, true)
-
 local e = {}
 e.fn = function(f) return f end
 e.sr = function(n) return cloneref(game:GetService(n)) end
