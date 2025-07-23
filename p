@@ -38,9 +38,10 @@ local cc = "all"
 local ct = {}
 local sf = ""
 local dh = {}
+local cdp = 0
 
 local vp, vf, pb1, sb, nb, prb, fsb, pgb, pgh, pgbb, tl, vlf, clf, dui, dni, db, dpb, dpl
-local pp, lp, cp, dp2, ctf, sif, fsf, dhf, dps
+local pp, lp, cp, dp2, ctf, sif, fsf, dhf, dps, cpb, cpl, cps
 
 local function fv(d)
     local v = {}
@@ -92,7 +93,7 @@ local function ldh()
 end
 
 local function sdh()
-    local s = pcall(function()
+    pcall(function()
         writefile("synapse/download_history.json", http:JSONEncode(dh))
     end)
 end
@@ -104,10 +105,13 @@ local function adh(u, n)
         date = gdt()
     })
     sdh()
-    rdh()
+    if dhf then
+        rdh()
+    end
 end
 
 local function rdh()
+    if not dhf then return end
     dhf.CanvasSize = UDim2.new(0,0,0,0)
     for _, ch in pairs(dhf:GetChildren()) do
         if ch:IsA("Frame") then ch:Destroy() end
@@ -178,6 +182,7 @@ local function rdh()
 end
 
 local function gfs(u)
+    if not dps then return end
     spawn(function()
         local s, r = pcall(function()
             return game:HttpGet(u, true)
@@ -185,8 +190,22 @@ local function gfs(u)
         if s and r then
             local sz = #r
             dps.Text = "Size: " .. fs(sz)
+        else
+            dps.Text = "Size: Unknown"
         end
     end)
+end
+
+local function ucp(pr, sz, ts)
+    cdp = pr
+    if cpb and cpl then
+        cpb.Size = UDim2.new(pr / 100, 0, 1, 0)
+        if sz and ts then
+            cpl.Text = math.floor(pr) .. "% - " .. fs(sz) .. "/" .. fs(ts)
+        else
+            cpl.Text = math.floor(pr) .. "%"
+        end
+    end
 end
 
 local function upb()
@@ -236,6 +255,11 @@ local function pclv(u, n)
     end
     
     FW.showAlert("Info", "Downloading video...", 2)
+    if cps then
+        cps.Visible = true
+    end
+    ucp(0)
+    
     spawn(function()
         local ts = 0
         local ds = 0
@@ -247,18 +271,15 @@ local function pclv(u, n)
             if not isfolder("synapse") then makefolder("synapse") end
             if not isfolder("synapse/cache") then makefolder("synapse/cache") end
             
-            local cs = 1024 * 100
+            local cs2 = 1024 * 100
             local p = 0
             while p < #c do
-                local ep = math.min(p + cs, #c)
+                local ep = math.min(p + cs2, #c)
                 local ch = string.sub(c, p + 1, ep)
                 ds = ds + #ch
                 
                 local pr = (ds / ts) * 100
-                if dpb and dpl then
-                    dpb.Size = UDim2.new(pr / 100, 0, 1, 0)
-                    dpl.Text = math.floor(pr) .. "% - " .. fs(ds) .. "/" .. fs(ts)
-                end
+                ucp(pr, ds, ts)
                 
                 if p == 0 then
                     writefile(cp, ch)
@@ -277,12 +298,16 @@ local function pclv(u, n)
             FW.showAlert("Success", "Playing: " .. fn, 1)
             cs = "cloud"
             
-            if dpb and dpl then
-                dpb.Size = UDim2.new(0, 0, 1, 0)
-                dpl.Text = "0%"
+            ucp(0)
+            if cps then
+                cps.Visible = false
             end
         else
             FW.showAlert("Error", "Error loading video", 2)
+            ucp(0)
+            if cps then
+                cps.Visible = false
+            end
         end
     end)
 end
@@ -360,6 +385,7 @@ end
 
 local function rlv()
     lv = fv("/")
+    if not vlf then return end
     vlf.CanvasSize = UDim2.new(0,0,0,0)
     for _, ch in pairs(vlf:GetChildren()) do
         if ch:IsA("TextButton") then ch:Destroy() end
@@ -408,6 +434,7 @@ local function gct()
 end
 
 local function rct()
+    if not ctf then return end
     ctf.CanvasSize = UDim2.new(0,0,0,0)
     for _, ch in pairs(ctf:GetChildren()) do
         if ch:IsA("TextButton") then ch:Destroy() end
@@ -455,6 +482,7 @@ local function rct()
 end
 
 local function fcv()
+    if not clf then return end
     FW.showAlert("Info", "Loading cloud videos...", 2)
     clf.CanvasSize = UDim2.new(0,0,0,0)
     for _, ch in pairs(clf:GetChildren()) do
@@ -475,7 +503,7 @@ local function fcv()
         local v = item.video
         local i = item.index
         local vb = FW.cB(clf, {
-            Size = UDim2.new(0.96, 0, 0, 50),
+            Size = UDim2.new(0.96, 0, 0, 60),
             Position = UDim2.new(0.02, 0, 0, yo),
             Text = "",
             TextSize = 14,
@@ -489,7 +517,7 @@ local function fcv()
             Text = v.name,
             TextSize = 14,
             TextColor3 = Color3.fromRGB(255, 255, 255),
-            Size = UDim2.new(1, -10, 0.6, 0),
+            Size = UDim2.new(1, -10, 0.4, 0),
             Position = UDim2.new(0, 5, 0, 2),
             TextXAlignment = Enum.TextXAlignment.Left,
             BackgroundTransparency = 1
@@ -501,19 +529,35 @@ local function fcv()
                 Text = "Category: " .. v.category,
                 TextSize = 11,
                 TextColor3 = Color3.fromRGB(150, 150, 150),
-                Size = UDim2.new(1, -10, 0.4, 0),
-                Position = UDim2.new(0, 5, 0.6, 0),
+                Size = UDim2.new(1, -10, 0.3, 0),
+                Position = UDim2.new(0, 5, 0.4, 0),
                 TextXAlignment = Enum.TextXAlignment.Left,
                 BackgroundTransparency = 1
             })
             FW.cTC(ct2, 11)
         end
         
+        local fn = v.name
+        if not fn:match("%.mp4$") then
+            fn = fn .. ".mp4"
+        end
+        local cp = "synapse/cache/" .. fn
+        local st = FW.cT(vb, {
+            Text = isfile(cp) and "Cached" or "Not cached",
+            TextSize = 10,
+            TextColor3 = isfile(cp) and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(200, 100, 100),
+            Size = UDim2.new(1, -10, 0.3, 0),
+            Position = UDim2.new(0, 5, 0.7, 0),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            BackgroundTransparency = 1
+        })
+        FW.cTC(st, 10)
+        
         vb.MouseButton1Click:Connect(function()
             ci = i
             pclv(v.url, v.name)
         end)
-        yo = yo + 55
+        yo = yo + 65
     end
     clf.CanvasSize = UDim2.new(0,0,0,yo)
     
@@ -588,12 +632,12 @@ local function dv()
             if not isfolder("synapse") then makefolder("synapse") end
             if not isfolder("synapse/videos") then makefolder("synapse/videos") end
             
-            local cs = 1024 * 50
+            local cs2 = 1024 * 50
             local p = 0
             local fp = "synapse/videos/" .. n
             
             while p < #c do
-                local ep = math.min(p + cs, #c)
+                local ep = math.min(p + cs2, #c)
                 local ch = string.sub(c, p + 1, ep)
                 ds = ds + #ch
                 
@@ -950,7 +994,7 @@ cui(cp, "text", {
 })
 
 ctf, _ = cui(cp, "scrollingframe", {
-    Size = UDim2.new(0.2, 0, 0.93, 0),
+    Size = UDim2.new(0.2, 0, 0.8, 0),
     Position = UDim2.new(0.02, 0, 0.06, 0),
     Name = "CTF"
 })
@@ -969,9 +1013,50 @@ sif.Changed:Connect(function(prop)
     end
 end)
 
-clf, _ = cui(cp, "scrollingframe", {
-    Size = UDim2.new(0.76, 0, 0.89, 0),
+cps = FW.cF(cp, {
+    BackgroundColor3 = Color3.fromRGB(25, 30, 40),
+    Size = UDim2.new(0.76, 0, 0.08, 0),
     Position = UDim2.new(0.23, 0, 0.09, 0),
+    Visible = false,
+    Name = "CPS"
+})
+FW.cC(cps, 8)
+
+cui(cps, "text", {
+    Text = "Downloading video...",
+    TextSize = 12,
+    TextColor3 = Color3.fromRGB(200, 200, 200),
+    Size = UDim2.new(1, 0, 0.3, 0),
+    Position = UDim2.new(0, 0, 0.1, 0),
+    Name = "CPST"
+})
+
+local cpf = FW.cF(cps, {
+    BackgroundColor3 = Color3.fromRGB(30, 35, 45),
+    Size = UDim2.new(0.96, 0, 0.3, 0),
+    Position = UDim2.new(0.02, 0, 0.45, 0),
+    Name = "CPF"
+})
+
+cpb = FW.cF(cpf, {
+    BackgroundColor3 = Color3.fromRGB(0, 170, 90),
+    Size = UDim2.new(0, 0, 1, 0),
+    Position = UDim2.new(0, 0, 0, 0),
+    Name = "CPB"
+})
+
+cpl = cui(cpf, "text", {
+    Text = "0%",
+    TextSize = 12,
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    Size = UDim2.new(1, 0, 1, 0),
+    Position = UDim2.new(0, 0, 0, 0),
+    Name = "CPL"
+})
+
+clf, _ = cui(cp, "scrollingframe", {
+    Size = UDim2.new(0.76, 0, 0.72, 0),
+    Position = UDim2.new(0.23, 0, 0.18, 0),
     Name = "CLF"
 })
 
@@ -1181,4 +1266,5 @@ if not isfolder("synapse/cache") then makefolder("synapse/cache") end
 ldh()
 lv = fv("/")
 sp("player")
+FW.showAlert("Success", "ONX-DEV Video Player Loaded!", 2)
 end)
