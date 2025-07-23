@@ -73,6 +73,9 @@ local function sp1(inst, props)
         elseif k == "img" then inst.Image = v
         elseif k == "it" then inst.ImageTransparency = v
         elseif k == "ic" then inst.ImageColor3 = v
+        elseif k == "col" then inst.Color = v
+        elseif k == "th" then inst.Thickness = v
+        elseif k == "tr2" then inst.Transparency = v
         end
     end
     return inst
@@ -337,14 +340,7 @@ end
 
 local function tncp1()
     ncp1 = not ncp1
-    if lp.Character then
-        for _, part in pairs(lp.Character:GetChildren()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = not ncp1
-            end
-        end
-        fw.sa("Success", "NoClip " .. (ncp1 and "ON" or "OFF") .. "!", 2)
-    end
+    fw.sa("Success", "NoClip " .. (ncp1 and "ON" or "OFF") .. "!", 2)
 end
 
 local function tcam1()
@@ -415,7 +411,9 @@ local function tgra1()
             
             us1().InputEnded:Connect(function(input)
                 if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.ButtonR1 or input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.ButtonL1 then
-                    bv.Velocity = Vector3.new(0, 0, 0)
+                    if bv and bv.Parent then
+                        bv.Velocity = Vector3.new(0, 0, 0)
+                    end
                 end
             end)
         end
@@ -507,7 +505,7 @@ end
 local function csl1(p, t, pos, sz)
     local f = cf1(p, {c=Color3.fromRGB(16,19,27), s=sz, p=pos, n=t:gsub(" ","")})
     cc1_ui(f, {cr=UDim.new(0, 6)})
-    cst1(f, {c=Color3.fromRGB(35,39,54), t=1})
+    cst1(f, {col=Color3.fromRGB(35,39,54), th=1})
     
     local l = ct1(f, {t=t, ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.9,0,0.8,0), p=UDim2.new(0.05,0,0.1,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
@@ -517,7 +515,7 @@ end
 local function csg1(p, t, pos, sz, min, max, def, cb)
     local f = cf1(p, {c=Color3.fromRGB(16,19,27), s=sz, p=pos, n=t:gsub(" ","")})
     cc1_ui(f, {cr=UDim.new(0, 8)})
-    cst1(f, {c=Color3.fromRGB(35,39,54), t=1})
+    cst1(f, {col=Color3.fromRGB(35,39,54), th=1})
     
     local l = ct1(f, {t=t .. ": " .. def, ts=12, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.9,0,0.25,0), p=UDim2.new(0.05,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
     
@@ -569,7 +567,7 @@ end
 local function ctg1(p, t, pos, sz, def, cb)
     local f = cf1(p, {c=Color3.fromRGB(16,19,27), s=sz, p=pos, n=t:gsub(" ","")})
     cc1_ui(f, {cr=UDim.new(0, 8)})
-    cst1(f, {c=Color3.fromRGB(35,39,54), t=1})
+    cst1(f, {col=Color3.fromRGB(35,39,54), th=1})
     
     local l = ct1(f, {t=t, ts=12, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.65,0,0.8,0), p=UDim2.new(0.05,0,0.1,0), sc=true, xa=Enum.TextXAlignment.Left, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
     
@@ -655,11 +653,11 @@ local function uep1()
     
     local mf = cs1(ep, {c=Color3.fromRGB(20,25,32), s=UDim2.new(0.95,0,0.94,0), p=UDim2.new(0.025,0,0.05,0), n="MainFrame", cs=UDim2.new(0, 0, 2.2, 0), sbt=8, sbc=Color3.fromRGB(166,190,255), bs=0})
     cc1_ui(mf, {cr=UDim.new(0, 12)})
-    cst1(mf, {c=Color3.fromRGB(35,39,54), t=2})
+    cst1(mf, {col=Color3.fromRGB(35,39,54), th=2})
     
     local sf = cf1(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.96,0,0.08,0), p=UDim2.new(0.02,0,0.01,0), n="StatsFrame"})
     cc1_ui(sf, {cr=UDim.new(0, 8)})
-    cst1(sf, {c=Color3.fromRGB(35,39,54), t=1})
+    cst1(sf, {col=Color3.fromRGB(35,39,54), th=1})
     
     local st = ct1(sf, {t="📊 Live Stats", ts=16, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.25,0), p=UDim2.new(0.02,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
@@ -671,7 +669,7 @@ local function uep1()
     
     local tf = cf1(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.46,0,0.18,0), p=UDim2.new(0.02,0,0.11,0), n="ToggleFrame"})
     cc1_ui(tf, {cr=UDim.new(0, 8)})
-    cst1(tf, {c=Color3.fromRGB(35,39,54), t=1})
+    cst1(tf, {col=Color3.fromRGB(35,39,54), th=1})
     
     local tft = ct1(tf, {t="🔧 Toggle Features", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
@@ -686,7 +684,7 @@ local function uep1()
     
     local tf2 = cf1(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.46,0,0.18,0), p=UDim2.new(0.5,0,0.11,0), n="ToggleFrame2"})
     cc1_ui(tf2, {cr=UDim.new(0, 8)})
-    cst1(tf2, {c=Color3.fromRGB(35,39,54), t=1})
+    cst1(tf2, {col=Color3.fromRGB(35,39,54), th=1})
     
     local tf2t = ct1(tf2, {t="⚡ Movement Features", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
@@ -694,7 +692,7 @@ local function uep1()
     
     local cf = cf1(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.31,0), n="ControlFrame"})
     cc1_ui(cf, {cr=UDim.new(0, 8)})
-    cst1(cf, {c=Color3.fromRGB(35,39,54), t=1})
+    cst1(cf, {col=Color3.fromRGB(35,39,54), th=1})
     
     local cft = ct1(cf, {t="🎮 Advanced Controls", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.15,0), p=UDim2.new(0.02,0,0.02,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
@@ -758,7 +756,7 @@ local function uep1()
     
     local if1 = cf1(mf, {c=Color3.fromRGB(16,19,27), s=UDim2.new(0.96,0,0.12,0), p=UDim2.new(0.02,0,0.58,0), n="InfoFrame"})
     cc1_ui(if1, {cr=UDim.new(0, 8)})
-    cst1(if1, {c=Color3.fromRGB(35,39,54), t=1})
+    cst1(if1, {col=Color3.fromRGB(35,39,54), th=1})
     
     local it = ct1(if1, {t="ℹ️ System Information", ts=14, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(0.96,0,0.2,0), p=UDim2.new(0.02,0,0.05,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
     
@@ -796,5 +794,59 @@ spawn(function()
                 end
             end
         end
+        
+        if frz1 and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+            if not lp.Character.HumanoidRootPart.Anchored then
+                lp.Character.HumanoidRootPart.Anchored = true
+            end
+        end
+        
+        if gra1 and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+            if not lp.Character.HumanoidRootPart:FindFirstChild("BodyVelocity") then
+                local bv = ci1("BodyVelocity", lp.Character.HumanoidRootPart)
+                bv.MaxForce = Vector3.new(4000, 4000, 4000)
+                bv.Velocity = Vector3.new(0, 0, 0)
+            end
+        end
+        
+        if esp1 then
+            for _, p in pairs(game:GetService("Players"):GetPlayers()) do
+                if p ~= lp and p.Character and not ec1[p] then
+                    cep1(p)
+                end
+            end
+        end
+    end
+end)
+
+lp.CharacterAdded:Connect(function()
+    wait(1)
+    if ncp1 then
+        spawn(function()
+            while ncp1 and lp.Character do
+                for _, part in pairs(lp.Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+                wait()
+            end
+        end)
+    end
+    
+    if frz1 and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+        lp.Character.HumanoidRootPart.Anchored = true
+    end
+    
+    if gra1 and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+        local bv = ci1("BodyVelocity", lp.Character.HumanoidRootPart)
+        bv.MaxForce = Vector3.new(4000, 4000, 4000)
+        bv.Velocity = Vector3.new(0, 0, 0)
+    end
+    
+    if ani1 ~= 1 and lp.Character and lp.Character:FindFirstChild("Humanoid") then
+        lp.Character.Humanoid.AnimationPlayed:Connect(function(track)
+            track:AdjustSpeed(ani1)
+        end)
     end
 end)
