@@ -1,3 +1,8 @@
+repeat wait() until game:IsLoaded()
+repeat wait() until lp
+repeat wait() until lp.Character
+repeat wait() until lp.Character:FindFirstChild("HumanoidRootPart")
+
 local hs2 = game:GetService("HttpService")
 local ts2 = game:GetService("TweenService")
 local cs2 = "Local"
@@ -113,15 +118,17 @@ local function ldS2()
 end
 
 local function createScriptCard2(parent, name, content, yPos)
-    local scd = nf(parent, {
+    local scd = e.ci2("Frame", parent)
+    e.sp2(scd, {
         c = Color3.fromRGB(25, 30, 40),
         s = UDim2.new(1, -20, 0, 55),
         p = UDim2.new(0, 10, 0, yPos),
         n = "ScriptCard_" .. name
     })
-    nc(scd, 0.15)
+    e.ci2("UICorner", scd).CornerRadius = UDim.new(0, 8)
     
-    local title = nt(scd, {
+    local title = e.ci2("TextLabel", scd)
+    e.sp2(title, {
         t = name,
         ts = 16,
         s = UDim2.new(0.4, 0, 0.6, 0),
@@ -129,20 +136,21 @@ local function createScriptCard2(parent, name, content, yPos)
         xa = Enum.TextXAlignment.Left,
         tc = Color3.fromRGB(240, 245, 255),
         bt = 1,
-        ff = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
+        ffc = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
         n = "ScriptTitle"
     })
-    ntc(title, 16)
     
     if ds2[name] then
-        local vb = nf(scd, {
+        local vb = e.ci2("Frame", scd)
+        e.sp2(vb, {
             c = Color3.fromRGB(20, 60, 110),
             s = UDim2.new(0, 84, 0, 24),
             p = UDim2.new(0, 13, 0, 28)
         })
-        nc(vb, 0.18)
+        e.ci2("UICorner", vb).CornerRadius = UDim.new(0, 4)
         
-        local vt = nt(vb, {
+        local vt = e.ci2("TextLabel", vb)
+        e.sp2(vt, {
             t = "VERIFIED",
             ts = 10,
             tc = Color3.fromRGB(255, 255, 255),
@@ -150,10 +158,10 @@ local function createScriptCard2(parent, name, content, yPos)
             bt = 1,
             n = "VerifiedText"
         })
-        ntc(vt, 10)
     end
     
-    local aeb = nb(scd, {
+    local aeb = e.ci2("TextButton", scd)
+    e.sp2(aeb, {
         c = aes2[name] and Color3.fromRGB(50, 170, 90) or Color3.fromRGB(65, 75, 90),
         s = UDim2.new(0, 80, 0, 25),
         p = UDim2.new(0.45, 0, 0, 15),
@@ -162,10 +170,10 @@ local function createScriptCard2(parent, name, content, yPos)
         ts = 10,
         n = "AutoExecBtn"
     })
-    nc(aeb, 0.15)
-    ntc(aeb, 10)
+    e.ci2("UICorner", aeb).CornerRadius = UDim.new(0, 4)
     
-    local exb = nb(scd, {
+    local exb = e.ci2("TextButton", scd)
+    e.sp2(exb, {
         c = Color3.fromRGB(50, 170, 90),
         s = UDim2.new(0, 80, 0, 25),
         p = UDim2.new(0.65, 0, 0, 15),
@@ -174,10 +182,10 @@ local function createScriptCard2(parent, name, content, yPos)
         ts = 11,
         n = "ExecuteBtn"
     })
-    nc(exb, 0.15)
-    ntc(exb, 11)
+    e.ci2("UICorner", exb).CornerRadius = UDim.new(0, 4)
     
-    local mrb = nb(scd, {
+    local mrb = e.ci2("TextButton", scd)
+    e.sp2(mrb, {
         c = Color3.fromRGB(50, 130, 210),
         s = UDim2.new(0, 60, 0, 25),
         p = UDim2.new(0.85, 0, 0, 15),
@@ -186,8 +194,7 @@ local function createScriptCard2(parent, name, content, yPos)
         ts = 11,
         n = "MoreBtn"
     })
-    nc(mrb, 0.15)
-    ntc(mrb, 11)
+    e.ci2("UICorner", mrb).CornerRadius = UDim.new(0, 4)
     
     exb.MouseEnter:Connect(function() exb.BackgroundColor3 = Color3.fromRGB(60, 180, 100) end)
     exb.MouseLeave:Connect(function() exb.BackgroundColor3 = Color3.fromRGB(50, 170, 90) end)
@@ -267,31 +274,35 @@ function shSO2(nm, cont)
     local ui = fw.gu()
     local mui = ui["11"]
     
-    sf2 = nf(mui, {
+    sf2 = e.ci2("Frame", mui)
+    e.sp2(sf2, {
         c = Color3.fromRGB(0, 0, 0),
         bt = 0.4,
         s = UDim2.new(1, 0, 1, 0),
         p = UDim2.new(0, 0, 0, 0),
-        n = "ScriptOptionsOverlay",
-        z = 10
+        n = "ScriptOptionsOverlay"
     })
+    sf2.ZIndex = 10
     
-    local op = nf(sf2, {
+    local op = e.ci2("Frame", sf2)
+    e.sp2(op, {
         c = Color3.fromRGB(20, 25, 35),
         s = UDim2.new(0, 400, 0, ds2[nm] and 350 or 400),
         p = UDim2.new(0.5, -200, 0.5, ds2[nm] and -175 or -200),
         n = "OptionsPanel"
     })
-    nc(op, 0.18)
+    e.ci2("UICorner", op).CornerRadius = UDim.new(0, 8)
     
-    local tb = nf(op, {
+    local tb = e.ci2("Frame", op)
+    e.sp2(tb, {
         c = Color3.fromRGB(30, 35, 45),
         s = UDim2.new(1, 0, 0, 50),
         p = UDim2.new(0, 0, 0, 0),
         n = "TitleBar"
     })
     
-    local title = nt(tb, {
+    local title = e.ci2("TextLabel", tb)
+    e.sp2(title, {
         t = "Script Options",
         ts = 18,
         tc = Color3.fromRGB(255, 255, 255),
@@ -300,9 +311,9 @@ function shSO2(nm, cont)
         bt = 1,
         n = "Title"
     })
-    ntc(title, 18)
     
-    local cb = nb(tb, {
+    local cb = e.ci2("TextButton", tb)
+    e.sp2(cb, {
         c = Color3.fromRGB(190, 60, 60),
         s = UDim2.new(0, 30, 0, 30),
         p = UDim2.new(1, -40, 0, 10),
@@ -311,14 +322,14 @@ function shSO2(nm, cont)
         ts = 16,
         n = "CloseBtn"
     })
-    nc(cb, 0.15)
-    ntc(cb, 16)
+    e.ci2("UICorner", cb).CornerRadius = UDim.new(0, 4)
     
     cb.MouseButton1Click:Connect(function()
         if sf2 then sf2:Destroy() sf2 = nil end
     end)
     
-    local subtitle = nt(op, {
+    local subtitle = e.ci2("TextLabel", op)
+    e.sp2(subtitle, {
         t = "Choose an action for: " .. nm,
         ts = 12,
         tc = Color3.fromRGB(190, 200, 220),
@@ -328,7 +339,6 @@ function shSO2(nm, cont)
         bt = 1,
         n = "Subtitle"
     })
-    ntc(subtitle, 12)
     
     local btns = {
         {text = "EXECUTE SCRIPT", color = Color3.fromRGB(50, 170, 90), pos = UDim2.new(0.1, 0, 0, 120)},
@@ -342,7 +352,8 @@ function shSO2(nm, cont)
     end
     
     for i, bd in pairs(btns) do
-        local btn = nb(op, {
+        local btn = e.ci2("TextButton", op)
+        e.sp2(btn, {
             c = bd.color,
             s = UDim2.new(0.8, 0, 0, 35),
             p = bd.pos,
@@ -351,8 +362,7 @@ function shSO2(nm, cont)
             ts = 12,
             n = "OptionBtn" .. i
         })
-        nc(btn, 0.15)
-        ntc(btn, 12)
+        e.ci2("UICorner", btn).CornerRadius = UDim.new(0, 4)
         
         btn.MouseEnter:Connect(function()
             if bd.text == "DELETE SCRIPT" then
@@ -439,15 +449,17 @@ end
 local function createCloudCard2(parent, data, index)
     local yp = (index - 1) * 65 + 10
     
-    local cc = nf(parent, {
+    local cc = e.ci2("Frame", parent)
+    e.sp2(cc, {
         c = Color3.fromRGB(25, 30, 40),
         s = UDim2.new(1, -20, 0, 55),
         p = UDim2.new(0, 10, 0, yp),
         n = "CloudCard"
     })
-    nc(cc, 0.15)
+    e.ci2("UICorner", cc).CornerRadius = UDim.new(0, 8)
     
-    local title = nt(cc, {
+    local title = e.ci2("TextLabel", cc)
+    e.sp2(title, {
         t = data.title or "Unknown Script",
         ts = 16,
         s = UDim2.new(0.35, 0, 0.6, 0),
@@ -457,25 +469,26 @@ local function createCloudCard2(parent, data, index)
         bt = 1,
         n = "ScriptTitle"
     })
-    ntc(title, 16)
     
-    local vb = nf(cc, {
+    local vb = e.ci2("Frame", cc)
+    e.sp2(vb, {
         c = Color3.fromRGB(20, 60, 110),
         s = UDim2.new(0, 84, 0, 24),
         p = UDim2.new(0, 13, 0, 28)
     })
-    nc(vb, 0.18)
+    e.ci2("UICorner", vb).CornerRadius = UDim.new(0, 4)
     
-    local vt = nt(vb, {
+    local vt = e.ci2("TextLabel", vb)
+    e.sp2(vt, {
         t = "VERIFIED",
         ts = 10,
         tc = Color3.fromRGB(255, 255, 255),
         s = UDim2.new(1, 0, 1, 0),
         bt = 1
     })
-    ntc(vt, 10)
     
-    local views = nt(cc, {
+    local views = e.ci2("TextLabel", cc)
+    e.sp2(views, {
         t = (data.views or "0") .. " Views",
         ts = 12,
         tc = Color3.fromRGB(160, 170, 190),
@@ -485,9 +498,9 @@ local function createCloudCard2(parent, data, index)
         bt = 1,
         n = "ViewsLabel"
     })
-    ntc(views, 12)
     
-    local sb = nb(cc, {
+    local sb = e.ci2("TextButton", cc)
+    e.sp2(sb, {
         c = Color3.fromRGB(50, 130, 210),
         s = UDim2.new(0, 100, 0, 35),
         p = UDim2.new(1, -110, 0, 10),
@@ -496,8 +509,7 @@ local function createCloudCard2(parent, data, index)
         ts = 12,
         n = "SelectBtn"
     })
-    nc(sb, 0.15)
-    ntc(sb, 12)
+    e.ci2("UICorner", sb).CornerRadius = UDim.new(0, 4)
     
     sb.MouseEnter:Connect(function() sb.BackgroundColor3 = Color3.fromRGB(60, 140, 220) end)
     sb.MouseLeave:Connect(function() sb.BackgroundColor3 = Color3.fromRGB(50, 130, 210) end)
@@ -514,31 +526,35 @@ function shCO2(dt)
     local ui = fw.gu()
     local mui = ui["11"]
     
-    sf2 = nf(mui, {
+    sf2 = e.ci2("Frame", mui)
+    e.sp2(sf2, {
         c = Color3.fromRGB(0, 0, 0),
         bt = 0.4,
         s = UDim2.new(1, 0, 1, 0),
         p = UDim2.new(0, 0, 0, 0),
-        n = "CloudOptionsOverlay",
-        z = 10
+        n = "CloudOptionsOverlay"
     })
+    sf2.ZIndex = 10
     
-    local op = nf(sf2, {
+    local op = e.ci2("Frame", sf2)
+    e.sp2(op, {
         c = Color3.fromRGB(20, 25, 35),
         s = UDim2.new(0, 400, 0, 350),
         p = UDim2.new(0.5, -200, 0.5, -175),
         n = "OptionsPanel"
     })
-    nc(op, 0.18)
+    e.ci2("UICorner", op).CornerRadius = UDim.new(0, 8)
     
-    local tb = nf(op, {
+    local tb = e.ci2("Frame", op)
+    e.sp2(tb, {
         c = Color3.fromRGB(30, 35, 45),
         s = UDim2.new(1, 0, 0, 50),
         p = UDim2.new(0, 0, 0, 0),
         n = "TitleBar"
     })
     
-    local title = nt(tb, {
+    local title = e.ci2("TextLabel", tb)
+    e.sp2(title, {
         t = "Cloud Script Options",
         ts = 18,
         tc = Color3.fromRGB(255, 255, 255),
@@ -547,9 +563,9 @@ function shCO2(dt)
         bt = 1,
         n = "Title"
     })
-    ntc(title, 18)
     
-    local cb = nb(tb, {
+    local cb = e.ci2("TextButton", tb)
+    e.sp2(cb, {
         c = Color3.fromRGB(190, 60, 60),
         s = UDim2.new(0, 30, 0, 30),
         p = UDim2.new(1, -40, 0, 10),
@@ -558,14 +574,14 @@ function shCO2(dt)
         ts = 16,
         n = "CloseBtn"
     })
-    nc(cb, 0.15)
-    ntc(cb, 16)
+    e.ci2("UICorner", cb).CornerRadius = UDim.new(0, 4)
     
     cb.MouseButton1Click:Connect(function()
         if sf2 then sf2:Destroy() sf2 = nil end
     end)
     
-    local subtitle = nt(op, {
+    local subtitle = e.ci2("TextLabel", op)
+    e.sp2(subtitle, {
         t = "Choose an action for: " .. (dt.title or "Unknown Script"),
         ts = 12,
         tc = Color3.fromRGB(190, 200, 220),
@@ -575,7 +591,6 @@ function shCO2(dt)
         bt = 1,
         n = "Subtitle"
     })
-    ntc(subtitle, 12)
     
     local btns = {
         {text = "EXECUTE SCRIPT", color = Color3.fromRGB(50, 170, 90), pos = UDim2.new(0.1, 0, 0, 120)},
@@ -585,7 +600,8 @@ function shCO2(dt)
     }
     
     for i, bd in pairs(btns) do
-        local btn = nb(op, {
+        local btn = e.ci2("TextButton", op)
+        e.sp2(btn, {
             c = bd.color,
             s = UDim2.new(0.8, 0, 0, 35),
             p = bd.pos,
@@ -594,8 +610,7 @@ function shCO2(dt)
             ts = 12,
             n = "CloudOptionBtn" .. i
         })
-        nc(btn, 0.15)
-        ntc(btn, 12)
+        e.ci2("UICorner", btn).CornerRadius = UDim.new(0, 4)
         
         btn.MouseEnter:Connect(function() btn.BackgroundColor3 = Color3.fromRGB(bd.color.R * 255 + 20, bd.color.G * 255 + 20, bd.color.B * 255 + 20) end)
         btn.MouseLeave:Connect(function() btn.BackgroundColor3 = bd.color end)
@@ -751,326 +766,269 @@ local function performSearch2()
     end
 end
 
-local sp2 = nim(fw.gu()["11"], {
-    it = 1,
-    ic = Color3.fromRGB(15, 18, 25),
-    i = "rbxassetid://18665679839",
-    s = UDim2.new(1.001, 0, 1, 0),
-    v = false,
-    cl = true,
-    bt = 1,
-    n = "ScriptsPage",
-    p = UDim2.new(-0.001, 0, 0, 0)
-})
-
-local tb2 = nf(sp2, {
-    c = Color3.fromRGB(25, 30, 40),
-    s = UDim2.new(1, -20, 0, 60),
-    p = UDim2.new(0, 10, 0, 10),
-    n = "TopBar"
-})
-nc(tb2, 0.18)
-
-local sbo2 = nf(tb2, {
-    c = Color3.fromRGB(18, 22, 32),
-    s = UDim2.new(0.5, -10, 0, 35),
-    p = UDim2.new(0, 15, 0, 12),
-    n = "SearchBox_Outer"
-})
-nc(sbo2, 0.18)
-
-searchBox2 = ntb(sbo2, {
-    c = Color3.fromRGB(35, 40, 50),
-    s = UDim2.new(1, -8, 1, -8),
-    p = UDim2.new(0, 4, 0, 4),
-    pc = Color3.fromRGB(120, 130, 150),
-    t = "",
-    ts = 14,
-    tc = Color3.fromRGB(240, 245, 255),
-    ff = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-    n = "SearchBox"
-})
-nc(searchBox2, 0.15)
-ntc(searchBox2, 14)
-
-local lt2 = nb(tb2, {
-    c = Color3.fromRGB(50, 130, 210),
-    s = UDim2.new(0.2, -5, 0, 35),
-    p = UDim2.new(0.55, 5, 0, 12),
-    t = "LOCAL",
-    tc = Color3.fromRGB(255, 255, 255),
-    ts = 14,
-    n = "LocalTab"
-})
-nc(lt2, 0.15)
-ntc(lt2, 14)
-
-local ct2 = nb(tb2, {
-    c = Color3.fromRGB(65, 75, 90),
-    s = UDim2.new(0.2, -5, 0, 35),
-    p = UDim2.new(0.78, 5, 0, 12),
-    t = "CLOUD",
-    tc = Color3.fromRGB(190, 200, 220),
-    ts = 14,
-    n = "CloudTab"
-})
-nc(ct2, 0.15)
-ntc(ct2, 14)
-
-lf2 = nf(sp2, {
-    bt = 1,
-    s = UDim2.new(1, 0, 1, -80),
-    p = UDim2.new(0, 0, 0, 80),
-    n = "LocalFrame",
-    v = true
-})
-
-cf2 = nf(sp2, {
-    bt = 1,
-    s = UDim2.new(1, 0, 1, -80),
-    p = UDim2.new(0, 0, 0, 80),
-    n = "CloudFrame",
-    v = false
-})
-
-local ap2 = nf(lf2, {
-    c = Color3.fromRGB(25, 30, 40),
-    s = UDim2.new(1, -20, 0, 80),
-    p = UDim2.new(0, 10, 0, 10),
-    n = "AddPanel"
-})
-nc(ap2, 0.18)
-
-local nio2 = nf(ap2, {
-    c = Color3.fromRGB(18, 22, 32),
-    s = UDim2.new(0.25, -5, 0, 30),
-    p = UDim2.new(0, 10, 0, 10),
-    n = "NameInput_Outer"
-})
-nc(nio2, 0.18)
-
-local ni2 = ntb(nio2, {
-    c = Color3.fromRGB(35, 40, 50),
-    s = UDim2.new(1, -8, 1, -8),
-    p = UDim2.new(0, 4, 0, 4),
-    pc = Color3.fromRGB(120, 130, 150),
-    t = "",
-    ts = 12,
-    tc = Color3.fromRGB(240, 245, 255),
-    ff = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-    n = "NameInput"
-})
-nc(ni2, 0.15)
-ntc(ni2, 12)
-
-local cio2 = nf(ap2, {
-    c = Color3.fromRGB(18, 22, 32),
-    s = UDim2.new(0.45, -5, 0, 30),
-    p = UDim2.new(0.27, 5, 0, 10),
-    n = "ContentInput_Outer"
-})
-nc(cio2, 0.18)
-
-local ci2 = ntb(cio2, {
-    c = Color3.fromRGB(35, 40, 50),
-    s = UDim2.new(1, -8, 1, -8),
-    p = UDim2.new(0, 4, 0, 4),
-    pc = Color3.fromRGB(120, 130, 150),
-    t = "",
-    ts = 12,
-    tc = Color3.fromRGB(240, 245, 255),
-    ff = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-    n = "ContentInput"
-})
-nc(ci2, 0.15)
-ntc(ci2, 12)
-
-local svb2 = nb(ap2, {
-    c = Color3.fromRGB(50, 170, 90),
-    s = UDim2.new(0.12, -5, 0, 30),
-    p = UDim2.new(0.74, 5, 0, 10),
-    t = "SAVE",
-    tc = Color3.fromRGB(255, 255, 255),
-    ts = 12,
-    n = "SaveBtn"
-})
-nc(svb2, 0.15)
-ntc(svb2, 12)
-
-local pb2 = nb(ap2, {
-    c = Color3.fromRGB(50, 130, 210),
-    s = UDim2.new(0.12, -5, 0, 30),
-    p = UDim2.new(0.88, 5, 0, 10),
-    t = "PASTE",
-    tc = Color3.fromRGB(255, 255, 255),
-    ts = 12,
-    n = "PasteBtn"
-})
-nc(pb2, 0.15)
-ntc(pb2, 12)
-
-local sc2 = nf(lf2, {
-    c = Color3.fromRGB(20, 25, 35),
-    s = UDim2.new(1, -20, 1, -110),
-    p = UDim2.new(0, 10, 0, 100),
-    n = "ScriptsContainer"
-})
-nc(sc2, 0.18)
-
-local ss2_scroll = nsf(sc2, {
-    bt = 1,
-    s = UDim2.new(1, -10, 1, -10),
-    p = UDim2.new(0, 5, 0, 5),
-    sb = 8,
-    cs = UDim2.new(0, 0, 0, 0),
-    n = "ScriptsScroll",
-    sic = Color3.fromRGB(50, 130, 210)
-})
-ssr2 = ss2_scroll
-
-local cc2 = nf(cf2, {
-    c = Color3.fromRGB(20, 25, 35),
-    s = UDim2.new(1, -20, 1, -20),
-    p = UDim2.new(0, 10, 0, 10),
-    n = "CloudContainer"
-})
-nc(cc2, 0.18)
-
-local cs2_scroll = nsf(cc2, {
-    bt = 1,
-    s = UDim2.new(1, -10, 1, -10),
-    p = UDim2.new(0, 5, 0, 5),
-    cs = UDim2.new(0, 0, 0, 0),
-    sb = 8,
-    n = "CloudScroll",
-    sic = Color3.fromRGB(50, 130, 210)
-})
-csr2 = cs2_scroll
-
-svb2.MouseButton1Click:Connect(function()
-    local nm = ni2.Text
-    local cont = ci2.Text
-    if nm and nm ~= "" and cont and cont ~= "" then
-        svS2(nm, cont)
-        ni2.Text = ""
-        ci2.Text = ""
-        fw.sa("Success", "Script saved: " .. nm, 2)
-    else
-        fw.sa("Error", "Please enter name and content!", 2)
-    end
-end)
-
-pb2.MouseButton1Click:Connect(function()
-    local cb = getclipboard and getclipboard() or ""
-    if cb ~= "" then
-        ci2.Text = cb
-        fw.sa("Success", "Content pasted!", 2)
-    else
-        fw.sa("Error", "Clipboard is empty!", 2)
-    end
-end)
-
-searchBox2.FocusLost:Connect(function(ep)
-    if ep then
-        performSearch2()
-    end
-end)
-
-searchBox2.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.Return then
-        performSearch2()
-    end
-end)
-
-lt2.MouseButton1Click:Connect(function()
-    swS2("Local")
-    lt2.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
-    ct2.BackgroundColor3 = Color3.fromRGB(65, 75, 90)
-end)
-
-ct2.MouseButton1Click:Connect(function()
-    swS2("Cloud")
-    ct2.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
-    lt2.BackgroundColor3 = Color3.fromRGB(65, 75, 90)
-end)
-
-local sidebar = fw.gu()["6"]:FindFirstChild("Sidebar")
-if sidebar then
-    local scriptBtn = nf(sidebar, {
-        c = Color3.fromRGB(31, 34, 50),
-        s = UDim2.new(0.68, 0, 0.064, 0),
-        p = UDim2.new(0.075, 0, 0.44, 0),
-        n = "Scripts",
-        bt = 1
-    })
-    nc(scriptBtn, 0.15)
-    
-    local box = nf(scriptBtn, {
-        z = 0,
-        c = Color3.fromRGB(255, 255, 255),
-        s = UDim2.new(0.15, 0, 0.6, 0),
-        p = UDim2.new(0.08, 0, 0.2, 0),
-        n = "Box"
-    })
-    nc(box, 0.2)
-    nar(box, 1)
-    ng(box, Color3.fromRGB(66, 79, 113), Color3.fromRGB(36, 44, 63))
-    
-    nim(box, {
-        z = 0,
-        st = Enum.ScaleType.Fit,
-        i = "rbxassetid://7733779610",
-        s = UDim2.new(0.6, 0, 0.6, 0),
+fw.cp("Scripts", "rbxassetid://7733779610", function()
+    local sp2 = e.ci2("ImageLabel", fw.gu()["11"])
+    e.sp2(sp2, {
         bt = 1,
-        n = "Ico",
-        p = UDim2.new(0.2, 0, 0.2, 0)
+        ic = Color3.fromRGB(15, 18, 25),
+        img = "rbxassetid://18665679839",
+        s = UDim2.new(1.001, 0, 1, 0),
+        vis = false,
+        n = "ScriptsPage",
+        p = UDim2.new(-0.001, 0, 0, 0)
     })
     
-    local lbl = nt(scriptBtn, {
-        tw = true,
-        ts = 16,
-        xa = Enum.TextXAlignment.Left,
-        ya = Enum.TextYAlignment.Top,
-        sc = true,
-        ff = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+    local tb2 = e.ci2("Frame", sp2)
+    e.sp2(tb2, {
+        c = Color3.fromRGB(25, 30, 40),
+        s = UDim2.new(1, -20, 0, 60),
+        p = UDim2.new(0, 10, 0, 10),
+        n = "TopBar"
+    })
+    e.ci2("UICorner", tb2).CornerRadius = UDim.new(0, 8)
+    
+    local sbo2 = e.ci2("Frame", tb2)
+    e.sp2(sbo2, {
+        c = Color3.fromRGB(18, 22, 32),
+        s = UDim2.new(0.5, -10, 0, 35),
+        p = UDim2.new(0, 15, 0, 12),
+        n = "SearchBox_Outer"
+    })
+    e.ci2("UICorner", sbo2).CornerRadius = UDim.new(0, 6)
+    
+    searchBox2 = e.ci2("TextBox", sbo2)
+    e.sp2(searchBox2, {
+        c = Color3.fromRGB(35, 40, 50),
+        s = UDim2.new(1, -8, 1, -8),
+        p = UDim2.new(0, 4, 0, 4),
+        t = "",
+        ts = 14,
+        tc = Color3.fromRGB(240, 245, 255),
+        ffc = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+        n = "SearchBox"
+    })
+    e.ci2("UICorner", searchBox2).CornerRadius = UDim.new(0, 4)
+    
+    local lt2 = e.ci2("TextButton", tb2)
+    e.sp2(lt2, {
+        c = Color3.fromRGB(50, 130, 210),
+        s = UDim2.new(0.2, -5, 0, 35),
+        p = UDim2.new(0.55, 5, 0, 12),
+        t = "LOCAL",
         tc = Color3.fromRGB(255, 255, 255),
-        bt = 1,
-        s = UDim2.new(0.6, 0, 0.6, 0),
-        t = "Scripts",
-        n = "Lbl",
-        p = UDim2.new(0.3, 0, 0.2, 0)
+        ts = 14,
+        n = "LocalTab"
     })
-    ntc(lbl, 16)
+    e.ci2("UICorner", lt2).CornerRadius = UDim.new(0, 6)
     
-    local clk = nb(scriptBtn, {
-        tw = true,
-        tc = Color3.fromRGB(0, 0, 0),
+    local ct2 = e.ci2("TextButton", tb2)
+    e.sp2(ct2, {
+        c = Color3.fromRGB(65, 75, 90),
+        s = UDim2.new(0.2, -5, 0, 35),
+        p = UDim2.new(0.78, 5, 0, 12),
+        t = "CLOUD",
+        tc = Color3.fromRGB(190, 200, 220),
+        ts = 14,
+        n = "CloudTab"
+    })
+    e.ci2("UICorner", ct2).CornerRadius = UDim.new(0, 6)
+    
+    lf2 = e.ci2("Frame", sp2)
+    e.sp2(lf2, {
+        bt = 1,
+        s = UDim2.new(1, 0, 1, -80),
+        p = UDim2.new(0, 0, 0, 80),
+        n = "LocalFrame",
+        vis = true
+    })
+    
+    cf2 = e.ci2("Frame", sp2)
+    e.sp2(cf2, {
+        bt = 1,
+        s = UDim2.new(1, 0, 1, -80),
+        p = UDim2.new(0, 0, 0, 80),
+        n = "CloudFrame",
+        vis = false
+    })
+    
+    local ap2 = e.ci2("Frame", lf2)
+    e.sp2(ap2, {
+        c = Color3.fromRGB(25, 30, 40),
+        s = UDim2.new(1, -20, 0, 80),
+        p = UDim2.new(0, 10, 0, 10),
+        n = "AddPanel"
+    })
+    e.ci2("UICorner", ap2).CornerRadius = UDim.new(0, 8)
+    
+    local nio2 = e.ci2("Frame", ap2)
+    e.sp2(nio2, {
+        c = Color3.fromRGB(18, 22, 32),
+        s = UDim2.new(0.25, -5, 0, 30),
+        p = UDim2.new(0, 10, 0, 10),
+        n = "NameInput_Outer"
+    })
+    e.ci2("UICorner", nio2).CornerRadius = UDim.new(0, 6)
+    
+    local ni2 = e.ci2("TextBox", nio2)
+    e.sp2(ni2, {
+        c = Color3.fromRGB(35, 40, 50),
+        s = UDim2.new(1, -8, 1, -8),
+        p = UDim2.new(0, 4, 0, 4),
+        t = "",
         ts = 12,
-        sc = true,
-        bt = 1,
-        s = UDim2.new(1, 0, 1, 0),
-        n = "Clk",
-        t = "  ",
-        z = 5
+        tc = Color3.fromRGB(240, 245, 255),
+        ffc = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+        n = "NameInput"
     })
-    nc(clk, 0)
-    ntc(clk, 12)
+    e.ci2("UICorner", ni2).CornerRadius = UDim.new(0, 4)
     
-    clk.MouseButton1Click:Connect(function()
-        fw.sp("Scripts", sidebar)
+    local cio2 = e.ci2("Frame", ap2)
+    e.sp2(cio2, {
+        c = Color3.fromRGB(18, 22, 32),
+        s = UDim2.new(0.45, -5, 0, 30),
+        p = UDim2.new(0.27, 5, 0, 10),
+        n = "ContentInput_Outer"
+    })
+    e.ci2("UICorner", cio2).CornerRadius = UDim.new(0, 6)
+    
+    local ci2 = e.ci2("TextBox", cio2)
+    e.sp2(ci2, {
+        c = Color3.fromRGB(35, 40, 50),
+        s = UDim2.new(1, -8, 1, -8),
+        p = UDim2.new(0, 4, 0, 4),
+        t = "",
+        ts = 12,
+        tc = Color3.fromRGB(240, 245, 255),
+        ffc = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+        n = "ContentInput"
+    })
+    e.ci2("UICorner", ci2).CornerRadius = UDim.new(0, 4)
+    
+    local svb2 = e.ci2("TextButton", ap2)
+    e.sp2(svb2, {
+        c = Color3.fromRGB(50, 170, 90),
+        s = UDim2.new(0.12, -5, 0, 30),
+        p = UDim2.new(0.74, 5, 0, 10),
+        t = "SAVE",
+        tc = Color3.fromRGB(255, 255, 255),
+        ts = 12,
+        n = "SaveBtn"
+    })
+    e.ci2("UICorner", svb2).CornerRadius = UDim.new(0, 6)
+    
+    local pb2 = e.ci2("TextButton", ap2)
+    e.sp2(pb2, {
+        c = Color3.fromRGB(50, 130, 210),
+        s = UDim2.new(0.12, -5, 0, 30),
+        p = UDim2.new(0.88, 5, 0, 10),
+        t = "PASTE",
+        tc = Color3.fromRGB(255, 255, 255),
+        ts = 12,
+        n = "PasteBtn"
+    })
+    e.ci2("UICorner", pb2).CornerRadius = UDim.new(0, 6)
+    
+    local sc2 = e.ci2("Frame", lf2)
+    e.sp2(sc2, {
+        c = Color3.fromRGB(20, 25, 35),
+        s = UDim2.new(1, -20, 1, -110),
+        p = UDim2.new(0, 10, 0, 100),
+        n = "ScriptsContainer"
+    })
+    e.ci2("UICorner", sc2).CornerRadius = UDim.new(0, 8)
+    
+    local ss2_scroll = e.ci2("ScrollingFrame", sc2)
+    e.sp2(ss2_scroll, {
+        bt = 1,
+        s = UDim2.new(1, -10, 1, -10),
+        p = UDim2.new(0, 5, 0, 5),
+        sbt = 8,
+        cs = UDim2.new(0, 0, 0, 0),
+        n = "ScriptsScroll",
+        sbc = Color3.fromRGB(50, 130, 210)
+    })
+    ssr2 = ss2_scroll
+    
+    local cc2 = e.ci2("Frame", cf2)
+    e.sp2(cc2, {
+        c = Color3.fromRGB(20, 25, 35),
+        s = UDim2.new(1, -20, 1, -20),
+        p = UDim2.new(0, 10, 0, 10),
+        n = "CloudContainer"
+    })
+    e.ci2("UICorner", cc2).CornerRadius = UDim.new(0, 8)
+    
+    local cs2_scroll = e.ci2("ScrollingFrame", cc2)
+    e.sp2(cs2_scroll, {
+        bt = 1,
+        s = UDim2.new(1, -10, 1, -10),
+        p = UDim2.new(0, 5, 0, 5),
+        cs = UDim2.new(0, 0, 0, 0),
+        sbt = 8,
+        n = "CloudScroll",
+        sbc = Color3.fromRGB(50, 130, 210)
+    })
+    csr2 = cs2_scroll
+    
+    svb2.MouseButton1Click:Connect(function()
+        local nm = ni2.Text
+        local cont = ci2.Text
+        if nm and nm ~= "" and cont and cont ~= "" then
+            svS2(nm, cont)
+            ni2.Text = ""
+            ci2.Text = ""
+            fw.sa("Success", "Script saved: " .. nm, 2)
+        else
+            fw.sa("Error", "Please enter name and content!", 2)
+        end
     end)
-end
-
-ldAE2()
-ldS2()
-exAS2()
-
-spawn(function()
-    fw.sa("Info", "Loading popular scripts...", 1)
-    local ps = srS2("popular", 30)
-    if #ps > 0 then
-        csc2 = ps
-        dsCS2(ps, csr2)
-    end
+    
+    pb2.MouseButton1Click:Connect(function()
+        local cb = getclipboard and getclipboard() or ""
+        if cb ~= "" then
+            ci2.Text = cb
+            fw.sa("Success", "Content pasted!", 2)
+        else
+            fw.sa("Error", "Clipboard is empty!", 2)
+        end
+    end)
+    
+    searchBox2.FocusLost:Connect(function(ep)
+        if ep then
+            performSearch2()
+        end
+    end)
+    
+    searchBox2.InputBegan:Connect(function(input)
+        if input.KeyCode == Enum.KeyCode.Return then
+            performSearch2()
+        end
+    end)
+    
+    lt2.MouseButton1Click:Connect(function()
+        swS2("Local")
+        lt2.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
+        ct2.BackgroundColor3 = Color3.fromRGB(65, 75, 90)
+    end)
+    
+    ct2.MouseButton1Click:Connect(function()
+        swS2("Cloud")
+        ct2.BackgroundColor3 = Color3.fromRGB(50, 130, 210)
+        lt2.BackgroundColor3 = Color3.fromRGB(65, 75, 90)
+    end)
+    
+    ldAE2()
+    ldS2()
+    exAS2()
+    
+    spawn(function()
+        fw.sa("Info", "Loading popular scripts...", 1)
+        local ps = srS2("popular", 30)
+        if #ps > 0 then
+            csc2 = ps
+            dsCS2(ps, csr2)
+        end
+    end)
 end)
 
+return true
