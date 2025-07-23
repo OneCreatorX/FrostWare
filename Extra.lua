@@ -453,7 +453,8 @@ spawn(function()
     
     local mods = {
         "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Scripts.lua",
-            "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/M.lua"
+            "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/M.lua",
+            "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/p"
     }
     
     for i, mu in pairs(mods) do
