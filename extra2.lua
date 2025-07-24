@@ -1,5 +1,4 @@
-wait(10)
-repeat wait() until game:IsLoaded()
+repeat task.wait() until game:IsLoaded()
 repeat wait() until lp
 repeat wait() until lp.Character
 repeat wait() until lp.Character:FindFirstChild("HumanoidRootPart")
