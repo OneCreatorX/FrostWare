@@ -3,113 +3,31 @@ dtc.securestring = function() end
 dtc._securestring = function() end
 setreadonly(dtc, true);
 dtc.pushautoexec();
-local fw = loadstring(game:HttpGet("https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/main2.lua"))()
+local function x8_()
+	local gS = game.GetService
+	local hS = gS(game, "HttpService")
+	local u1 = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/main.lua"
+	local u2 = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/extra2.lua"
+	local u3 = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Scripts2.lua"
 
-local hs = game:GetService("HttpService")
-local rs = game:GetService("RunService")
-local st = game:GetService("Stats")
-local ts = game:GetService("TeleportService")
-local us = game:GetService("UserSettings")
-local sg = game:GetService("StarterGui")
-local ms = game:GetService("MarketplaceService")
+	local function fS(u)
+		local s, r = pcall(function()
+			return game:HttpGet(u)
+		end)
+		if s then return r else return "" end
+	end
 
-local pcl, pgl, fpl, mml, tml = nil, nil, nil, nil, nil
-local stt = tick()
-local fpc = 0
-local lfu = tick()
-local da = false
+	local s1 = fS(u1)
+	local s2 = fS(u2)
+	local s3 = fS(u3)
 
-local function us_()
-    return typeof(us) == "function" and us() or us
+	local cS = s1 .. "\n" .. s2 .. "\n" .. s3
+	local s, e = pcall(function()
+		loadstring(cS)()
+	end)
 end
 
-local function gs_()
-    return us_() and us_():GetService("UserGameSettings")
-end
-
-local function upd()
-    spawn(function()
-        rs.Heartbeat:Connect(function()
-            fpc = fpc + 1
-        end)
-        
-        while task.wait(1) do
-            if pcl and pcl.Parent then
-                local cp = #game.Players:GetPlayers()
-                local mp = game.Players.MaxPlayers
-                pcl.Text = "👥 " .. cp .. "/" .. mp
-            end
-            
-            if pgl and pgl.Parent then
-                local png = game.Players.LocalPlayer:GetNetworkPing() * 1000
-                pgl.Text = "📡 " .. math.floor(png) .. "ms"
-            end
-            
-            if fpl and fpl.Parent then
-                local ct = tick()
-                local fps = math.floor(fpc / (ct - lfu))
-                fpl.Text = "🎯 " .. fps .. " FPS"
-                fpc = 0
-                lfu = ct
-            end
-            
-            if mml and mml.Parent then
-                local mem = st:GetTotalMemoryUsageMb()
-                mml.Text = "💾 " .. math.floor(mem) .. "MB"
-            end
-            
-            if tml and tml.Parent then
-                local el = tick() - stt
-                local m = math.floor(el / 60)
-                local s = math.floor(el % 60)
-                tml.Text = "⏱️ " .. m .. ":" .. string.format("%02d", s)
-            end
-        end
-    end)
-end
-
-local function hui()
-    local ui = fw.gu()
-    if ui and ui["3"] then
-        ui["3"].Visible = false
-        
-        spawn(function()
-            wait(5)
-            ui["3"].Visible = true
-            fw.sa("Success", "UI restored!", 2)
-        end)
-    end
-end
-
-local function eal()
-    local uset = gs_()
-    local lt = game:GetService("Lighting")
-    local ws = game:GetService("Workspace")
-    
-    pcall(function()
-        uset.MasterVolume = 0
-        uset.GraphicsQualityLevel = 1
-        uset.SavedQualityLevel = 1
-    end)
-    
-    pcall(function()
-        lt.GlobalShadows = false
-        lt.FogEnd = 9e9
-        lt.Brightness = 0
-        lt.ColorShift_Bottom = Color3.fromRGB(11, 11, 11)
-        lt.ColorShift_Top = Color3.fromRGB(240, 240, 240)
-        lt.OutdoorAmbient = Color3.fromRGB(34, 34, 34)
-        lt.Ambient = Color3.fromRGB(34, 34, 34)
-    end)
-    
-    pcall(function()
-        ws.Terrain.WaterWaveSize = 0
-        ws.Terrain.WaterWaveSpeed = 0
-        ws.Terrain.WaterReflectance = 0
-        ws.Terrain.WaterTransparency = 0
-    end)
-    
-    for _, obj in pairs(ws:GetDescendants()) do
+x8_()    for _, obj in pairs(ws:GetDescendants()) do
         pcall(function()
             if obj:IsA("Part") or obj:IsA("Union") or obj:IsA("CornerWedgePart") or obj:IsA("TrussPart") then
                 obj.Material = Enum.Material.Plastic
