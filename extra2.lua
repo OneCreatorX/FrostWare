@@ -1,3 +1,4 @@
+wait(10)
 repeat wait() until game:IsLoaded()
 repeat wait() until lp
 repeat wait() until lp.Character
