@@ -424,5 +424,3 @@ if scriptsPageFrame then
         end
     end)
 end
-
-return true
