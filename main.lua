@@ -966,3 +966,4 @@ local function ifw()
     oc.MouseButton1Click:Connect(function() fw.sh() end)
 end
 ifw()
+repeat task.wait() until game:IsLoaded()
