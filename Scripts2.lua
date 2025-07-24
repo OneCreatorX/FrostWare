@@ -5,7 +5,7 @@ local lf2, cf2, csc2, ss2, sf2 = nil, nil, {}, nil, nil
 local ls2, aes2 = {}, {}
 local ssr2 = nil
 local csr2 = nil
-local searchBox2 = nil
+local sb2 = nil
 local sd2 = "FrostWare/Scripts/"
 local aef2 = "FrostWare/AutoExec.json"
 local ds2 = {
@@ -20,7 +20,7 @@ local pagesContainer = fw.gu()["11"]
 local scriptsPageFrame = pagesContainer:FindFirstChild("ScriptsPage")
 
 if scriptsPageFrame then
-    local function swS2(sec)
+    local function sw2(sec)
         cs2 = sec
         if lf2 and cf2 then
             if sec == "Local" then
@@ -33,12 +33,12 @@ if scriptsPageFrame then
         end
     end
 
-    local function svAE2()
+    local function sv2()
         if not isfolder("FrostWare") then makefolder("FrostWare") end
         writefile(aef2, hs2:JSONEncode(aes2))
     end
 
-    local function ldAE2()
+    local function ld2()
         if not isfolder("FrostWare") then makefolder(sd2) end
         if isfile(aef2) then
             local ok, dt = pcall(function() return hs2:JSONDecode(readfile(aef2)) end)
@@ -46,17 +46,17 @@ if scriptsPageFrame then
         end
     end
 
-    local function tgAE2(nm)
+    local function tg2(nm)
         if aes2[nm] then
             aes2[nm] = nil
         else
             aes2[nm] = true
         end
-        svAE2()
-        upL2()
+        sv2()
+        up2()
     end
 
-    local function exAS2()
+    local function ex2()
         for nm, _ in pairs(aes2) do
             if ls2[nm] then
                 spawn(function()
@@ -67,17 +67,17 @@ if scriptsPageFrame then
         end
     end
 
-    local function svS2(nm, cont)
+    local function sv3(nm, cont)
         if not isfolder(sd2) then makefolder(sd2) end
         ls2[nm] = cont
         writefile(sd2 .. nm .. ".lua", cont)
         local dt = {}
         for n, c in pairs(ls2) do dt[n] = c end
         writefile(sd2 .. "scripts.json", hs2:JSONEncode(dt))
-        upL2()
+        up2()
     end
 
-    local function dlS2(nm)
+    local function dl2(nm)
         if ds2[nm] then
             fw.sa("Error", "Cannot delete default script!", 2)
             return false
@@ -86,7 +86,7 @@ if scriptsPageFrame then
         if ls2[nm] then
             if aes2[nm] then
                 aes2[nm] = nil
-                svAE2()
+                sv2()
             end
             
             ls2[nm] = nil
@@ -99,14 +99,14 @@ if scriptsPageFrame then
             for n, c in pairs(ls2) do dt[n] = c end
             writefile(sd2 .. "scripts.json", hs2:JSONEncode(dt))
             
-            upL2()
+            up2()
             fw.sa("Success", "Script deleted: " .. nm, 2)
             return true
         end
         return false
     end
 
-    local function ldS2()
+    local function ld3()
         if not isfolder(sd2) then makefolder(sd2) end
         for nm, cont in pairs(ds2) do ls2[nm] = cont end
         if isfile(sd2 .. "scripts.json") then
@@ -115,34 +115,34 @@ if scriptsPageFrame then
                 for nm, cont in pairs(dt) do ls2[nm] = cont end
             end
         end
-        upL2()
+        up2()
     end
 
-    local function createScriptCard2(parent, name, content, yPos)
-        local scd = nf(parent, {c=Color3.fromRGB(25,30,40), s=UDim2.new(1,-20,0,55), p=UDim2.new(0,10,0,yPos), n="ScriptCard_"..name})
+    local function cc2(parent, name, content, yPos)
+        local scd = nf(parent, {c=Color3.fromRGB(25,30,40), s=UDim2.new(1,-10,0,80), p=UDim2.new(0,5,0,yPos), n="ScriptCard_"..name})
         nc(scd, 0.15)
         
-        local title = nt(scd, {t=name, ts=16, s=UDim2.new(0.4,0,0.6,0), p=UDim2.new(0,15,0,5), xa=Enum.TextXAlignment.Left, tc=Color3.fromRGB(240,245,255), bt=1, ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.SemiBold,Enum.FontStyle.Normal), n="ScriptTitle"})
-        ntc(title, 16)
+        local title = nt(scd, {t=name, ts=14, s=UDim2.new(0.4,0,0.4,0), p=UDim2.new(0.02,0,0.05,0), xa=Enum.TextXAlignment.Left, tc=Color3.fromRGB(240,245,255), bt=1, ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.SemiBold,Enum.FontStyle.Normal), n="ScriptTitle"})
+        ntc(title, 14)
         
         if ds2[name] then
-            local vb = nf(scd, {c=Color3.fromRGB(20,60,110), s=UDim2.new(0,84,0,24), p=UDim2.new(0,13,0,28)})
+            local vb = nf(scd, {c=Color3.fromRGB(20,60,110), s=UDim2.new(0.15,0,0.25,0), p=UDim2.new(0.02,0,0.45,0)})
             nc(vb, 0.18)
-            local vt = nt(vb, {t="VERIFIED", ts=10, tc=Color3.fromRGB(255,255,255), s=UDim2.new(1,0,1,0), bt=1, n="VerifiedText"})
-            ntc(vt, 10)
+            local vt = nt(vb, {t="VERIFIED", ts=8, tc=Color3.fromRGB(255,255,255), s=UDim2.new(1,0,1,0), bt=1, n="VerifiedText"})
+            ntc(vt, 8)
         end
         
-        local aeb = nb(scd, {c=aes2[name] and Color3.fromRGB(50,170,90) or Color3.fromRGB(65,75,90), s=UDim2.new(0,80,0,25), p=UDim2.new(0.45,0,0,15), t=aes2[name] and "AUTO: ON" or "AUTO: OFF", tc=Color3.fromRGB(255,255,255), ts=10, n="AutoExecBtn"})
+        local aeb = nb(scd, {c=aes2[name] and Color3.fromRGB(50,170,90) or Color3.fromRGB(65,75,90), s=UDim2.new(0.15,0,0.35,0), p=UDim2.new(0.45,0,0.3,0), t=aes2[name] and "AUTO: ON" or "AUTO: OFF", tc=Color3.fromRGB(255,255,255), ts=9, n="AutoExecBtn"})
         nc(aeb, 0.15)
-        ntc(aeb, 10)
+        ntc(aeb, 9)
         
-        local exb = nb(scd, {c=Color3.fromRGB(50,170,90), s=UDim2.new(0,80,0,25), p=UDim2.new(0.65,0,0,15), t="EXECUTE", tc=Color3.fromRGB(255,255,255), ts=11, n="ExecuteBtn"})
+        local exb = nb(scd, {c=Color3.fromRGB(50,170,90), s=UDim2.new(0.15,0,0.35,0), p=UDim2.new(0.62,0,0.3,0), t="EXECUTE", tc=Color3.fromRGB(255,255,255), ts=9, n="ExecuteBtn"})
         nc(exb, 0.15)
-        ntc(exb, 11)
+        ntc(exb, 9)
         
-        local mrb = nb(scd, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0,60,0,25), p=UDim2.new(0.85,0,0,15), t="MORE", tc=Color3.fromRGB(255,255,255), ts=11, n="MoreBtn"})
+        local mrb = nb(scd, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0.15,0,0.35,0), p=UDim2.new(0.79,0,0.3,0), t="MORE", tc=Color3.fromRGB(255,255,255), ts=9, n="MoreBtn"})
         nc(mrb, 0.15)
-        ntc(mrb, 11)
+        ntc(mrb, 9)
         
         exb.MouseButton1Click:Connect(function()
             fw.sa("Success", name .. " executing...", 2)
@@ -159,12 +159,12 @@ if scriptsPageFrame then
             end
         end)
         
-        aeb.MouseButton1Click:Connect(function() tgAE2(name) end)
+        aeb.MouseButton1Click:Connect(function() tg2(name) end)
         
         return scd
     end
 
-    function upL2()
+    function up2()
         if ssr2 then
             for _, ch in pairs(ssr2:GetChildren()) do
                 if ch:IsA("Frame") then ch:Destroy() end
@@ -176,15 +176,15 @@ if scriptsPageFrame then
             end
             
             for i, sc in pairs(scs) do
-                local yp = (i - 1) * 65 + 10
-                createScriptCard2(ssr2, sc.name, sc.content, yp)
+                local yp = (i - 1) * 90 + 5
+                cc2(ssr2, sc.name, sc.content, yp)
             end
             
-            ssr2.CanvasSize = UDim2.new(0, 0, 0, #scs * 65 + 20)
+            ssr2.CanvasSize = UDim2.new(0, 0, 0, #scs * 90 + 10)
         end
     end
 
-    local function srS2(qry, mr)
+    local function sr2(qry, mr)
         mr = mr or 20
         local ok, res = pcall(function()
             local url = "https://scriptblox.com/api/script/search?q=" .. hs2:UrlEncode(qry) .. "&max=" .. mr
@@ -199,25 +199,25 @@ if scriptsPageFrame then
         return {}
     end
 
-    local function createCloudCard2(parent, data, index)
-        local yp = (index - 1) * 65 + 10
-        local cc = nf(parent, {c=Color3.fromRGB(25,30,40), s=UDim2.new(1,-20,0,55), p=UDim2.new(0,10,0,yp), n="CloudCard"})
+    local function cc3(parent, data, index)
+        local yp = (index - 1) * 90 + 5
+        local cc = nf(parent, {c=Color3.fromRGB(25,30,40), s=UDim2.new(1,-10,0,80), p=UDim2.new(0,5,0,yp), n="CloudCard"})
         nc(cc, 0.15)
         
-        local title = nt(cc, {t=data.title or "Unknown Script", ts=16, s=UDim2.new(0.35,0,0.6,0), p=UDim2.new(0,15,0,5), xa=Enum.TextXAlignment.Left, tc=Color3.fromRGB(240,245,255), bt=1, n="ScriptTitle"})
-        ntc(title, 16)
+        local title = nt(cc, {t=data.title or "Unknown Script", ts=14, s=UDim2.new(0.5,0,0.4,0), p=UDim2.new(0.02,0,0.05,0), xa=Enum.TextXAlignment.Left, tc=Color3.fromRGB(240,245,255), bt=1, n="ScriptTitle"})
+        ntc(title, 14)
         
-        local vb = nf(cc, {c=Color3.fromRGB(20,60,110), s=UDim2.new(0,84,0,24), p=UDim2.new(0,13,0,28)})
+        local vb = nf(cc, {c=Color3.fromRGB(20,60,110), s=UDim2.new(0.15,0,0.25,0), p=UDim2.new(0.02,0,0.45,0)})
         nc(vb, 0.18)
-        local vt = nt(vb, {t="VERIFIED", ts=10, tc=Color3.fromRGB(255,255,255), s=UDim2.new(1,0,1,0), bt=1})
-        ntc(vt, 10)
+        local vt = nt(vb, {t="VERIFIED", ts=8, tc=Color3.fromRGB(255,255,255), s=UDim2.new(1,0,1,0), bt=1})
+        ntc(vt, 8)
         
-        local views = nt(cc, {t=(data.views or "0") .. " Views", ts=12, tc=Color3.fromRGB(160,170,190), s=UDim2.new(0.2,0,0.6,0), p=UDim2.new(0.4,0,0,5), xa=Enum.TextXAlignment.Left, bt=1, n="ViewsLabel"})
-        ntc(views, 12)
+        local views = nt(cc, {t=(data.views or "0") .. " Views", ts=10, tc=Color3.fromRGB(160,170,190), s=UDim2.new(0.25,0,0.3,0), p=UDim2.new(0.5,0,0.1,0), xa=Enum.TextXAlignment.Left, bt=1, n="ViewsLabel"})
+        ntc(views, 10)
         
-        local sb = nb(cc, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0,100,0,35), p=UDim2.new(1,-110,0,10), t="SELECT", tc=Color3.fromRGB(255,255,255), ts=12, n="SelectBtn"})
+        local sb = nb(cc, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0.2,0,0.4,0), p=UDim2.new(0.75,0,0.3,0), t="SELECT", tc=Color3.fromRGB(255,255,255), ts=10, n="SelectBtn"})
         nc(sb, 0.15)
-        ntc(sb, 12)
+        ntc(sb, 10)
         
         sb.MouseButton1Click:Connect(function()
             fw.sa("Success", "Executing cloud script...", 2)
@@ -255,26 +255,26 @@ if scriptsPageFrame then
         return cc
     end
 
-    local function dsCS2(scs, sf)
+    local function ds2(scs, sf)
         for _, ch in pairs(sf:GetChildren()) do
             if ch.Name == "CloudCard" then ch:Destroy() end
         end
         for i, sc in pairs(scs) do
-            createCloudCard2(sf, sc, i)
+            cc3(sf, sc, i)
         end
-        sf.CanvasSize = UDim2.new(0, 0, 0, #scs * 65 + 20)
+        sf.CanvasSize = UDim2.new(0, 0, 0, #scs * 90 + 10)
     end
 
-    local function performSearch2()
+    local function ps2()
         if cs2 == "Cloud" then
-            local qry = searchBox2.Text
+            local qry = sb2.Text
             if qry and qry ~= "" then
                 fw.sa("Info", "Searching scripts...", 1)
                 spawn(function()
-                    local scs = srS2(qry, 50)
+                    local scs = sr2(qry, 50)
                     if #scs > 0 then
                         csc2 = scs
-                        dsCS2(scs, csr2)
+                        ds2(scs, csr2)
                         fw.sa("Success", "Found " .. #scs .. " scripts!", 2)
                     else
                         fw.sa("Error", "No scripts found!", 2)
@@ -282,9 +282,9 @@ if scriptsPageFrame then
                 end)
             end
         elseif cs2 == "Local" then
-            local qry = searchBox2.Text
+            local qry = sb2.Text
             if not qry or qry == "" then
-                upL2()
+                up2()
                 return
             end
             
@@ -301,82 +301,76 @@ if scriptsPageFrame then
                 end
                 
                 for i, sc in pairs(filteredScripts) do
-                    local yp = (i - 1) * 65 + 10
-                    createScriptCard2(ssr2, sc.name, sc.content, yp)
+                    local yp = (i - 1) * 90 + 5
+                    cc2(ssr2, sc.name, sc.content, yp)
                 end
                 
-                ssr2.CanvasSize = UDim2.new(0, 0, 0, #filteredScripts * 65 + 20)
+                ssr2.CanvasSize = UDim2.new(0, 0, 0, #filteredScripts * 90 + 10)
             end
         end
     end
 
-    local tit = nt(scriptsPageFrame, {t="Scripts", ts=48, tc=Color3.fromRGB(255,255,255), bt=1, s=UDim2.new(1,0,0.2,0), p=UDim2.new(0,0,0.1,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(tit, 48)
-    
-    local info = nt(scriptsPageFrame, {t="Administra y ejecuta scripts locales y de la nube.", ts=24, tc=Color3.fromRGB(180,180,180), bt=1, s=UDim2.new(1,0,0.1,0), p=UDim2.new(0,0,0.25,0), sc=true, ff=Font.new("rbxassetid://12187365364",Enum.FontWeight.Regular,Enum.FontStyle.Normal)})
-    ntc(info, 24)
-
-    local tb2 = nf(scriptsPageFrame, {c=Color3.fromRGB(25,30,40), s=UDim2.new(1,-20,0,60), p=UDim2.new(0,10,0,200), n="TopBar"})
+    local tb2 = nf(scriptsPageFrame, {c=Color3.fromRGB(25,30,40), s=UDim2.new(0.95,0,0.12,0), p=UDim2.new(0.025,0,0.02,0), n="TopBar"})
     nc(tb2, 0.18)
 
-    local sbo2 = nf(tb2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.5,-10,0,35), p=UDim2.new(0,15,0,12), n="SearchBox_Outer"})
+    local sbo2 = nf(tb2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.5,0,0.6,0), p=UDim2.new(0.02,0,0.2,0), n="SearchBox_Outer"})
     nc(sbo2, 0.18)
 
-    searchBox2 = ntb(sbo2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(1,-8,1,-8), p=UDim2.new(0,4,0,4), pc=Color3.fromRGB(120,130,150), t="", ts=14, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="SearchBox"})
-    nc(searchBox2, 0.15)
-    ntc(searchBox2, 14)
+    sb2 = ntb(sbo2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(0.95,0,0.8,0), p=UDim2.new(0.025,0,0.1,0), pc=Color3.fromRGB(120,130,150), t="", ts=12, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="SearchBox"})
+    nc(sb2, 0.15)
+    ntc(sb2, 12)
 
-    local lt2 = nb(tb2, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0.2,-5,0,35), p=UDim2.new(0.55,5,0,12), t="LOCAL", tc=Color3.fromRGB(255,255,255), ts=14, n="LocalTab"})
+    local lt2 = nb(tb2, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0.2,0,0.6,0), p=UDim2.new(0.55,0,0.2,0), t="LOCAL", tc=Color3.fromRGB(255,255,255), ts=12, n="LocalTab"})
     nc(lt2, 0.15)
-    ntc(lt2, 14)
+    ntc(lt2, 12)
 
-    local ct2 = nb(tb2, {c=Color3.fromRGB(65,75,90), s=UDim2.new(0.2,-5,0,35), p=UDim2.new(0.78,5,0,12), t="CLOUD", tc=Color3.fromRGB(190,200,220), ts=14, n="CloudTab"})
+    local ct2 = nb(tb2, {c=Color3.fromRGB(65,75,90), s=UDim2.new(0.2,0,0.6,0), p=UDim2.new(0.77,0,0.2,0), t="CLOUD", tc=Color3.fromRGB(190,200,220), ts=12, n="CloudTab"})
     nc(ct2, 0.15)
-    ntc(ct2, 14)
+    ntc(ct2, 12)
 
-    lf2 = nf(scriptsPageFrame, {bt=1, s=UDim2.new(1,0,1,-280), p=UDim2.new(0,0,0,270), n="LocalFrame", v=true})
-    cf2 = nf(scriptsPageFrame, {bt=1, s=UDim2.new(1,0,1,-280), p=UDim2.new(0,0,0,270), n="CloudFrame", v=false})
+    lf2 = nf(scriptsPageFrame, {bt=1, s=UDim2.new(0.95,0,0.84,0), p=UDim2.new(0.025,0,0.15,0), n="LocalFrame", v=true})
+    cf2 = nf(scriptsPageFrame, {bt=1, s=UDim2.new(0.95,0,0.84,0), p=UDim2.new(0.025,0,0.15,0), n="CloudFrame", v=false})
 
-    local ap2 = nf(lf2, {c=Color3.fromRGB(25,30,40), s=UDim2.new(1,-20,0,80), p=UDim2.new(0,10,0,10), n="AddPanel"})
+    local ap2 = nf(lf2, {c=Color3.fromRGB(25,30,40), s=UDim2.new(1,0,0.15,0), p=UDim2.new(0,0,0,0), n="AddPanel"})
     nc(ap2, 0.18)
 
-    local nio2 = nf(ap2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.25,-5,0,30), p=UDim2.new(0,10,0,10), n="NameInput_Outer"})
+    local nio2 = nf(ap2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.25,0,0.5,0), p=UDim2.new(0.02,0,0.25,0), n="NameInput_Outer"})
     nc(nio2, 0.18)
 
-    local ni2 = ntb(nio2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(1,-8,1,-8), p=UDim2.new(0,4,0,4), pc=Color3.fromRGB(120,130,150), t="", ts=12, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="NameInput"})
+    local ni2 = ntb(nio2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(0.9,0,0.8,0), p=UDim2.new(0.05,0,0.1,0), pc=Color3.fromRGB(120,130,150), t="", ts=10, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="NameInput"})
     nc(ni2, 0.15)
-    ntc(ni2, 12)
+    ntc(ni2, 10)
 
-    local cio2 = nf(ap2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.45,-5,0,30), p=UDim2.new(0.27,5,0,10), n="ContentInput_Outer"})
+    local cio2 = nf(ap2, {c=Color3.fromRGB(18,22,32), s=UDim2.new(0.4,0,0.5,0), p=UDim2.new(0.29,0,0.25,0), n="ContentInput_Outer"})
     nc(cio2, 0.18)
 
-    local ci2 = ntb(cio2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(1,-8,1,-8), p=UDim2.new(0,4,0,4), pc=Color3.fromRGB(120,130,150), t="", ts=12, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="ContentInput"})
+    local ci2 = ntb(cio2, {c=Color3.fromRGB(35,40,50), s=UDim2.new(0.95,0,0.8,0), p=UDim2.new(0.025,0,0.1,0), pc=Color3.fromRGB(120,130,150), t="", ts=10, tc=Color3.fromRGB(240,245,255), ff=Font.new("rbxasset://fonts/families/SourceSansPro.json",Enum.FontWeight.Regular,Enum.FontStyle.Normal), n="ContentInput"})
     nc(ci2, 0.15)
-    ntc(ci2, 12)
+    ntc(ci2, 10)
 
-    local svb2 = nb(ap2, {c=Color3.fromRGB(50,170,90), s=UDim2.new(0.12,-5,0,30), p=UDim2.new(0.74,5,0,10), t="SAVE", tc=Color3.fromRGB(255,255,255), ts=12, n="SaveBtn"})
+    local svb2 = nb(ap2, {c=Color3.fromRGB(50,170,90), s=UDim2.new(0.12,0,0.5,0), p=UDim2.new(0.71,0,0.25,0), t="SAVE", tc=Color3.fromRGB(255,255,255), ts=10, n="SaveBtn"})
     nc(svb2, 0.15)
-    ntc(svb2, 12)
+    ntc(svb2, 10)
 
-    local pb2 = nb(ap2, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0.12,-5,0,30), p=UDim2.new(0.88,5,0,10), t="PASTE", tc=Color3.fromRGB(255,255,255), ts=12, n="PasteBtn"})
+    local pb2 = nb(ap2, {c=Color3.fromRGB(50,130,210), s=UDim2.new(0.12,0,0.5,0), p=UDim2.new(0.85,0,0.25,0), t="PASTE", tc=Color3.fromRGB(255,255,255), ts=10, n="PasteBtn"})
     nc(pb2, 0.15)
-    ntc(pb2, 12)
+    ntc(pb2, 10)
 
-    local sc2 = nf(lf2, {c=Color3.fromRGB(20,25,35), s=UDim2.new(1,-20,1,-110), p=UDim2.new(0,10,0,100), n="ScriptsContainer"})
+    local sc2 = nf(lf2, {c=Color3.fromRGB(20,25,35), s=UDim2.new(1,0,0.83,0), p=UDim2.new(0,0,0.17,0), n="ScriptsContainer"})
     nc(sc2, 0.18)
 
-    ssr2 = nsf(sc2, {bt=1, s=UDim2.new(1,-10,1,-10), p=UDim2.new(0,5,0,5), sb=8, cs=UDim2.new(0,0,0,0), n="ScriptsScroll", sic=Color3.fromRGB(50,130,210)})
+    ssr2 = nsf(sc2, {bt=1, s=UDim2.new(0.98,0,0.98,0), p=UDim2.new(0.01,0,0.01,0), sb=6, cs=UDim2.new(0,0,0,0), n="ScriptsScroll", sic=Color3.fromRGB(50,130,210)})
 
-    local cc2 = nf(cf2, {c=Color3.fromRGB(20,25,35), s=UDim2.new(1,-20,1,-20), p=UDim2.new(0,10,0,10), n="CloudContainer"})
-    nc(cc2, 0.18)
+    local cc4 = nf(cf2, {c=Color3.fromRGB(20,25,35), s=UDim2.new(1,0,1,0), p=UDim2.new(0,0,0,0), n="CloudContainer"})
+    nc(cc4, 0.18)
 
-    csr2 = nsf(cc2, {bt=1, s=UDim2.new(1,-10,1,-10), p=UDim2.new(0,5,0,5), cs=UDim2.new(0,0,0,0), sb=8, n="CloudScroll", sic=Color3.fromRGB(50,130,210)})
+    csr2 = nsf(cc4, {bt=1, s=UDim2.new(0.98,0,0.98,0), p=UDim2.new(0.01,0,0.01,0), cs=UDim2.new(0,0,0,0), sb=6, n="CloudScroll", sic=Color3.fromRGB(50,130,210)})
 
     svb2.MouseButton1Click:Connect(function()
         local nm = ni2.Text
         local cont = ci2.Text
         if nm and nm ~= "" and cont and cont ~= "" then
-            svS2(nm, cont)
+            sv3(nm, cont)
             ni2.Text = ""
             ci2.Text = ""
             fw.sa("Success", "Script saved: " .. nm, 2)
@@ -395,38 +389,38 @@ if scriptsPageFrame then
         end
     end)
 
-    searchBox2.FocusLost:Connect(function(ep)
-        if ep then performSearch2() end
+    sb2.FocusLost:Connect(function(ep)
+        if ep then ps2() end
     end)
 
-    searchBox2.InputBegan:Connect(function(input)
+    sb2.InputBegan:Connect(function(input)
         if input.KeyCode == Enum.KeyCode.Return then
-            performSearch2()
+            ps2()
         end
     end)
 
     lt2.MouseButton1Click:Connect(function()
-        swS2("Local")
+        sw2("Local")
         lt2.BackgroundColor3 = Color3.fromRGB(50,130,210)
         ct2.BackgroundColor3 = Color3.fromRGB(65,75,90)
     end)
 
     ct2.MouseButton1Click:Connect(function()
-        swS2("Cloud")
+        sw2("Cloud")
         ct2.BackgroundColor3 = Color3.fromRGB(50,130,210)
         lt2.BackgroundColor3 = Color3.fromRGB(65,75,90)
     end)
 
-    ldAE2()
-    ldS2()
-    exAS2()
+    ld2()
+    ld3()
+    ex2()
 
     spawn(function()
         fw.sa("Info", "Loading popular scripts...", 1)
-        local ps = srS2("popular", 30)
+        local ps = sr2("popular", 30)
         if #ps > 0 then
             csc2 = ps
-            dsCS2(ps, csr2)
+            ds2(ps, csr2)
         end
     end)
 end
