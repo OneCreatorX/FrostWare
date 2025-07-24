@@ -1,3 +1,4 @@
+wait(10)
 local hs2 = game:GetService("HttpService")
 local ts2 = game:GetService("TweenService")
 local cs2 = "Local"
