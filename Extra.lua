@@ -5,29 +5,35 @@ setreadonly(dtc, true)
 dtc.pushautoexec()
 
 local function x8_()
-	local u1 = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/main.lua"
-	local u2 = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/extra2.lua"
-	local u3 = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Scripts2.lua"
-	local u4 = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Musicc.lua"
+    local gS = game.GetService
+    local hS = gS(game, "HttpService")
 
-	local function fS(u)
-		local s, r = pcall(function()
-			return game:HttpGet(u)
-		end)
-		return s and r or ""
-	end
+    local u1 = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/main.lua"
+    local u2 = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/extra2.lua"
+    local u3 = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Scripts2.lua"
+    local u4 = "https://raw.githubusercontent.com/OneCreatorX/FrostWare/refs/heads/main/Musicc.lua"
 
-	local cS = table.concat({
-		fS(u1),
-		fS(u2),
-		fS(u3),
-		fS(u4)
-	}, "\n")
+    local function fS(u)
+        local s, r = pcall(function()
+            return game:HttpGet(u)
+        end)
+        return s and r or ""
+    end
 
-	local ok, err = pcall(function()
-		loadstring(cS)()
-	end)
-	if not ok then warn("FW error:", err) end
+    local cS = table.concat({
+        fS(u1),
+        fS(u2),
+        fS(u3),
+        fS(u4)
+    }, "\n")
+
+    local success, err = pcall(function()
+        loadstring(cS)()
+    end)
+
+    if not success then
+        warn("[FW] Error ", err)
+    end
 end
 
 x8_()
