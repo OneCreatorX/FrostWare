@@ -968,9 +968,7 @@ end
 ifw()
 print("2")
 repeat task.wait() until game:IsLoaded()
-print("2")
-repeat wait() until game.Players.LocalPlayer:FindFirstChild("Characte")
-repeat wait() until game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+print("4")
 
 local pcl1, pgl1, fpl1, mml1, tml1 = nil, nil, nil, nil, nil
 local stt1 = tick()
