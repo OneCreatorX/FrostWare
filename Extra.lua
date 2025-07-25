@@ -22,9 +22,8 @@ end
 local s1 = fS(u1)  
 local s2 = fS(u2)  
 local s3 = fS(u3)  
-local s4 = fS(u4)  
 
-local cS = s1 .. "\n" .. s2 .. "\n" .. s3 .. "\n" .. s4  
+local cS = s1 .. "\n" .. s2 .. "\n" .. s3
 local s, e = pcall(function()  
 	loadstring(cS)()  
 end)
