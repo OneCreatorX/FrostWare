@@ -966,12 +966,11 @@ local function ifw()
     oc.MouseButton1Click:Connect(function() fw.sh() end)
 end
 ifw()
+print("2")
 repeat task.wait() until game:IsLoaded()
-
-repeat task.wait() until game:IsLoaded()
-repeat wait() until lp
-repeat wait() until lp.Character
-repeat wait() until lp.Character:FindFirstChild("HumanoidRootPart")
+print("2")
+repeat wait() until game.Players.LocalPlayer:FindFirstChild("Characte")
+repeat wait() until game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
 local pcl1, pgl1, fpl1, mml1, tml1 = nil, nil, nil, nil, nil
 local stt1 = tick()
