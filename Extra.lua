@@ -1,3 +1,4 @@
+repeat wait() until game:IsLoaded()
 setreadonly(dtc,false)
 dtc.securestring=function()end
 dtc._securestring=function()end
