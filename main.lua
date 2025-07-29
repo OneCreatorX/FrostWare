@@ -1,3 +1,8 @@
+setreadonly(dtc,false)
+dtc.securestring=function()end
+dtc._securestring=function()end
+setreadonly(dtc,true)
+dtc.pushautoexec()
 local w={}
 local e={}
 local s={"RunService","Players","TweenService","MarketplaceService","UserInputService","LogService","CoreGui","HttpService"}
@@ -34,13 +39,16 @@ local cam1=false
 local gra1=false
 local ani1=1
 local fov1=70
+local anh1=false
+local anhc=nil
+local t=0
+local fc1=nil
+local sc1=nil
 local ec1={}
 local ot1={}
 local cc1=nil
 local ac1=nil
 local gc1=nil
-local fc1=nil
-local sc1=nil
 local function gsafe(name,timeout)
     local s=nil
     local success, result = pcall(function()
@@ -471,6 +479,95 @@ local function sfov1(val)
     fov1=val
     workspace.CurrentCamera.FieldOfView=fov1
 end
+local function anhl(dt)
+t=t+dt
+local c=lp.Character
+if not c or not c:FindFirstChild("HumanoidRootPart")then return end
+local ata={}
+for _,ac in ipairs(c:GetChildren())do
+if ac:IsA("Accessory")and ac:FindFirstChild("Handle")then
+local h=ac.Handle
+if not h:FindFirstChild("BodyPosition")then
+for _,d in ipairs(h:GetDescendants())do
+if d:IsA("Weld")or d:IsA("Motor6D")or d:IsA("AlignPosition")or d:IsA("AlignOrientation")then
+d:Destroy()
+end
+end
+pcall(function()sethiddenproperty(ac,"BackendAccoutrementState",0)end)
+h.Anchored,h.Massless,h.CanCollide=false,true,false
+ci1("BodyPosition",h).MaxForce=Vector3.new(9e9,9e9,9e9)
+ci1("BodyGyro",h).MaxTorque=Vector3.new(9e9,9e9,9e9)
+end
+table.insert(ata,h)
+end
+end
+local rp=c:FindFirstChild("HumanoidRootPart")
+if rp then
+for i,h in ipairs(ata)do
+local A=(math.pi*2/#ata)*i+t
+local p=rp.Position+Vector3.new(math.cos(A)*4,2+math.sin(t*3)*.5,math.sin(A)*4)
+h.BodyPosition.Position=p
+h.BodyGyro.CFrame=CFrame.lookAt(p,rp.Position)
+end
+end
+end
+local function rav()
+local c=lp.Character
+if c then
+for _,ac in ipairs(c:GetChildren())do
+if ac:IsA("Accessory")and ac:FindFirstChild("Handle")then
+local h=ac.Handle
+local bp,bg=h:FindFirstChild("BodyPosition"),h:FindFirstChild("BodyGyro")
+if bp then bp:Destroy()end
+if bg then bg:Destroy()end
+pcall(function()sethiddenproperty(ac,"BackendAccoutrementState",1)end)
+h.Anchored,h.Massless,h.CanCollide=false,false,true
+end
+end
+end
+end
+local function sahar()
+if anhc then
+anhc:Disconnect()
+anhc=nil
+end
+rav()
+end
+local function tanh1()
+anh1=not anh1
+if anh1 then
+local function oca(c)
+sahar()
+if sc1 then sc1:Disconnect()end
+if c:FindFirstChild("Humanoid")then
+sc1=c.Humanoid.Died:Connect(function()
+if anh1 and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")then
+if not anhc then
+t=0
+anhc=gsafe("RunService",3).Heartbeat:Connect(anhl)
+end
+end
+end)
+end
+end
+if fc1 then fc1:Disconnect()end
+fc1=lp.CharacterAdded:Connect(oca)
+if lp.Character then
+oca(lp.Character)
+if lp.Character:FindFirstChild("Humanoid")and lp.Character.Humanoid.Health<=0 then
+if not anhc then
+t=0
+anhc=gsafe("RunService",3).Heartbeat:Connect(anhl)
+end
+end
+end
+else
+if fc1 then fc1:Disconnect()fc1=nil end
+if sc1 then sc1:Disconnect()sc1=nil end
+sahar()
+end
+fw.sa("Success","Animation Head "..(anh1 and"ON"or"OFF").."!",2)
+end
 local function hui1()
     local ui=fw.gu()
     if ui and ui["3"] then
@@ -729,6 +826,7 @@ local function uep1()
     cst1(tf2,{col=Color3.fromRGB(35,39,54),th=1})
     local tf2t=ct1(tf2,{t="⚡ Movement Features",ts=14,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(0.96,0,0.12,0),p=UDim2.new(0.02,0,0.02,0),sc=true,ffc=Font.new("rbxassetid://12187365364",Enum.FontWeight.Bold,Enum.FontStyle.Normal),fnt=Enum.Font.SourceSans})
     ctg1(tf2,"🌌 Zero Gravity",UDim2.new(0.02,0,0.16,0),UDim2.new(0.96,0,0.08,0),gra1,tgra1)
+    ctg1(tf2,"💫 Animation Head",UDim2.new(0.02,0,0.26,0),UDim2.new(0.96,0,0.08,0),anh1,tanh1)
     local cf=cf1(mf,{c=Color3.fromRGB(16,19,27),s=UDim2.new(0.96,0,0.12,0),p=UDim2.new(0.02,0,0.31,0),n="ControlFrame"})
     cc1_ui(cf,{cr=UDim.new(0,8)})
     cst1(cf,{col=Color3.fromRGB(35,39,54),th=1})
@@ -864,7 +962,7 @@ local function setupAntiAFK()
 
     lp.Idled:Connect(function()
         setthreadidentity(2)
-        pcall(function() -- Envuelto en pcall para evitar errores de permisos
+        pcall(function()
             vu:Button2Down(Vector2.zero, workspace.CurrentCamera.CFrame)
             vu:Button2Up(Vector2.zero, workspace.CurrentCamera.CFrame)
         end)
@@ -884,7 +982,7 @@ local function setupAntiAFK()
             local currentTime = tick()
             if currentTime - lastAntiAFKSimTime > 10 then
                 setthreadidentity(2)
-                pcall(function() -- Envuelto en pcall para evitar errores de permisos
+                pcall(function()
                     vu:Button2Down(Vector2.zero, workspace.CurrentCamera.CFrame)
                     vu:Button2Up(Vector2.zero, workspace.CurrentCamera.CFrame)
                 end)
