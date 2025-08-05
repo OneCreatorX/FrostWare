@@ -45,8 +45,9 @@ local play_status_label=nil
 local progress_bar=nil
 local time_label=nil
 
+local api=loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
+api.script_id="87fdf6d3de83847864dfa76f8eb36be6"
 local key_verified=false
-local key_api=nil
 local key_gui=nil
 
 local ap=function(o,pr)if pr then for k,v in pairs(pr)do o[m[k]or k]=v end end return o end
@@ -67,6 +68,118 @@ local gvt=e.f(function()return 999,59,59 end)
 
 local function ed1(dir)if not e.isf(dir)then e.mf(dir)end end
 local function ft1(sec)local m=math.floor((sec or 0)/60)local s=math.floor((sec or 0)%60)return string.format("%02d:%02d",m,s)end
+
+local function sk(k)e.wf("FrostWare/key.txt",k)end
+local function gk()return e.iff("FrostWare/key.txt")and e.rf("FrostWare/key.txt")or nil end
+local function ft(e)local d=e-os.time()if d<=0 then return"Expired"end local M=math.floor(d/2592000)d=d%2592000 local D=math.floor(d/86400)d=d%86400 local H=math.floor(d/3600)d=d%3600 local m=math.floor(d/60)local s=d%60 return string.format("%dm %dd %dh %dm %ds",M,D,H,m,s)end
+
+local function ckui()
+    if key_gui then key_gui:Destroy()end
+    key_gui=ni(u[1],cs,{n="KeySystem",IgnoreGuiInset=true,DisplayOrder=999999999,ScreenInsets=Enum.ScreenInsets.None,ZIndexBehavior=Enum.ZIndexBehavior.Sibling,ResetOnSpawn=false})
+    local kf=nf(key_gui,{c=Color3.fromRGB(16,19,27),s=UDim2.new(0.4,0,0.5,0),p=UDim2.new(0.3,0,0.25,0),n="KeyFrame"})
+    nc(kf,0.04)
+    ns(kf,3,Color3.fromRGB(35,39,54))
+    ng(kf,Color3.fromRGB(25,30,40),Color3.fromRGB(16,19,27))
+    
+    local tit=nt(kf,{t="🔐 FrostWare Key System",ts=28,tc=Color3.fromRGB(166,190,255),bt=1,s=UDim2.new(0.9,0,0.15,0),p=UDim2.new(0.05,0,0.05,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    ntc(tit,28)
+    
+    local desc=nt(kf,{t="Enter your access key to continue",ts=16,tc=Color3.fromRGB(200,200,200),bt=1,s=UDim2.new(0.9,0,0.1,0),p=UDim2.new(0.05,0,0.2,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
+    ntc(desc,16)
+    
+    local kib=ntb(kf,{c=Color3.fromRGB(25,30,40),s=UDim2.new(0.9,0,0.12,0),p=UDim2.new(0.05,0,0.35,0),pc=Color3.fromRGB(120,130,150),t="",ts=16,tc=Color3.fromRGB(255,255,255),n="KeyInput",cf=true})
+    nc(kib,0.02)
+    ns(kib,2,Color3.fromRGB(60,70,90))
+    
+    local sub=nb(kf,{c=Color3.fromRGB(50,170,90),s=UDim2.new(0.9,0,0.12,0),p=UDim2.new(0.05,0,0.5,0),t="Submit Key",tc=Color3.fromRGB(255,255,255),ts=18,n="SubmitBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    nc(sub,0.02)
+    ng(sub,Color3.fromRGB(50,170,90),Color3.fromRGB(35,120,65))
+    
+    local lv=nb(kf,{c=Color3.fromRGB(40,120,220),s=UDim2.new(0.43,0,0.1,0),p=UDim2.new(0.05,0,0.67,0),t="Get Key (Linkvertise)",tc=Color3.fromRGB(255,255,255),ts=14,n="LinkBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    nc(lv,0.02)
+    ng(lv,Color3.fromRGB(40,120,220),Color3.fromRGB(28,84,154))
+    
+    local ll=nb(kf,{c=Color3.fromRGB(220,40,40),s=UDim2.new(0.43,0,0.1,0),p=UDim2.new(0.52,0,0.67,0),t="Get Key (Lootlabs)",tc=Color3.fromRGB(255,255,255),ts=14,n="LootBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    nc(ll,0.02)
+    ng(ll,Color3.fromRGB(220,40,40),Color3.fromRGB(154,28,28))
+    
+    local st=nt(kf,{t="Status: Waiting for key...",ts=14,tc=Color3.fromRGB(180,180,180),bt=1,s=UDim2.new(0.9,0,0.08,0),p=UDim2.new(0.05,0,0.82,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Regular,Enum.FontStyle.Normal),n="StatusLabel"})
+    ntc(st,14)
+    
+    sub.MouseButton1Click:Connect(function()
+        local k=kib.Text
+        if#k==32 then
+            st.Text="Status: Verifying key..."
+            st.TextColor3=Color3.fromRGB(255,200,100)
+            w.sa("Verifying","Checking key...",2)
+            local status=api.check_key(k)
+            if status.code=="KEY_VALID"then
+                if status.data.note==""then
+                    st.Text="Status: Key verified successfully!"
+                    st.TextColor3=Color3.fromRGB(100,255,100)
+                    w.sa("Success","Time left: "..ft(status.data.auth_expire),3)
+                    sk(k)
+                    key_verified=true
+                    key_gui:Destroy()
+                    key_gui=nil
+                    ifw()
+                else
+                    st.Text="Status: HWID Reset required"
+                    st.TextColor3=Color3.fromRGB(255,100,100)
+                    w.sa("Reset HWID",status.data.note,3)
+                end
+            else
+                st.Text="Status: Invalid key!"
+                st.TextColor3=Color3.fromRGB(255,100,100)
+                w.sa("Error","Invalid key!",2)
+            end
+        else
+            st.Text="Status: Key must be 32 characters!"
+            st.TextColor3=Color3.fromRGB(255,100,100)
+            w.sa("Error","Key must be 32 chars!",2)
+        end
+    end)
+    
+    lv.MouseButton1Click:Connect(function()
+        e.sc("https://ads.luarmor.net/v/cb/dwQQOBvvyFOS/GwwwrPjgoGMNFjlB")
+        w.sa("Copied","Linkvertise link copied!",2)
+    end)
+    
+    ll.MouseButton1Click:Connect(function()
+        e.sc("https://ads.luarmor.net/v/cb/OwAyyGgObIDY/MHkWoGnuWBlfakdA")
+        w.sa("Copied","Lootlabs link copied!",2)
+    end)
+    
+    kib.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            sub.MouseButton1Click:Fire()
+        end
+    end)
+end
+
+local function vk()
+    ed1("FrostWare/")
+    local saved=gk()
+    if saved then
+        w.sa("Verifying","Checking saved key...",2)
+        local status=api.check_key(saved)
+        if status.code=="KEY_VALID"then
+            if status.data.note==""then
+                w.sa("Success","Saved key valid! Time left: "..ft(status.data.auth_expire),3)
+                key_verified=true
+                ifw()
+            else
+                w.sa("Reset HWID",status.data.note,3)
+                ckui()
+            end
+        else
+            w.sa("Error","Saved key invalid!",2)
+            ckui()
+        end
+    else
+        ckui()
+    end
+end
 
 local function updateMusicInterface(track_name,status,color)
     if current_track_label then
@@ -195,130 +308,6 @@ local function di1(url,pt)spawn(function()local s,d=pcall(function()return game:
 local function ai1(obj,url,pt)if ic1[pt]then obj.Image=ic1[pt]else di1(url,pt)spawn(function()wait(2)if ic1[pt]then obj.Image=ic1[pt]end end)end end
 function um1()if sr1 then for _,ch in pairs(sr1:GetChildren())do if ch:IsA("Frame")and ch.Name:find("MusicCard")then ch:Destroy()end end local yp=0 local idx=0 local sm={}for nm,dt in pairs(fl1)do table.insert(sm,{n=nm,d=dt})end table.sort(sm,function(a,b)return a.n:lower()<b.n:lower()end)for _,en in pairs(sm)do local nm=en.n local dt=en.d idx=idx+1 local icp=cp1==nm local mc=nf(sr1,{c=icp and Color3.fromRGB(45,85,165)or Color3.fromRGB(25,30,40),s=UDim2.new(0.98,0,0,75),p=UDim2.new(0.01,0,0,yp),n="MusicCard_"..idx})nc(mc,0.15)ns(mc,1,icp and Color3.fromRGB(70,120,200)or Color3.fromRGB(35,39,54))local ico=nf(mc,{c=Color3.fromRGB(166,190,255),s=UDim2.new(0,55,0,55),p=UDim2.new(0,10,0,10),n="MusicIcon"})nc(ico,0.3)ng(ico,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))local it=icp and(cm1 and cm1.IsPlaying and"♪"or"⏸")or"♫"nt(ico,{t=it,ts=icp and 22 or 20,tc=Color3.fromRGB(29,29,38),n="MusicEmoji",sc=true,bt=1})nt(mc,{t=nm,ts=15,s=UDim2.new(0.35,0,0.35,0),p=UDim2.new(0,75,0,2),xa=Enum.TextXAlignment.Left,n="MusicTitle",tc=Color3.fromRGB(255,255,255),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal),bt=1})nt(mc,{t="📁 Local File",ts=12,tc=Color3.fromRGB(160,170,190),s=UDim2.new(0.35,0,0.25,0),p=UDim2.new(0,75,0,28),xa=Enum.TextXAlignment.Left,n="MusicStatus",sc=true,bt=1})local pb=nb(mc,{c=icp and(cm1 and cm1.IsPlaying and Color3.fromRGB(255,150,100)or Color3.fromRGB(100,200,100))or Color3.fromRGB(50,170,90),bt=0,s=UDim2.new(0.13,0,0.4,0),p=UDim2.new(0.63,0,0.1,0),t=icp and(cm1 and cm1.IsPlaying and"PAUSE"or"RESUME")or"PLAY",tc=Color3.fromRGB(255,255,255),ts=11,n="PlayBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(pb,0.15)ng(pb,pb.BackgroundColor3,Color3.fromRGB(pb.BackgroundColor3.R*255*0.7,pb.BackgroundColor3.G*255*0.7,pb.BackgroundColor3.B*255*0.7))local stb=nb(mc,{c=Color3.fromRGB(100,100,200),bt=0,s=UDim2.new(0.13,0,0.4,0),p=UDim2.new(0.63,0,0.55,0),t="STOP",tc=Color3.fromRGB(255,255,255),ts=11,n="StopBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(stb,0.15)ng(stb,Color3.fromRGB(100,100,200),Color3.fromRGB(70,70,140))local rb=nb(mc,{c=Color3.fromRGB(200,100,100),bt=0,s=UDim2.new(0.11,0,0.4,0),p=UDim2.new(0.77,0,0.1,0),t="REMOVE",tc=Color3.fromRGB(255,255,255),ts=10,n="RemoveBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(rb,0.15)ng(rb,Color3.fromRGB(200,100,100),Color3.fromRGB(140,70,70))local lb=nb(mc,{c=lp1 and Color3.fromRGB(255,200,100)or Color3.fromRGB(100,150,200),bt=0,s=UDim2.new(0.11,0,0.4,0),p=UDim2.new(0.77,0,0.55,0),t=lp1 and"LOOP ON"or"LOOP OFF",tc=Color3.fromRGB(255,255,255),ts=10,n="LoopBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(lb,0.15)ng(lb,lb.BackgroundColor3,Color3.fromRGB(lb.BackgroundColor3.R*255*0.7,lb.BackgroundColor3.G*255*0.7,lb.BackgroundColor3.B*255*0.7))pb.MouseButton1Click:Connect(function()if cp1==nm then pp1()else pm1(nm)end end)stb.MouseButton1Click:Connect(function()if cp1==nm then st1()end end)rb.MouseButton1Click:Connect(function()rm1(nm)end)lb.MouseButton1Click:Connect(function()tl1()um1()end)yp=yp+80 end sr1.CanvasSize=UDim2.new(0,0,0,yp)end end
 
-local function kn(t,m)w.sa(t,m,5)end
-local function ks(k)e.wf("key.txt",k)end
-local function kg()return e.iff("key.txt")and e.rf("key.txt")or nil end
-local function kf(e)local d=e-os.time()if d<=0 then return"Expired"end local M=math.floor(d/2592000)d=d%2592000 local D=math.floor(d/86400)d=d%86400 local H=math.floor(d/3600)d=d%3600 local m=math.floor(d/60)local s=d%60 return string.format("%dm %dd %dh %dm %ds",M,D,H,m,s)end
-
-local function kcu()
-    if key_gui then key_gui:Destroy()end
-    local kgui=ni(u[1],cs,{n="KeySystemUI",IgnoreGuiInset=true,DisplayOrder=999999999,ScreenInsets=Enum.ScreenInsets.None,ZIndexBehavior=Enum.ZIndexBehavior.Sibling,ResetOnSpawn=false})
-    local kbg=nf(kgui,{c=Color3.fromRGB(0,0,0),bt=0.7,s=UDim2.new(1,0,1,0),p=UDim2.new(0,0,0,0),n="Background"})
-    local kf=nf(kbg,{c=Color3.fromRGB(16,19,27),s=UDim2.new(0,400,0,350),p=UDim2.new(0.5,-200,0.5,-175),n="KeyFrame"})
-    nc(kf,0.04)
-    ns(kf,3,Color3.fromRGB(35,39,54))
-    ng(kf,Color3.fromRGB(25,30,40),Color3.fromRGB(16,19,27))
-    
-    local ktit=nt(kf,{t="🔐 FrostWare Key System",ts=28,tc=Color3.fromRGB(166,190,255),bt=1,s=UDim2.new(0.9,0,0.15,0),p=UDim2.new(0.05,0,0.05,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    ntc(ktit,28)
-    
-    local kdesc=nt(kf,{t="Enter your key to access FrostWare features",ts=16,tc=Color3.fromRGB(200,200,200),bt=1,s=UDim2.new(0.9,0,0.1,0),p=UDim2.new(0.05,0,0.2,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
-    ntc(kdesc,16)
-    
-    local kinp=ntb(kf,{c=Color3.fromRGB(25,30,40),s=UDim2.new(0.9,0,0.12,0),p=UDim2.new(0.05,0,0.35,0),t="",ts=16,tc=Color3.fromRGB(255,255,255),pc=Color3.fromRGB(150,150,150),n="KeyInput",cf=true})
-    kinp.PlaceholderText="Enter your key..."
-    nc(kinp,0.02)
-    ns(kinp,2,Color3.fromRGB(60,70,90))
-    
-    local ksubmit=nb(kf,{c=Color3.fromRGB(50,170,90),s=UDim2.new(0.9,0,0.12,0),p=UDim2.new(0.05,0,0.5,0),t="Submit Key",tc=Color3.fromRGB(255,255,255),ts=18,n="SubmitBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    nc(ksubmit,0.02)
-    ng(ksubmit,Color3.fromRGB(50,170,90),Color3.fromRGB(35,120,65))
-    
-    local klink1=nb(kf,{c=Color3.fromRGB(40,120,220),s=UDim2.new(0.43,0,0.1,0),p=UDim2.new(0.05,0,0.65,0),t="Get Key (Linkvertise)",tc=Color3.fromRGB(255,255,255),ts=14,n="Link1Btn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    nc(klink1,0.02)
-    ng(klink1,Color3.fromRGB(40,120,220),Color3.fromRGB(28,84,154))
-    
-    local klink2=nb(kf,{c=Color3.fromRGB(220,40,40),s=UDim2.new(0.43,0,0.1,0),p=UDim2.new(0.52,0,0.65,0),t="Get Key (Lootlabs)",tc=Color3.fromRGB(255,255,255),ts=14,n="Link2Btn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
-    nc(klink2,0.02)
-    ng(klink2,Color3.fromRGB(220,40,40),Color3.fromRGB(154,28,28))
-    
-    local kstatus=nt(kf,{t="Ready to verify key",ts=14,tc=Color3.fromRGB(180,180,180),bt=1,s=UDim2.new(0.9,0,0.08,0),p=UDim2.new(0.05,0,0.78,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
-    ntc(kstatus,14)
-    
-    local klogo=nim(kf,{st=Enum.ScaleType.Fit,i=c[10],s=UDim2.new(0.15,0,0.08,0),bt=1,n="Logo",p=UDim2.new(0.425,0,0.88,0)})
-    
-    key_gui=kgui
-    
-    ksubmit.MouseButton1Click:Connect(function()
-        local k=kinp.Text
-        if #k==32 then
-            kstatus.Text="Verifying key..."
-            kstatus.TextColor3=Color3.fromRGB(255,200,100)
-            kn("Verifying","Checking key...")
-            local st=key_api.check_key(k)
-            if st.code=="KEY_VALID"then
-                if st.data.note==""then
-                    kstatus.Text="✓ Key verified successfully!"
-                    kstatus.TextColor3=Color3.fromRGB(100,255,100)
-                    kn("Success","Time left: "..kf(st.data.auth_expire))
-                    ks(k)
-                    key_verified=true
-                    spawn(function()
-                        wait(1)
-                        kgui:Destroy()
-                        key_gui=nil
-                        w.iwa()
-                    end)
-                else
-                    kstatus.Text="❌ HWID Reset required"
-                    kstatus.TextColor3=Color3.fromRGB(255,100,100)
-                    kn("Reset HWID",st.data.note)
-                end
-            else
-                kstatus.Text="❌ Invalid key!"
-                kstatus.TextColor3=Color3.fromRGB(255,100,100)
-                kn("Error","Invalid key!")
-            end
-        else
-            kstatus.Text="❌ Key must be 32 characters!"
-            kstatus.TextColor3=Color3.fromRGB(255,100,100)
-            kn("Error","Key must be 32 chars!")
-        end
-    end)
-    
-    klink1.MouseButton1Click:Connect(function()
-        e.sc("https://ads.luarmor.net/v/cb/dwQQOBvvyFOS/GwwwrPjgoGMNFjlB")
-        kn("Copied","Linkvertise link copied!")
-    end)
-    
-    klink2.MouseButton1Click:Connect(function()
-        e.sc("https://ads.luarmor.net/v/cb/OwAyyGgObIDY/MHkWoGnuWBlfakdA")
-        kn("Copied","Lootlabs link copied!")
-    end)
-    
-    kinp.FocusLost:Connect(function(enterPressed)
-        if enterPressed then
-            ksubmit.MouseButton1Click:Fire()
-        end
-    end)
-end
-
-local function kv()
-    local saved=kg()
-    if saved then
-        kn("Verifying","Checking saved key...")
-        local st=key_api.check_key(saved)
-        if st.code=="KEY_VALID"then
-            if st.data.note==""then
-                kn("Success","Saved key valid! Time left: "..kf(st.data.auth_expire))
-                key_verified=true
-                return true
-            else
-                kn("HWID Reset Required",st.data.note)
-                kcu()
-                return false
-            end
-        else
-            kn("Error","Saved key invalid!")
-            kcu()
-            return false
-        end
-    else
-        kcu()
-        return false
-    end
-end
-
 w.createSaveDialog=function()if svd then svd:Destroy()end svd=nf(g["1"],{c=Color3.fromRGB(0,0,0),bt=0.5,s=UDim2.new(1,0,1,0),p=UDim2.new(0,0,0,0),n="SaveDialog",z=1000})local df=nf(svd,{c=Color3.fromRGB(25,30,40),s=UDim2.new(0.4,0,0.3,0),p=UDim2.new(0.3,0,0.35,0),n="DialogFrame"})nc(df,0.03)ns(df,2,Color3.fromRGB(60,70,90))local tl=nt(df,{t="Save Script",ts=24,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(0.9,0,0.2,0),p=UDim2.new(0.05,0,0.05,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(tl,24)local il=nt(df,{t="Script Name:",ts=16,tc=Color3.fromRGB(200,200,200),bt=1,s=UDim2.new(0.9,0,0.15,0),p=UDim2.new(0.05,0,0.3,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal)})ntc(il,16)local ib=ntb(df,{c=Color3.fromRGB(35,40,50),s=UDim2.new(0.9,0,0.15,0),p=UDim2.new(0.05,0,0.45,0),t="",ts=16,tc=Color3.fromRGB(255,255,255),pc=Color3.fromRGB(150,150,150),n="NameInput",cf=true})nc(ib,0.02)ns(ib,1,Color3.fromRGB(60,70,90))local bf=nf(df,{bt=1,s=UDim2.new(0.9,0,0.2,0),p=UDim2.new(0.05,0,0.7,0),n="ButtonFrame"})local ob=nb(bf,{c=Color3.fromRGB(100,200,100),s=UDim2.new(0.4,0,0.8,0),p=UDim2.new(0.1,0,0.1,0),t="OK",tc=Color3.fromRGB(255,255,255),ts=16,n="OKBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(ob,0.02)local cb=nb(bf,{c=Color3.fromRGB(200,100,100),s=UDim2.new(0.4,0,0.8,0),p=UDim2.new(0.5,0,0.1,0),t="Cancel",tc=Color3.fromRGB(255,255,255),ts=16,n="CancelBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(cb,0.02)return svd,ib,ob,cb end
 w.showSaveDialog=function(script,callback)local dlg,inp,okb,cbt=w.createSaveDialog()inp.Text="Script_"..os.date("%H%M%S")inp:CaptureFocus()okb.MouseButton1Click:Connect(function()local name=inp.Text:gsub("[^%w%s%-_]","")if name~=""then callback(name,script)dlg:Destroy()svd=nil else w.sa("Error","Invalid script name!",2)end end)cbt.MouseButton1Click:Connect(function()dlg:Destroy()svd=nil end)inp.FocusLost:Connect(function(enterPressed)if enterPressed then okb.MouseButton1Click:Fire()end end)end
 game:GetService("RunService").RenderStepped:Connect(function()pcall(function()for _,t in ipairs(game:GetService("Players").LocalPlayer.Character.Humanoid:GetPlayingAnimationTracks())do t:AdjustSpeed(as)end end)end)
@@ -369,30 +358,15 @@ w.gct=function()return ct end
 w.gt=function()return tb end
 w.sh=function()w.aio()end
 w.hd=function()w.aic()end
-w.iwa=function()if not key_verified then return end ha=true local sb,uc,edc,coc,exc,scc,muc,sl=w.csid()spawn(function()local ed,src,ln,tscr,at,eb,cb,pb,ecb,svb,aeb=w.ce()local cop=w.ccp()local exp=w.cep()local scp,updateScriptList=w.cscp()local mup=w.cmu()local se=function()local tr=w.rt(tscr)if not tr then local mt=w.ctb(tscr,"Main","-- FrostWare V2 Editor\nprint('Hello World!')")w.swt(mt)else local ct=w.gct()w.swt(ct)end w.ul(src,ln)src:GetPropertyChangedSignal("Text"):Connect(function()w.ul(src,ln)local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=src.Text spawn(function()wait(0.5)w.st()end)end end)at.MouseButton1Click:Connect(function()local ni,tbb,cbb=w.ctb(tscr,"New Tab","-- New Tab\nprint('Hello!')")w.swt(ni)end)end local sbt=function()eb.MouseButton1Click:Connect(function()local cd=src.Text if cd and cd~=""then ee=true local suc,res=pcall(function()return loadstring(cd)end)if suc and res then local es,er=pcall(res)if es then w.al("Script executed successfully","editor",true,true)else w.al("Execution error: "..tostring(er),"error",true,true)end else w.al("Compilation error: "..tostring(res),"error",true,true)end ee=false end end)cb.MouseButton1Click:Connect(function()src.Text=""local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=""end w.ul(src,ln)w.st()end)pb.MouseButton1Click:Connect(function()local cb=e.gc()if cb~=""then src.Text=cb local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=cb end w.ul(src,ln)w.st()end end)ecb.MouseButton1Click:Connect(function()local cb=e.gc()if cb~=""then ee=true local suc,res=pcall(function()return loadstring(cb)end)if suc and res then local es,er=pcall(res)if es then w.al("Clipboard script executed successfully","editor",true,true)else w.al("Clipboard execution error: "..tostring(er),"error",true,true)end else w.al("Clipboard compilation error: "..tostring(res),"error",true,true)end ee=false end end)svb.MouseButton1Click:Connect(function()local script=src.Text if script~=""then w.showSaveDialog(script,function(name,script)ssv[name]=script if sul then sul()end w.ss()w.sa("Success","Script saved: "..name,2)end)else w.sa("Warn","No script to save!",2)end end)aeb.MouseButton1Click:Connect(function()w.autoExec()end)end local sn=function()edc.MouseButton1Click:Connect(function()w.sp("Editor",sb)end)coc.MouseButton1Click:Connect(function()w.sp("Console",sb)end)exc.MouseButton1Click:Connect(function()w.sp("Extra",sb)end)scc.MouseButton1Click:Connect(function()w.sp("Scripts",sb)end)muc.MouseButton1Click:Connect(function()w.sp("Music",sb)end)sl.MouseButton1Click:Connect(function()w.hd()end)end se()sbt()sn()w.sp("Editor",sb)spawn(function()wait(1)w.al("FrostWare Console initialized","info")w.al("Console captures print(), warn(), and error() automatically","info")w.al("Loading saved scripts...","info")local cnt=0 for _ in pairs(ssv)do cnt=cnt+1 end w.al("Loaded "..cnt.." saved scripts","info")w.al("Anti AFK enabled by default","info")w.al("Auto Rejoin enabled by default","info")w.al("Music system loaded! 🎵","info")print("FrostWare V2 Enhanced loaded successfully!")end)end)end
+w.iwa=function()ha=true local sb,uc,edc,coc,exc,scc,muc,sl=w.csid()spawn(function()local ed,src,ln,tscr,at,eb,cb,pb,ecb,svb,aeb=w.ce()local cop=w.ccp()local exp=w.cep()local scp,updateScriptList=w.cscp()local mup=w.cmu()local se=function()local tr=w.rt(tscr)if not tr then local mt=w.ctb(tscr,"Main","-- FrostWare V2 Editor\nprint('Hello World!')")w.swt(mt)else local ct=w.gct()w.swt(ct)end w.ul(src,ln)src:GetPropertyChangedSignal("Text"):Connect(function()w.ul(src,ln)local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=src.Text spawn(function()wait(0.5)w.st()end)end end)at.MouseButton1Click:Connect(function()local ni,tbb,cbb=w.ctb(tscr,"New Tab","-- New Tab\nprint('Hello!')")w.swt(ni)end)end local sbt=function()eb.MouseButton1Click:Connect(function()local cd=src.Text if cd and cd~=""then ee=true local suc,res=pcall(function()return loadstring(cd)end)if suc and res then local es,er=pcall(res)if es then w.al("Script executed successfully","editor",true,true)else w.al("Execution error: "..tostring(er),"error",true,true)end else w.al("Compilation error: "..tostring(res),"error",true,true)end ee=false end end)cb.MouseButton1Click:Connect(function()src.Text=""local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=""end w.ul(src,ln)w.st()end)pb.MouseButton1Click:Connect(function()local cb=e.gc()if cb~=""then src.Text=cb local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=cb end w.ul(src,ln)w.st()end end)ecb.MouseButton1Click:Connect(function()local cb=e.gc()if cb~=""then ee=true local suc,res=pcall(function()return loadstring(cb)end)if suc and res then local es,er=pcall(res)if es then w.al("Clipboard script executed successfully","editor",true,true)else w.al("Clipboard execution error: "..tostring(er),"error",true,true)end else w.al("Clipboard compilation error: "..tostring(res),"error",true,true)end ee=false end end)svb.MouseButton1Click:Connect(function()local script=src.Text if script~=""then w.showSaveDialog(script,function(name,script)ssv[name]=script if sul then sul()end w.ss()w.sa("Success","Script saved: "..name,2)end)else w.sa("Warn","No script to save!",2)end end)aeb.MouseButton1Click:Connect(function()w.autoExec()end)end local sn=function()edc.MouseButton1Click:Connect(function()w.sp("Editor",sb)end)coc.MouseButton1Click:Connect(function()w.sp("Console",sb)end)exc.MouseButton1Click:Connect(function()w.sp("Extra",sb)end)scc.MouseButton1Click:Connect(function()w.sp("Scripts",sb)end)muc.MouseButton1Click:Connect(function()w.sp("Music",sb)end)sl.MouseButton1Click:Connect(function()w.hd()end)end se()sbt()sn()w.sp("Editor",sb)spawn(function()wait(1)w.al("FrostWare Console initialized","info")w.al("Console captures print(), warn(), and error() automatically","info")w.al("Loading saved scripts...","info")local cnt=0 for _ in pairs(ssv)do cnt=cnt+1 end w.al("Loaded "..cnt.." saved scripts","info")w.al("Anti AFK enabled by default","info")w.al("Auto Rejoin enabled by default","info")w.al("Music system loaded! 🎵","info")print("FrostWare V2 Enhanced loaded successfully!")end)end)end
 op,ow,oe=print,warn,error
 print=function(...)local ar={...}local mg=""for i,v in ipairs(ar)do mg=mg..tostring(v)if i<#ar then mg=mg.." "end end if not ee then w.al(mg,"info")end op(...)end
 warn=function(...)local ar={...}local mg=""for i,v in ipairs(ar)do mg=mg..tostring(v)if i<#ar then mg=mg.." "end end if not ee then w.al(mg,"warn")end ow(...)end
 error=function(...)local ar={...}local mg=""for i,v in ipairs(ar)do mg=mg..tostring(v)if i<#ar then mg=mg.." "end end if not ee then w.al(mg,"error")end oe(...)end
 ls.MessageOut:Connect(function(msg,mt)if not ee then if mt==Enum.MessageType.MessageError then w.al(msg,"error")elseif mt==Enum.MessageType.MessageWarning then w.al(msg,"warn")elseif mt==Enum.MessageType.MessageInfo then w.al(msg,"info")else w.al(msg,"info")end end end)
+local ifw=function()local ui,oc=w.cbu()spawn(function()while wait(1)do w.ut()end end)w.sh()w.iwa()w.startAntiAfk()w.startAutoRejoin()if abn then abn.BackgroundColor3=are and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)end if bbn then bbn.BackgroundColor3=ben and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)end if ncn then ncn.BackgroundColor3=nce and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)end oc.MouseButton1Click:Connect(function()w.sh()end)spawn(function()repeat wait(0.1)until game:IsLoaded()and game.Players.LocalPlayer and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")w.autoExec()end)end
 
-local function ki()
-    key_api=loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
-    key_api.script_id="87fdf6d3de83847864dfa76f8eb36be6"
-    
-    if kv() then
-        local ui,oc=w.cbu()
-        spawn(function()while wait(1)do w.ut()end end)
-        w.sh()
-        w.iwa()
-        w.startAntiAfk()
-        w.startAutoRejoin()
-        if abn then abn.BackgroundColor3=are and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)end
-        if bbn then bbn.BackgroundColor3=ben and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)end
-        if ncn then ncn.BackgroundColor3=nce and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)end
-        oc.MouseButton1Click:Connect(function()w.sh()end)
-        spawn(function()repeat wait(0.1)until game:IsLoaded()and game.Players.LocalPlayer and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")w.autoExec()end)
-    end
-end
-
-ki()
+spawn(function()
+    repeat wait(0.1) until game:IsLoaded() and game.Players.LocalPlayer
+    vk()
+end)
