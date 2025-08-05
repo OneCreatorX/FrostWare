@@ -2,7 +2,6 @@ setreadonly(dtc,false)
 dtc.securestring=function()end
 dtc._securestring=function()end
 setreadonly(dtc,true)
-dtc.pushautoexec()
 
 local w={}
 local e={}
@@ -113,6 +112,10 @@ local function ckui()
     
     local st=nt(kf,{t="Status: Waiting for key...",ts=14,tc=Color3.fromRGB(180,180,180),bt=1,s=UDim2.new(0.9,0,0.08,0),p=UDim2.new(0.05,0,0.82,0),sc=true,n="StatusLabel"})
     
+    local clb=nb(kf,{c=Color3.fromRGB(100,100,100),s=UDim2.new(0.08,0,0.08,0),p=UDim2.new(0.9,0,0.02,0),t="×",tc=Color3.fromRGB(255,255,255),ts=20,n="CloseBtn"})
+    nc(clb,0.3)
+    ng(clb,Color3.fromRGB(100,100,100),Color3.fromRGB(70,70,70))
+    
     sub.MouseButton1Click:Connect(function()
         local k=kib.Text
         if#k==32 then
@@ -129,6 +132,7 @@ local function ckui()
                     key_verified=true
                     key_gui:Destroy()
                     key_gui=nil
+                    dtc.pushautoexec()
                     ifw()
                 else
                     st.Text="Status: HWID Reset required"
@@ -157,6 +161,11 @@ local function ckui()
         createSimpleNotification("Copied","Lootlabs link copied!")
     end)
     
+    clb.MouseButton1Click:Connect(function()
+        key_gui:Destroy()
+        key_gui=nil
+    end)
+    
     kib.FocusLost:Connect(function(enterPressed)
         if enterPressed then
             sub.MouseButton1Click:Fire()
@@ -174,6 +183,7 @@ local function vk()
             if status.data.note==""then
                 createSimpleNotification("Success","Saved key valid! Time left: "..ft(status.data.auth_expire))
                 key_verified=true
+                dtc.pushautoexec()
                 ifw()
                 return
             else
