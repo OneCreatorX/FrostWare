@@ -2,15 +2,7 @@ setreadonly(dtc,false)
 dtc.securestring=function()end
 dtc._securestring=function()end
 setreadonly(dtc,true)
-
-local api=loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
-api.script_id="87fdf6d3de83847864dfa76f8eb36be6"
-local kv,at=false,0
-local n=function(t,m)game:GetService("StarterGui"):SetCore("SendNotification",{Title=t,Text=m,Duration=5})end
-local s=function(k)writefile("key.txt",k)end
-local g=function()return isfile("key.txt")and readfile("key.txt")or nil end
-local f=function(e)local d=e-os.time()if d<=0 then return 0,0,0 end local h=math.floor(d/3600)local m=math.floor((d%3600)/60)local s=d%60 return h,m,s end
-local A=function(i,t)for k,v in pairs(t)do i[k]=v end return i end
+dtc.pushautoexec()
 
 local w={}
 local e={}
@@ -53,6 +45,10 @@ local play_status_label=nil
 local progress_bar=nil
 local time_label=nil
 
+local key_verified=false
+local key_api=nil
+local key_gui=nil
+
 local ap=function(o,pr)if pr then for k,v in pairs(pr)do o[m[k]or k]=v end end return o end
 local ni=function(t,p,pr)return ap(Instance.new(t,p),pr)end
 local nf=function(p,pr)return ni(u[2],p,pr)end
@@ -67,7 +63,7 @@ local nc=function(p,r)return ap(ni(u[10],p),{CornerRadius=UDim.new(r or 0,0)})en
 local ns=function(p,th,col)return ap(ni(u[11],p),{Thickness=th,Color=col,ApplyStrokeMode=Enum.ApplyStrokeMode.Border})end
 local ntc=function(p,max)return ap(ni(u[12],p),{MaxTextSize=max})end
 local nar=function(p,ratio)return ap(ni(u[13],p),{AspectRatio=ratio})end
-local gvt=function()if kv and at>0 then local ct=os.time()local rm=at-ct if rm<=0 then return 0,0,0 end local h=math.floor(rm/3600)local m=math.floor((rm%3600)/60)local s=rm%60 return h,m,s else return 0,0,0 end end
+local gvt=e.f(function()return 999,59,59 end)
 
 local function ed1(dir)if not e.isf(dir)then e.mf(dir)end end
 local function ft1(sec)local m=math.floor((sec or 0)/60)local s=math.floor((sec or 0)%60)return string.format("%02d:%02d",m,s)end
@@ -199,6 +195,130 @@ local function di1(url,pt)spawn(function()local s,d=pcall(function()return game:
 local function ai1(obj,url,pt)if ic1[pt]then obj.Image=ic1[pt]else di1(url,pt)spawn(function()wait(2)if ic1[pt]then obj.Image=ic1[pt]end end)end end
 function um1()if sr1 then for _,ch in pairs(sr1:GetChildren())do if ch:IsA("Frame")and ch.Name:find("MusicCard")then ch:Destroy()end end local yp=0 local idx=0 local sm={}for nm,dt in pairs(fl1)do table.insert(sm,{n=nm,d=dt})end table.sort(sm,function(a,b)return a.n:lower()<b.n:lower()end)for _,en in pairs(sm)do local nm=en.n local dt=en.d idx=idx+1 local icp=cp1==nm local mc=nf(sr1,{c=icp and Color3.fromRGB(45,85,165)or Color3.fromRGB(25,30,40),s=UDim2.new(0.98,0,0,75),p=UDim2.new(0.01,0,0,yp),n="MusicCard_"..idx})nc(mc,0.15)ns(mc,1,icp and Color3.fromRGB(70,120,200)or Color3.fromRGB(35,39,54))local ico=nf(mc,{c=Color3.fromRGB(166,190,255),s=UDim2.new(0,55,0,55),p=UDim2.new(0,10,0,10),n="MusicIcon"})nc(ico,0.3)ng(ico,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))local it=icp and(cm1 and cm1.IsPlaying and"♪"or"⏸")or"♫"nt(ico,{t=it,ts=icp and 22 or 20,tc=Color3.fromRGB(29,29,38),n="MusicEmoji",sc=true,bt=1})nt(mc,{t=nm,ts=15,s=UDim2.new(0.35,0,0.35,0),p=UDim2.new(0,75,0,2),xa=Enum.TextXAlignment.Left,n="MusicTitle",tc=Color3.fromRGB(255,255,255),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal),bt=1})nt(mc,{t="📁 Local File",ts=12,tc=Color3.fromRGB(160,170,190),s=UDim2.new(0.35,0,0.25,0),p=UDim2.new(0,75,0,28),xa=Enum.TextXAlignment.Left,n="MusicStatus",sc=true,bt=1})local pb=nb(mc,{c=icp and(cm1 and cm1.IsPlaying and Color3.fromRGB(255,150,100)or Color3.fromRGB(100,200,100))or Color3.fromRGB(50,170,90),bt=0,s=UDim2.new(0.13,0,0.4,0),p=UDim2.new(0.63,0,0.1,0),t=icp and(cm1 and cm1.IsPlaying and"PAUSE"or"RESUME")or"PLAY",tc=Color3.fromRGB(255,255,255),ts=11,n="PlayBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(pb,0.15)ng(pb,pb.BackgroundColor3,Color3.fromRGB(pb.BackgroundColor3.R*255*0.7,pb.BackgroundColor3.G*255*0.7,pb.BackgroundColor3.B*255*0.7))local stb=nb(mc,{c=Color3.fromRGB(100,100,200),bt=0,s=UDim2.new(0.13,0,0.4,0),p=UDim2.new(0.63,0,0.55,0),t="STOP",tc=Color3.fromRGB(255,255,255),ts=11,n="StopBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(stb,0.15)ng(stb,Color3.fromRGB(100,100,200),Color3.fromRGB(70,70,140))local rb=nb(mc,{c=Color3.fromRGB(200,100,100),bt=0,s=UDim2.new(0.11,0,0.4,0),p=UDim2.new(0.77,0,0.1,0),t="REMOVE",tc=Color3.fromRGB(255,255,255),ts=10,n="RemoveBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(rb,0.15)ng(rb,Color3.fromRGB(200,100,100),Color3.fromRGB(140,70,70))local lb=nb(mc,{c=lp1 and Color3.fromRGB(255,200,100)or Color3.fromRGB(100,150,200),bt=0,s=UDim2.new(0.11,0,0.4,0),p=UDim2.new(0.77,0,0.55,0),t=lp1 and"LOOP ON"or"LOOP OFF",tc=Color3.fromRGB(255,255,255),ts=10,n="LoopBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(lb,0.15)ng(lb,lb.BackgroundColor3,Color3.fromRGB(lb.BackgroundColor3.R*255*0.7,lb.BackgroundColor3.G*255*0.7,lb.BackgroundColor3.B*255*0.7))pb.MouseButton1Click:Connect(function()if cp1==nm then pp1()else pm1(nm)end end)stb.MouseButton1Click:Connect(function()if cp1==nm then st1()end end)rb.MouseButton1Click:Connect(function()rm1(nm)end)lb.MouseButton1Click:Connect(function()tl1()um1()end)yp=yp+80 end sr1.CanvasSize=UDim2.new(0,0,0,yp)end end
 
+local function kn(t,m)w.sa(t,m,5)end
+local function ks(k)e.wf("key.txt",k)end
+local function kg()return e.iff("key.txt")and e.rf("key.txt")or nil end
+local function kf(e)local d=e-os.time()if d<=0 then return"Expired"end local M=math.floor(d/2592000)d=d%2592000 local D=math.floor(d/86400)d=d%86400 local H=math.floor(d/3600)d=d%3600 local m=math.floor(d/60)local s=d%60 return string.format("%dm %dd %dh %dm %ds",M,D,H,m,s)end
+
+local function kcu()
+    if key_gui then key_gui:Destroy()end
+    local kgui=ni(u[1],cs,{n="KeySystemUI",IgnoreGuiInset=true,DisplayOrder=999999999,ScreenInsets=Enum.ScreenInsets.None,ZIndexBehavior=Enum.ZIndexBehavior.Sibling,ResetOnSpawn=false})
+    local kbg=nf(kgui,{c=Color3.fromRGB(0,0,0),bt=0.7,s=UDim2.new(1,0,1,0),p=UDim2.new(0,0,0,0),n="Background"})
+    local kf=nf(kbg,{c=Color3.fromRGB(16,19,27),s=UDim2.new(0,400,0,350),p=UDim2.new(0.5,-200,0.5,-175),n="KeyFrame"})
+    nc(kf,0.04)
+    ns(kf,3,Color3.fromRGB(35,39,54))
+    ng(kf,Color3.fromRGB(25,30,40),Color3.fromRGB(16,19,27))
+    
+    local ktit=nt(kf,{t="🔐 FrostWare Key System",ts=28,tc=Color3.fromRGB(166,190,255),bt=1,s=UDim2.new(0.9,0,0.15,0),p=UDim2.new(0.05,0,0.05,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    ntc(ktit,28)
+    
+    local kdesc=nt(kf,{t="Enter your key to access FrostWare features",ts=16,tc=Color3.fromRGB(200,200,200),bt=1,s=UDim2.new(0.9,0,0.1,0),p=UDim2.new(0.05,0,0.2,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
+    ntc(kdesc,16)
+    
+    local kinp=ntb(kf,{c=Color3.fromRGB(25,30,40),s=UDim2.new(0.9,0,0.12,0),p=UDim2.new(0.05,0,0.35,0),t="",ts=16,tc=Color3.fromRGB(255,255,255),pc=Color3.fromRGB(150,150,150),n="KeyInput",cf=true})
+    kinp.PlaceholderText="Enter your key..."
+    nc(kinp,0.02)
+    ns(kinp,2,Color3.fromRGB(60,70,90))
+    
+    local ksubmit=nb(kf,{c=Color3.fromRGB(50,170,90),s=UDim2.new(0.9,0,0.12,0),p=UDim2.new(0.05,0,0.5,0),t="Submit Key",tc=Color3.fromRGB(255,255,255),ts=18,n="SubmitBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    nc(ksubmit,0.02)
+    ng(ksubmit,Color3.fromRGB(50,170,90),Color3.fromRGB(35,120,65))
+    
+    local klink1=nb(kf,{c=Color3.fromRGB(40,120,220),s=UDim2.new(0.43,0,0.1,0),p=UDim2.new(0.05,0,0.65,0),t="Get Key (Linkvertise)",tc=Color3.fromRGB(255,255,255),ts=14,n="Link1Btn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    nc(klink1,0.02)
+    ng(klink1,Color3.fromRGB(40,120,220),Color3.fromRGB(28,84,154))
+    
+    local klink2=nb(kf,{c=Color3.fromRGB(220,40,40),s=UDim2.new(0.43,0,0.1,0),p=UDim2.new(0.52,0,0.65,0),t="Get Key (Lootlabs)",tc=Color3.fromRGB(255,255,255),ts=14,n="Link2Btn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})
+    nc(klink2,0.02)
+    ng(klink2,Color3.fromRGB(220,40,40),Color3.fromRGB(154,28,28))
+    
+    local kstatus=nt(kf,{t="Ready to verify key",ts=14,tc=Color3.fromRGB(180,180,180),bt=1,s=UDim2.new(0.9,0,0.08,0),p=UDim2.new(0.05,0,0.78,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal)})
+    ntc(kstatus,14)
+    
+    local klogo=nim(kf,{st=Enum.ScaleType.Fit,i=c[10],s=UDim2.new(0.15,0,0.08,0),bt=1,n="Logo",p=UDim2.new(0.425,0,0.88,0)})
+    
+    key_gui=kgui
+    
+    ksubmit.MouseButton1Click:Connect(function()
+        local k=kinp.Text
+        if #k==32 then
+            kstatus.Text="Verifying key..."
+            kstatus.TextColor3=Color3.fromRGB(255,200,100)
+            kn("Verifying","Checking key...")
+            local st=key_api.check_key(k)
+            if st.code=="KEY_VALID"then
+                if st.data.note==""then
+                    kstatus.Text="✓ Key verified successfully!"
+                    kstatus.TextColor3=Color3.fromRGB(100,255,100)
+                    kn("Success","Time left: "..kf(st.data.auth_expire))
+                    ks(k)
+                    key_verified=true
+                    spawn(function()
+                        wait(1)
+                        kgui:Destroy()
+                        key_gui=nil
+                        w.iwa()
+                    end)
+                else
+                    kstatus.Text="❌ HWID Reset required"
+                    kstatus.TextColor3=Color3.fromRGB(255,100,100)
+                    kn("Reset HWID",st.data.note)
+                end
+            else
+                kstatus.Text="❌ Invalid key!"
+                kstatus.TextColor3=Color3.fromRGB(255,100,100)
+                kn("Error","Invalid key!")
+            end
+        else
+            kstatus.Text="❌ Key must be 32 characters!"
+            kstatus.TextColor3=Color3.fromRGB(255,100,100)
+            kn("Error","Key must be 32 chars!")
+        end
+    end)
+    
+    klink1.MouseButton1Click:Connect(function()
+        e.sc("https://ads.luarmor.net/v/cb/dwQQOBvvyFOS/GwwwrPjgoGMNFjlB")
+        kn("Copied","Linkvertise link copied!")
+    end)
+    
+    klink2.MouseButton1Click:Connect(function()
+        e.sc("https://ads.luarmor.net/v/cb/OwAyyGgObIDY/MHkWoGnuWBlfakdA")
+        kn("Copied","Lootlabs link copied!")
+    end)
+    
+    kinp.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            ksubmit.MouseButton1Click:Fire()
+        end
+    end)
+end
+
+local function kv()
+    local saved=kg()
+    if saved then
+        kn("Verifying","Checking saved key...")
+        local st=key_api.check_key(saved)
+        if st.code=="KEY_VALID"then
+            if st.data.note==""then
+                kn("Success","Saved key valid! Time left: "..kf(st.data.auth_expire))
+                key_verified=true
+                return true
+            else
+                kn("HWID Reset Required",st.data.note)
+                kcu()
+                return false
+            end
+        else
+            kn("Error","Saved key invalid!")
+            kcu()
+            return false
+        end
+    else
+        kcu()
+        return false
+    end
+end
+
 w.createSaveDialog=function()if svd then svd:Destroy()end svd=nf(g["1"],{c=Color3.fromRGB(0,0,0),bt=0.5,s=UDim2.new(1,0,1,0),p=UDim2.new(0,0,0,0),n="SaveDialog",z=1000})local df=nf(svd,{c=Color3.fromRGB(25,30,40),s=UDim2.new(0.4,0,0.3,0),p=UDim2.new(0.3,0,0.35,0),n="DialogFrame"})nc(df,0.03)ns(df,2,Color3.fromRGB(60,70,90))local tl=nt(df,{t="Save Script",ts=24,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(0.9,0,0.2,0),p=UDim2.new(0.05,0,0.05,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(tl,24)local il=nt(df,{t="Script Name:",ts=16,tc=Color3.fromRGB(200,200,200),bt=1,s=UDim2.new(0.9,0,0.15,0),p=UDim2.new(0.05,0,0.3,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal)})ntc(il,16)local ib=ntb(df,{c=Color3.fromRGB(35,40,50),s=UDim2.new(0.9,0,0.15,0),p=UDim2.new(0.05,0,0.45,0),t="",ts=16,tc=Color3.fromRGB(255,255,255),pc=Color3.fromRGB(150,150,150),n="NameInput",cf=true})nc(ib,0.02)ns(ib,1,Color3.fromRGB(60,70,90))local bf=nf(df,{bt=1,s=UDim2.new(0.9,0,0.2,0),p=UDim2.new(0.05,0,0.7,0),n="ButtonFrame"})local ob=nb(bf,{c=Color3.fromRGB(100,200,100),s=UDim2.new(0.4,0,0.8,0),p=UDim2.new(0.1,0,0.1,0),t="OK",tc=Color3.fromRGB(255,255,255),ts=16,n="OKBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(ob,0.02)local cb=nb(bf,{c=Color3.fromRGB(200,100,100),s=UDim2.new(0.4,0,0.8,0),p=UDim2.new(0.5,0,0.1,0),t="Cancel",tc=Color3.fromRGB(255,255,255),ts=16,n="CancelBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(cb,0.02)return svd,ib,ob,cb end
 w.showSaveDialog=function(script,callback)local dlg,inp,okb,cbt=w.createSaveDialog()inp.Text="Script_"..os.date("%H%M%S")inp:CaptureFocus()okb.MouseButton1Click:Connect(function()local name=inp.Text:gsub("[^%w%s%-_]","")if name~=""then callback(name,script)dlg:Destroy()svd=nil else w.sa("Error","Invalid script name!",2)end end)cbt.MouseButton1Click:Connect(function()dlg:Destroy()svd=nil end)inp.FocusLost:Connect(function(enterPressed)if enterPressed then okb.MouseButton1Click:Fire()end end)end
 game:GetService("RunService").RenderStepped:Connect(function()pcall(function()for _,t in ipairs(game:GetService("Players").LocalPlayer.Character.Humanoid:GetPlayingAnimationTracks())do t:AdjustSpeed(as)end end)end)
@@ -207,14 +327,19 @@ w.startAntiAfk=function()spawn(function()while aaf do wait(60)pcall(function()ga
 w.startAutoRejoin=function()task.spawn(function()local nc=game:GetService("NetworkClient")while are do pcall(function()if not nc:FindFirstChild("ClientReplicator")then game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,game.JobId,l)end end)task.wait(1)end end)end
 w.toggleBright=function()ben=not ben if ben then if not obg then pcall(function()obg=lt.Ambient end)end spawn(function()while ben do pcall(function()lt.Ambient=Color3.fromRGB(255,255,255)lt.ColorShift_Bottom=Color3.fromRGB(255,255,255)lt.ColorShift_Top=Color3.fromRGB(255,255,255)end)wait(0.1)end end)else pcall(function()if obg then lt.Ambient=obg lt.ColorShift_Bottom=Color3.fromRGB(0,0,0)lt.ColorShift_Top=Color3.fromRGB(0,0,0)end end)end end
 w.toggleNoclip=function()nce=not nce if ncc then ncc:Disconnect()ncc=nil end if nce then ncc=r.Heartbeat:Connect(function()pcall(function()local c=l.Character if c then for _,p in pairs(c:GetDescendants())do if p:IsA("BasePart")and p.CanCollide then p.CanCollide=false end end end end)end)else pcall(function()local c=l.Character if c then for _,p in pairs(c:GetDescendants())do if p:IsA("BasePart")and p.Name~="HumanoidRootPart"then p.CanCollide=true end end end end)end end
-w.autoExec=function()if not kv then return end local cnt=0 for n,s in pairs(ssv)do if ael[n]then cnt=cnt+1 spawn(function()repeat wait(0.1)until game:IsLoaded()and game.Players.LocalPlayer and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")pcall(function()local f=loadstring(s)if f then f()end w.al("Auto executed: "..n,"info")end)end)end end w.sa("Info","Auto executed "..cnt.." scripts",2)end
+w.autoExec=function()local cnt=0 for n,s in pairs(ssv)do if ael[n]then cnt=cnt+1 spawn(function()repeat wait(0.1)until game:IsLoaded()and game.Players.LocalPlayer and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")pcall(function()local f=loadstring(s)if f then f()end w.al("Auto executed: "..n,"info")end)end)end end w.sa("Info","Auto executed "..cnt.." scripts",2)end
 w.rb=function()if sul then sul()end end
 w.aio=function()if not obr or not g["3"]then return end local tp,tsz=UDim2.new(0.018,0,0.031,0),UDim2.new(0.964,0,0.936,0)if d then g["3"].Position,g["3"].Size,g["3"].Visible,obr.Visible=tp,tsz,true,false if sbr and pgr then sbr.Position,pgr.Position=UDim2.new(0,0,0,0),UDim2.new(0.255,0,0,0)end return end local bp,bs,ssz=obr.AbsolutePosition,obr.AbsoluteSize,obr.Parent.AbsoluteSize local cx,cy=bp.X+bs.X/2,bp.Y+bs.Y/2 g["3"].Position=UDim2.new(0,cx-ssz.X*tsz.X.Scale/2,0,cy-ssz.Y*tsz.Y.Scale/2)g["3"].Size,g["3"].Visible,obr.Visible=UDim2.new(0,bs.X,0,bs.Y),true,false local et=tws:Create(g["3"],TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=tsz,Position=tp})et:Play()et.Completed:Connect(function()if sbr and pgr then sbr.Position,pgr.Position=UDim2.new(-0.25,0,0,0),UDim2.new(1,0,0,0)local st=tws:Create(sbr,TweenInfo.new(0.3,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.new(0,0,0,0)})local pt=tws:Create(pgr,TweenInfo.new(0.3,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.new(0.255,0,0,0)})st:Play()spawn(function()wait(0.1)pt:Play()end)end end)end
 w.aic=function()if not obr or not g["3"]then return end local cbp,cbs=obr.Position,obr.Size if d then g["3"].Visible,obr.Visible=false,true if sbr and pgr then sbr.Position,pgr.Position=UDim2.new(0,0,0,0),UDim2.new(0.255,0,0,0)end return end if sbr and pgr then local st=tws:Create(sbr,TweenInfo.new(0.25,Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position=UDim2.new(-0.25,0,0,0)})local pt=tws:Create(pgr,TweenInfo.new(0.25,Enum.EasingStyle.Quart,Enum.EasingDirection.In),{Position=UDim2.new(1,0,0,0)})st:Play()pt:Play()pt.Completed:Connect(function()local ssz=g["3"].Parent.AbsoluteSize local bap=Vector2.new(ssz.X*cbp.X.Scale+cbp.X.Offset,ssz.Y*cbp.Y.Scale+cbp.Y.Offset)local bas=Vector2.new(ssz.X*cbs.X.Scale+cbs.X.Offset,ssz.Y*cbs.Y.Scale+cbs.Y.Offset)local cx,cy=bap.X+bas.X/2,bap.Y+bas.Y/2 local sht=tws:Create(g["3"],TweenInfo.new(0.4,Enum.EasingStyle.Back,Enum.EasingDirection.In),{Size=UDim2.new(0,bas.X,0,bas.Y),Position=UDim2.new(0,cx-bas.X/2,0,cy-bas.Y/2)})sht:Play()sht.Completed:Connect(function()g["3"].Visible,obr.Visible=false,true obr.Size,obr.Position=UDim2.new(0,0,0,0),UDim2.new(0,cx,0,cy)local bat=tws:Create(obr,TweenInfo.new(0.3,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=cbs,Position=cbp})bat:Play()end)end)end end
 w.sct=function()for _,tw in pairs(ctw)do if tw then tw:Cancel()end end ctw={}if cfp then cfp.Visible,cfp.Position=false,UDim2.new(-0.001,0,0,0)end if ctp then ctp.Visible,ctp.Position=false,UDim2.new(0.1,0,0,0)end cfp,ctp,ia=nil,nil,false end
 w.apt=function(fp,tp,cb)if ia then w.sct()end cfp,ctp=fp,tp if d then if fp then fp.Visible=false end if tp then tp.Visible=true end ia=false if cb then cb()end return end ia=true if fp and tp then if fp==tp then ia,cfp,ctp=false,nil,nil if cb then cb()end return end tp.Visible,tp.Position=true,UDim2.new(0.1,0,0,0)local so=tws:Create(fp,TweenInfo.new(0.15,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.new(-0.1,0,0,0)})local si=tws:Create(tp,TweenInfo.new(0.2,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.new(-0.001,0,0,0)})ctw[1],ctw[2]=so,si so:Play()so.Completed:Connect(function()if not ia then return end fp.Visible,fp.Position=false,UDim2.new(-0.001,0,0,0)si:Play()si.Completed:Connect(function()ia,ctw,cfp,ctp=false,{},nil,nil if cb then cb()end end)end)elseif tp then tp.Visible,tp.Position=true,UDim2.new(0.1,0,0,0)local si=tws:Create(tp,TweenInfo.new(0.2,Enum.EasingStyle.Quart,Enum.EasingDirection.Out),{Position=UDim2.new(-0.001,0,0,0)})ctw[1]=si si:Play()si.Completed:Connect(function()ia,ctw,cfp,ctp=false,{},nil,nil if cb then cb()end end)else ia,cfp,ctp=false,nil,nil if cb then cb()end end end
 local csb=function(p,nm,txt,pos,sz)local btn=nb(p,{c=Color3.fromRGB(166,190,255),bt=0,s=sz,p=pos,n=nm,t=txt,tc=Color3.fromRGB(29,29,38),ts=16,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(btn,0.2)ng(btn,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))ntc(btn,16)return btn end
-w.ut=function()if tbr and tsr and pbr then local el=tick()-ss local h,m,s=math.floor(el/3600),math.floor((el%3600)/60),math.floor(el%60)tbr.Text=string.format("Session: %02d:%02d:%02d",h,m,s)local h2,m2,s2=gvt()local h2_val=(h2 and tonumber(h2))or 0 local m2_val=(m2 and tonumber(m2))or 0 local s2_val=(s2 and tonumber(s2))or 0 local tsec,msec,pc=h2_val*3600+m2_val*60+s2_val,50*3600,0 if tsec>0 then pc=math.min(tsec/msec,1)tsr.Text,tsr.TextColor3=string.format("Remaining: %02d:%02d:%02d",h2_val,m2_val,s2_val),Color3.fromRGB(255,255,255)if d then pbr.Size=UDim2.new(pc,0,1,0)else local st=tws:Create(pbr,TweenInfo.new(0.5,Enum.EasingStyle.Quad),{Size=UDim2.new(pc,0,1,0)})st:Play()end local cl=(pc>0.5 and {Color3.fromRGB(100,255,100),Color3.fromRGB(50,200,50)})or(pc>0.2 and {Color3.fromRGB(255,200,100),Color3.fromRGB(200,150,50)})or{Color3.fromRGB(255,100,100),Color3.fromRGB(200,50,50)}ng(pbr,cl[1],cl[2])else tsr.Text,tsr.TextColor3="Status: EXPIRED",Color3.fromRGB(255,100,100)pbr.Size=UDim2.new(0,0,1,0)end end end
+w.ut=function()if tbr and tsr and pbr then local el=tick()-ss local h,m,s=math.floor(el/3600),math.floor((el%3600)/60),math.floor(el%60)tbr.Text=string.format("Session: %02d:%02d:%02d",h,m,s)local h2,m2,s2=gvt()
+local h2_val = (h2 and tonumber(h2)) or 0
+local m2_val = (m2 and tonumber(m2)) or 0
+local s2_val = (s2 and tonumber(s2)) or 0
+local tsec,msec,pc=h2_val*3600+m2_val*60+s2_val,50*3600,0
+if tsec>0 then pc=math.min(tsec/msec,1)tsr.Text,tsr.TextColor3=string.format("Remaining: %02d:%02d:%02d",h2_val,m2_val,s2_val),Color3.fromRGB(255,255,255)if d then pbr.Size=UDim2.new(pc,0,1,0)else local st=tws:Create(pbr,TweenInfo.new(0.5,Enum.EasingStyle.Quad),{Size=UDim2.new(pc,0,1,0)})st:Play()end local cl=(pc>0.5 and {Color3.fromRGB(100,255,100),Color3.fromRGB(50,200,50)})or(pc>0.2 and {Color3.fromRGB(255,200,100),Color3.fromRGB(200,150,50)})or{Color3.fromRGB(255,100,100),Color3.fromRGB(200,50,50)}ng(pbr,cl[1],cl[2])else tsr.Text,tsr.TextColor3="Status: EXPIRED",Color3.fromRGB(255,100,100)pbr.Size=UDim2.new(0,0,1,0)end end end
 w.st=function()if not e.isf(td.."tabs")then e.mf(td.."tabs")end for id,tab in pairs(tb)do if tab.name and tab.content then e.wf(td.."tabs/"..id..".lua",tab.content)end end end
 w.lt=function()if not e.isf(td.."tabs")then return false end local files=e.lf(td.."tabs")for _,file in ipairs(files)do local id=tonumber(file:match("tabs/(%d+)%.lua$"))if id then local content=e.rf(file)if content and content~=""then tb[id]={name="Tab "..id,content=content,id=id,button=nil,closeButton=nil}if id>=tc then tc=id+1 end end end end return true end
 w.ss=function()if not e.isf(td.."scripts")then e.mf(td.."scripts")end for name,script in pairs(ssv)do e.wf(td.."scripts/"..name..".lua",script)end if not e.isf(td.."autoexec")then e.mf(td.."autoexec")end local ae=""for name,enabled in pairs(ael)do if enabled then ae=ae..name.."\n"end end e.wf(td.."autoexec/list.txt",ae)end
@@ -230,7 +355,7 @@ w.csid=function()local sb=nim(g["6"],{ImageTransparency=1,ic=Color3.fromRGB(13,1
 w.ce=function()local ep=nim(g["11"],{ImageTransparency=1,ic=Color3.fromRGB(13,15,20),i=c[8],s=UDim2.new(1.001,0,1,0),cl=true,bt=1,n="EditorPage",p=UDim2.new(-0.001,0,0,0)})local tbar=nf(ep,{c=Color3.fromRGB(16,19,27),s=UDim2.new(1,0,0.08,0),p=UDim2.new(0,0,0,0),n="TabBar"})nc(tbar,0.02)ns(tbar,2,Color3.fromRGB(35,39,54))local tscr=nsf(tbar,{bt=1,s=UDim2.new(0.85,0,1,0),p=UDim2.new(0,0,0,0),n="TabScroll",sb=0,cs=UDim2.new(0,0,0,0)})ap(ni(u[15],tscr),{fd=Enum.FillDirection.Horizontal,so=Enum.SortOrder.LayoutOrder,pd=UDim.new(0,2)})local at=nb(tbar,{c=Color3.fromRGB(166,190,255),s=UDim2.new(0.08,0,0.7,0),p=UDim2.new(0.9,0,0.15,0),t="+",tc=Color3.fromRGB(29,29,38),ts=28,n="AddTab",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(at,0.2)ng(at,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))ntc(at,28)local epp=nim(ep,{ic=Color3.fromRGB(32,39,57),i=c[19],s=UDim2.new(0.84,0,0.92,0),cl=true,bt=1,n="EditorPage",p=UDim2.new(0,0,0.08,0)})local txb=nf(epp,{c=Color3.fromRGB(24,24,32),s=UDim2.new(1,0,1,0),p=UDim2.new(0,0,0,0),n="TxtBox",bt=1})local ef=nsf(txb,{eb=Enum.ElasticBehavior.Always,ti=c[20],mi=c[20],vs=Enum.ScrollBarInset.Always,c=Color3.fromRGB(32,31,32),n="EditorFrame",sit=1,hs=Enum.ScrollBarInset.Always,bi=c[20],s=UDim2.new(1,0,1,0),sic=Color3.fromRGB(38,40,46),sb=10,bt=1})local src=ntb(ef,{cp=-1,n="Source",xa=Enum.TextXAlignment.Left,pc=Color3.fromRGB(205,205,205),z=3,tw=true,tt=0,ts=20,tc=Color3.fromRGB(255,255,255),ya=Enum.TextYAlignment.Top,rt=false,ff=Font.new(c[2],Enum.FontWeight.Medium,Enum.FontStyle.Normal),ml=true,cf=false,cl=true,s=UDim2.new(0.7,0,2,0),p=UDim2.new(0.08,0,0,0),t="-- FrostWare V2 Editor\nprint('Hello World!')",bt=1})local ln=nt(ef,{tw=true,ts=20,ya=Enum.TextYAlignment.Top,sc=true,c=Color3.fromRGB(32,31,32),ff=Font.new(c[2],Enum.FontWeight.Regular,Enum.FontStyle.Normal),tc=Color3.fromRGB(193,191,235),bt=1,s=UDim2.new(0.05,0,2,0),p=UDim2.new(0.021,0,-0.003,0)})ntc(ln,20)nc(ef)local btns=nim(ep,{z=2,ic=Color3.fromRGB(16,19,27),i=c[21],s=UDim2.new(0.16,0,0.92,0),cl=true,bt=1,n="Btns",p=UDim2.new(0.84,0,0.08,0)})local eb=csb(btns,"Exec","Execute",UDim2.new(0.05,0,0.05,0),UDim2.new(0.9,0,0.12,0))local cb=csb(btns,"Clr","Clear",UDim2.new(0.05,0,0.19,0),UDim2.new(0.9,0,0.12,0))local pb=csb(btns,"Pst","Paste",UDim2.new(0.05,0,0.33,0),UDim2.new(0.9,0,0.12,0))local ecb=csb(btns,"ExecClp","Exec Clipboard",UDim2.new(0.05,0,0.47,0),UDim2.new(0.9,0,0.12,0))local svb=csb(btns,"Save","Save Script",UDim2.new(0.05,0,0.61,0),UDim2.new(0.9,0,0.12,0))local aeb=csb(btns,"AutoExec","Auto Execute",UDim2.new(0.05,0,0.75,0),UDim2.new(0.9,0,0.12,0))sr,lr=src,ln return ep,src,ln,tscr,at,eb,cb,pb,ecb,svb,aeb end
 w.ccp=function()local cop=nim(g["11"],{ImageTransparency=1,ic=Color3.fromRGB(13,15,20),i=c[8],s=UDim2.new(1.001,0,1,0),v=false,cl=true,bt=1,n="ConsolePage",p=UDim2.new(-0.001,0,0,0)})local tit=nt(cop,{t="Console Output",ts=32,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(1,0,0.08,0),p=UDim2.new(0,0,0.02,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(tit,32)local cf=nf(cop,{c=Color3.fromRGB(16,19,27),s=UDim2.new(0.95,0,0.75,0),p=UDim2.new(0.025,0,0.12,0),n="ConsoleFrame"})nc(cf,0.02)ns(cf,2,Color3.fromRGB(35,39,54))local cs=nsf(cf,{c=Color3.fromRGB(12,15,22),s=UDim2.new(1,0,0.85,0),p=UDim2.new(0,0,0,0),sb=8,cs=UDim2.new(0,0,0,0),n="ConsoleScroll"})nc(cs,0.02)local bf=nf(cf,{bt=1,s=UDim2.new(1,0,0.15,0),p=UDim2.new(0,0,0.85,0),n="ButtonFrame"})local ccb=csb(bf,"ClearConsole","Clear Console",UDim2.new(0.02,0,0.2,0),UDim2.new(0.14,0,0.48,0))local cab=csb(bf,"CopyAll","Copy All",UDim2.new(0.18,0,0.2,0),UDim2.new(0.14,0,0.48,0))local tgb=csb(bf,"Toggle","Toggle Console",UDim2.new(0.34,0,0.2,0),UDim2.new(0.14,0,0.48,0))csr=cs ccb.MouseButton1Click:Connect(function()w.cc()w.sa("Success","Console cleared!",2)end)cab.MouseButton1Click:Connect(function()w.cac()end)tgb.MouseButton1Click:Connect(function()local en=w.tc()w.sa("Info",en and"Console enabled!"or"Console disabled!",2)end)return cop end
 w.cep=function()local exp=nim(g["11"],{ImageTransparency=1,ic=Color3.fromRGB(13,15,20),i=c[8],s=UDim2.new(1.001,0,1,0),v=false,cl=true,bt=1,n="ExtraPage",p=UDim2.new(-0.001,0,0,0)})local tit=nt(exp,{t="Extra Features",ts=32,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(1,0,0.08,0),p=UDim2.new(0,0,0.02,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(tit,32)local bf=nf(exp,{c=Color3.fromRGB(16,19,27),s=UDim2.new(0.95,0,0.8,0),p=UDim2.new(0.025,0,0.12,0),n="ButtonsFrame"})nc(bf,0.02)ns(bf,2,Color3.fromRGB(35,39,54))local rjb=csb(bf,"Rejoin","Rejoin Server",UDim2.new(0.05,0,0.05,0),UDim2.new(0.28,0,0.12,0))local shb=csb(bf,"ServerHop","Server Hop",UDim2.new(0.36,0,0.05,0),UDim2.new(0.28,0,0.12,0))local arb=csb(bf,"AutoRejoin","Auto Rejoin: "..(are and"ON"or"OFF"),UDim2.new(0.67,0,0.05,0),UDim2.new(0.28,0,0.12,0))bbn=csb(bf,"Bright","Brightness: "..(ben and"ON"or"OFF"),UDim2.new(0.05,0,0.2,0),UDim2.new(0.43,0,0.12,0))ncn=csb(bf,"Noclip","Noclip: "..(nce and"ON"or"OFF"),UDim2.new(0.52,0,0.2,0),UDim2.new(0.43,0,0.12,0))local asl=nt(bf,{t="Animation Speed: "..as,ts=18,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(0.9,0,0.08,0),p=UDim2.new(0.05,0,0.38,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal),xa=Enum.TextXAlignment.Left})ntc(asl,18)local asf=nf(bf,{c=Color3.fromRGB(25,30,40),s=UDim2.new(0.7,0,0.08,0),p=UDim2.new(0.05,0,0.48,0),n="SliderFrame"})nc(asf,0.02)ns(asf,1,Color3.fromRGB(60,70,90))local asb=nf(asf,{c=Color3.fromRGB(100,150,255),s=UDim2.new(as/50,0,0.8,0),p=UDim2.new(0,0,0.1,0),n="SliderBar"})nc(asb,0.02)ng(asb,Color3.fromRGB(100,150,255),Color3.fromRGB(50,100,200))local asi=ntb(bf,{c=Color3.fromRGB(35,40,50),s=UDim2.new(0.15,0,0.08,0),p=UDim2.new(0.8,0,0.48,0),t=tostring(as),ts=14,tc=Color3.fromRGB(255,255,255),n="SpeedInput",cf=true})nc(asi,0.02)ns(asi,1,Color3.fromRGB(60,70,90))local function updateSlider(input)local relativeX=math.clamp((input.Position.X-asf.AbsolutePosition.X)/asf.AbsoluteSize.X,0,1)local newValue=math.floor(relativeX*50)asb.Size=UDim2.new(relativeX,0,0.8,0)as=newValue w.setAnimationSpeed(as)asl.Text="Animation Speed: "..as asi.Text=tostring(as)end asf.InputBegan:Connect(function(input)if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then updateSlider(input)end end)asf.InputChanged:Connect(function(input)if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then updateSlider(input)end end)rjb.MouseButton1Click:Connect(function()game:GetService("TeleportService"):Teleport(game.PlaceId,l)w.sa("Info","Rejoining server...",2)end)shb.MouseButton1Click:Connect(function()local servers={}local req=game:GetService("HttpService"):JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))for _,server in pairs(req.data)do if server.playing<server.maxPlayers and server.id~=game.JobId then table.insert(servers,server.id)end end if#servers>0 then game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,servers[math.random(1,#servers)],l)w.sa("Info","Server hopping...",2)else w.sa("Warn","No available servers found!",2)end end)abn=arb arb.MouseButton1Click:Connect(function()are=not are arb.Text="Auto Rejoin: "..(are and"ON"or"OFF")arb.BackgroundColor3=are and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)if are then w.startAutoRejoin()w.sa("Success","Auto Rejoin enabled!",2)else w.sa("Info","Auto Rejoin disabled!",2)end end)bbn.MouseButton1Click:Connect(function()w.toggleBright()bbn.Text="Brightness: "..(ben and"ON"or"OFF")bbn.BackgroundColor3=ben and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)w.sa("Info",ben and"Brightness enabled!"or"Brightness disabled!",2)end)ncn.MouseButton1Click:Connect(function()w.toggleNoclip()ncn.Text="Noclip: "..(nce and"ON"or"OFF")ncn.BackgroundColor3=nce and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)w.sa("Info",nce and"Noclip enabled!"or"Noclip disabled!",2)end)asi.FocusLost:Connect(function()local newSpeed=tonumber(asi.Text)if newSpeed and newSpeed>=0 and newSpeed<=50 then as=newSpeed w.setAnimationSpeed(as)asl.Text="Animation Speed: "..as asb.Size=UDim2.new(as/50,0,0.8,0)else asi.Text=tostring(as)w.sa("Error","Invalid speed! Use 0-50",2)end end)return exp end
-w.cscp=function()local scp=nim(g["11"],{ImageTransparency=1,ic=Color3.fromRGB(13,15,20),i=c[8],s=UDim2.new(1.001,0,1,0),v=false,cl=true,bt=1,n="ScriptsPage",p=UDim2.new(-0.001,0,0,0)})local tit=nt(scp,{t="Script Manager",ts=32,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(1,0,0.08,0),p=UDim2.new(0,0,0.02,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(tit,32)local lf=nf(scp,{c=Color3.fromRGB(16,19,27),s=UDim2.new(0.95,0,0.8,0),p=UDim2.new(0.025,0,0.12,0),n="ListFrame"})nc(lf,0.02)ns(lf,2,Color3.fromRGB(35,39,54))local ls=nsf(lf,{c=Color3.fromRGB(12,15,22),s=UDim2.new(1,0,0.85,0),p=UDim2.new(0,0,0,0),sb=8,cs=UDim2.new(0,0,0,0),n="ListScroll"})nc(ls,0.02)local bf=nf(lf,{bt=1,s=UDim2.new(1,0,0.15,0),p=UDim2.new(0,0,0.85,0),n="ButtonFrame"})local lbl=nt(bf,{t="Saved Scripts",ts=18,tc=Color3.fromRGB(200,200,200),bt=1,s=UDim2.new(0.3,0,1,0),p=UDim2.new(0.02,0,0,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(lbl,18)local updateList=function()for _,ch in pairs(ls:GetChildren())do if ch:IsA(u[2])then ch:Destroy()end end local yp=0 for name,script in pairs(ssv)do local sf=nf(ls,{c=Color3.fromRGB(20,25,32),s=UDim2.new(1,0,0,50),p=UDim2.new(0,0,0,yp),n=name})nc(sf,0.02)ns(sf,1,Color3.fromRGB(35,39,54))local snl=nt(sf,{t=name,ts=16,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(0.4,0,1,0),p=UDim2.new(0.02,0,0,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal),xa=Enum.TextXAlignment.Left})ntc(snl,16)local cb=nf(sf,{c=ael[name] and Color3.fromRGB(100,200,100) or Color3.fromRGB(60,70,90),s=UDim2.new(0,20,0,20),p=UDim2.new(0.44,0,0.3,0),n="AutoCheck"})nc(cb,0.3)local cc=nb(cb,{bt=1,s=UDim2.new(1,0,1,0),t="",n="CheckBtn"})local lb=csb(sf,"Load","Load",UDim2.new(0.52,0,0.1,0),UDim2.new(0.12,0,0.8,0))local eb=csb(sf,"Exec","Execute",UDim2.new(0.66,0,0.1,0),UDim2.new(0.12,0,0.8,0))local db=csb(sf,"Delete","Delete",UDim2.new(0.8,0,0.1,0),UDim2.new(0.18,0,0.8,0))cc.MouseButton1Click:Connect(function()ael[name]=not ael[name]cb.BackgroundColor3=ael[name] and Color3.fromRGB(100,200,100) or Color3.fromRGB(60,70,90)w.ss()end)lb.MouseButton1Click:Connect(function()if sr then sr.Text=script local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=script end w.ul(sr,lr)w.st()w.sa("Success","Script loaded to editor: "..name,2)else w.sa("Warn","Editor not available!",2)end end)eb.MouseButton1Click:Connect(function()if not kv then w.sa("Error","Key verification required!",2)return end ee=true local suc,res=pcall(function()return loadstring(script)end)if suc and res then local es,er=pcall(res)if es then w.al("Script executed successfully: "..name,"editor",true,true)w.sa("Success","Script executed: "..name,2)else w.al("Execution error: "..tostring(er),"error",true,true)w.sa("Error","Execution failed: "..name,2)end else w.al("Compilation error: "..tostring(res),"error",true,true)w.sa("Error","Compilation failed: "..name,2)end ee=false end)db.MouseButton1Click:Connect(function()e.df(td.."scripts/"..name..".lua")ssv[name]=nil ael[name]=nil sf:Destroy()w.ss()w.sa("Success","Script deleted: "..name,2)w.rb()end)yp=yp+55 end ls.CanvasSize=UDim2.new(0,0,0,yp)end sul=updateList w.ls()updateList()return scp,updateList end
+w.cscp=function()local scp=nim(g["11"],{ImageTransparency=1,ic=Color3.fromRGB(13,15,20),i=c[8],s=UDim2.new(1.001,0,1,0),v=false,cl=true,bt=1,n="ScriptsPage",p=UDim2.new(-0.001,0,0,0)})local tit=nt(scp,{t="Script Manager",ts=32,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(1,0,0.08,0),p=UDim2.new(0,0,0.02,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(tit,32)local lf=nf(scp,{c=Color3.fromRGB(16,19,27),s=UDim2.new(0.95,0,0.8,0),p=UDim2.new(0.025,0,0.12,0),n="ListFrame"})nc(lf,0.02)ns(lf,2,Color3.fromRGB(35,39,54))local ls=nsf(lf,{c=Color3.fromRGB(12,15,22),s=UDim2.new(1,0,0.85,0),p=UDim2.new(0,0,0,0),sb=8,cs=UDim2.new(0,0,0,0),n="ListScroll"})nc(ls,0.02)local bf=nf(lf,{bt=1,s=UDim2.new(1,0,0.15,0),p=UDim2.new(0,0,0.85,0),n="ButtonFrame"})local lbl=nt(bf,{t="Saved Scripts",ts=18,tc=Color3.fromRGB(200,200,200),bt=1,s=UDim2.new(0.3,0,1,0),p=UDim2.new(0.02,0,0,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(lbl,18)local updateList=function()for _,ch in pairs(ls:GetChildren())do if ch:IsA(u[2])then ch:Destroy()end end local yp=0 for name,script in pairs(ssv)do local sf=nf(ls,{c=Color3.fromRGB(20,25,32),s=UDim2.new(1,0,0,50),p=UDim2.new(0,0,0,yp),n=name})nc(sf,0.02)ns(sf,1,Color3.fromRGB(35,39,54))local snl=nt(sf,{t=name,ts=16,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(0.4,0,1,0),p=UDim2.new(0.02,0,0,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal),xa=Enum.TextXAlignment.Left})ntc(snl,16)local cb=nf(sf,{c=ael[name] and Color3.fromRGB(100,200,100) or Color3.fromRGB(60,70,90),s=UDim2.new(0,20,0,20),p=UDim2.new(0.44,0,0.3,0),n="AutoCheck"})nc(cb,0.3)local cc=nb(cb,{bt=1,s=UDim2.new(1,0,1,0),t="",n="CheckBtn"})local lb=csb(sf,"Load","Load",UDim2.new(0.52,0,0.1,0),UDim2.new(0.12,0,0.8,0))local eb=csb(sf,"Exec","Execute",UDim2.new(0.66,0,0.1,0),UDim2.new(0.12,0,0.8,0))local db=csb(sf,"Delete","Delete",UDim2.new(0.8,0,0.1,0),UDim2.new(0.18,0,0.8,0))cc.MouseButton1Click:Connect(function()ael[name]=not ael[name]cb.BackgroundColor3=ael[name] and Color3.fromRGB(100,200,100) or Color3.fromRGB(60,70,90)w.ss()end)lb.MouseButton1Click:Connect(function()if sr then sr.Text=script local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=script end w.ul(sr,lr)w.st()w.sa("Success","Script loaded to editor: "..name,2)else w.sa("Warn","Editor not available!",2)end end)eb.MouseButton1Click:Connect(function()ee=true local suc,res=pcall(function()return loadstring(script)end)if suc and res then local es,er=pcall(res)if es then w.al("Script executed successfully: "..name,"editor",true,true)w.sa("Success","Script executed: "..name,2)else w.al("Execution error: "..tostring(er),"error",true,true)w.sa("Error","Execution failed: "..name,2)end else w.al("Compilation error: "..tostring(res),"error",true,true)w.sa("Error","Compilation failed: "..name,2)end ee=false end)db.MouseButton1Click:Connect(function()e.df(td.."scripts/"..name..".lua")ssv[name]=nil ael[name]=nil sf:Destroy()w.ss()w.sa("Success","Script deleted: "..name,2)w.rb()end)yp=yp+55 end ls.CanvasSize=UDim2.new(0,0,0,yp)end sul=updateList w.ls()updateList()return scp,updateList end
 w.cmu=function()local mup=nim(g["11"],{ImageTransparency=1,ic=Color3.fromRGB(13,15,20),i=c[8],s=UDim2.new(1.001,0,1,0),v=false,cl=true,bt=1,n="MusicPage",p=UDim2.new(-0.001,0,0,0)})local tit=nt(mup,{t="Music Player",ts=32,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(1,0,0.08,0),p=UDim2.new(0,0,0.02,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(tit,32)local tb2=nf(mup,{c=Color3.fromRGB(25,30,40),s=UDim2.new(0.95,0,0.25,0),p=UDim2.new(0.025,0,0.1,0),n="TopBar"})nc(tb2,0.18)ns(tb2,2,Color3.fromRGB(35,39,54))local cpf=nf(tb2,{c=Color3.fromRGB(20,25,35),s=UDim2.new(0.48,0,0.85,0),p=UDim2.new(0.01,0,0.075,0),n="CurrentlyPlaying"})nc(cpf,0.15)ns(cpf,1,Color3.fromRGB(35,39,54))ai1(cpf,"https://i.imgur.com/music_bg.png","FrostWare/Images/music_bg.png")nt(cpf,{t="🎵 Now Playing",ts=15,tc=Color3.fromRGB(166,190,255),s=UDim2.new(1,0,0.25,0),p=UDim2.new(0,0,0,0),n="CPLabel",sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal),bt=1})current_track_label=nt(cpf,{t="No music selected",ts=17,tc=Color3.fromRGB(255,255,255),s=UDim2.new(1,0,0.35,0),p=UDim2.new(0,0,0.25,0),n="CurrentTrack",sc=true,ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal),bt=1})play_status_label=nt(cpf,{t="⏹ Stopped",ts=13,tc=Color3.fromRGB(200,200,200),s=UDim2.new(1,0,0.25,0),p=UDim2.new(0,0,0.6,0),n="PlayStatus",sc=true,bt=1})local vf=nf(cpf,{bt=1,s=UDim2.new(1,0,0.15,0),p=UDim2.new(0,0,0.85,0),n="Visualizer"})local vb={}for i=1,20 do local bar=nf(vf,{c=Color3.fromRGB(166,190,255),s=UDim2.new(0.04,0,0.1,0),p=UDim2.new((i-1)*0.05,0,0.9,0),n="Bar"..i})nc(bar,0.1)ng(bar,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))vb[i]=bar end vz1=vb local vcf=nf(tb2,{c=Color3.fromRGB(20,25,35),s=UDim2.new(0.5,0,0.85,0),p=UDim2.new(0.5,0,0.075,0),n="VolumeControl"})nc(vcf,0.15)ns(vcf,1,Color3.fromRGB(35,39,54))nt(vcf,{t="🔊 Volume: "..math.floor(cv1*100).."%",ts=13,tc=Color3.fromRGB(200,200,200),s=UDim2.new(1,0,0.2,0),p=UDim2.new(0,0,0,0),n="VolumeLabel",sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal),bt=1})local vs=nf(vcf,{c=Color3.fromRGB(30,35,45),s=UDim2.new(0.9,0,0.15,0),p=UDim2.new(0.05,0,0.25,0),n="VolumeSlider_Track"})nc(vs,0.1)ns(vs,1,Color3.fromRGB(50,55,65))local vh=nf(vs,{c=Color3.fromRGB(166,190,255),s=UDim2.new(cv1,0,1,0),p=UDim2.new(0,0,0,0),n="VolumeSlider_Handle"})nc(vh,0.1)ng(vh,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))local vb2=nb(vs,{bt=1,s=UDim2.new(1,0,1,0),p=UDim2.new(0,0,0,0),t="",n="VolumeSlider_Button"})local pf=nf(vcf,{c=Color3.fromRGB(30,35,45),s=UDim2.new(0.9,0,0.15,0),p=UDim2.new(0.05,0,0.45,0),n="ProgressFrame"})nc(pf,0.1)ns(pf,1,Color3.fromRGB(50,55,65))progress_bar=nf(pf,{c=Color3.fromRGB(166,190,255),s=UDim2.new(0,0,1,0),p=UDim2.new(0,0,0,0),n="ProgressBar"})nc(progress_bar,0.1)ng(progress_bar,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))local pb3=nb(pf,{bt=1,s=UDim2.new(1,0,1,0),p=UDim2.new(0,0,0,0),t="",n="ProgressSlider_Button"})time_label=nt(vcf,{t="00:00 / 00:00",ts=11,tc=Color3.fromRGB(180,180,180),s=UDim2.new(1,0,0.15,0),p=UDim2.new(0,0,0.65,0),n="TimeLabel",sc=true,bt=1})local cf2=nf(vcf,{bt=1,s=UDim2.new(1,0,0.15,0),p=UDim2.new(0,0,0.85,0),n="Controls"})local plb=nb(cf2,{c=Color3.fromRGB(50,170,90),bt=0,s=UDim2.new(0.18,0,1,0),p=UDim2.new(0.02,0,0,0),t="▶",tc=Color3.fromRGB(255,255,255),ts=15,n="PlayPauseBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(plb,0.15)ng(plb,Color3.fromRGB(50,170,90),Color3.fromRGB(35,120,65))local stb=nb(cf2,{c=Color3.fromRGB(200,100,100),bt=0,s=UDim2.new(0.18,0,1,0),p=UDim2.new(0.22,0,0,0),t="■",tc=Color3.fromRGB(255,255,255),ts=15,n="StopBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(stb,0.15)ng(stb,Color3.fromRGB(200,100,100),Color3.fromRGB(140,70,70))local shb=nb(cf2,{c=Color3.fromRGB(100,150,200),bt=0,s=UDim2.new(0.18,0,1,0),p=UDim2.new(0.42,0,0,0),t="🔀",tc=Color3.fromRGB(255,255,255),ts=13,n="ShuffleBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(shb,0.15)ng(shb,Color3.fromRGB(100,150,200),Color3.fromRGB(70,105,140))local rfb=nb(cf2,{c=Color3.fromRGB(150,100,200),bt=0,s=UDim2.new(0.18,0,1,0),p=UDim2.new(0.62,0,0,0),t="🔄",tc=Color3.fromRGB(255,255,255),ts=13,n="RefreshBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(rfb,0.15)ng(rfb,Color3.fromRGB(150,100,200),Color3.fromRGB(105,70,140))local lpb=nb(cf2,{c=lp1 and Color3.fromRGB(255,200,100)or Color3.fromRGB(100,100,150),bt=0,s=UDim2.new(0.16,0,1,0),p=UDim2.new(0.82,0,0,0),t=lp1 and"🔁"or"🔁",tc=Color3.fromRGB(255,255,255),ts=11,n="LoopBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(lpb,0.15)ng(lpb,lpb.BackgroundColor3,Color3.fromRGB(lpb.BackgroundColor3.R*255*0.7,lpb.BackgroundColor3.G*255*0.7,lpb.BackgroundColor3.B*255*0.7))local af=nf(mup,{c=Color3.fromRGB(25,30,40),s=UDim2.new(0.95,0,0.12,0),p=UDim2.new(0.025,0,0.36,0),n="InputFrame"})nc(af,0.18)ns(af,2,Color3.fromRGB(35,39,54))local sio=nf(af,{c=Color3.fromRGB(18,22,32),s=UDim2.new(0.35,0,0.6,0),p=UDim2.new(0.02,0,0.2,0),n="SearchInput_Outer"})nc(sio,0.18)ns(sio,1,Color3.fromRGB(28,32,42))si1=ntb(sio,{c=Color3.fromRGB(35,40,50),s=UDim2.new(0.95,0,0.8,0),p=UDim2.new(0.025,0,0.1,0),pc=Color3.fromRGB(120,130,150),t="",ts=12,tc=Color3.fromRGB(240,245,255),n="SearchInput",ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal)})nc(si1,0.15)local nio=nf(af,{c=Color3.fromRGB(18,22,32),s=UDim2.new(0.25,0,0.6,0),p=UDim2.new(0.39,0,0.2,0),n="NameInput_Outer"})nc(nio,0.18)ns(nio,1,Color3.fromRGB(28,32,42))ni1=ntb(nio,{c=Color3.fromRGB(35,40,50),s=UDim2.new(0.9,0,0.8,0),p=UDim2.new(0.05,0,0.1,0),pc=Color3.fromRGB(120,130,150),t="",ts=13,tc=Color3.fromRGB(240,245,255),n="NameInput",ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal)})nc(ni1,0.15)local uio=nf(af,{c=Color3.fromRGB(18,22,32),s=UDim2.new(0.25,0,0.6,0),p=UDim2.new(0.66,0,0.2,0),n="UrlInput_Outer"})nc(uio,0.18)ns(uio,1,Color3.fromRGB(28,32,42))ui1=ntb(uio,{c=Color3.fromRGB(35,40,50),s=UDim2.new(0.95,0,0.8,0),p=UDim2.new(0.025,0,0.1,0),pc=Color3.fromRGB(120,130,150),t="",ts=13,tc=Color3.fromRGB(240,245,255),n="UrlInput",ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal)})nc(ui1,0.15)local abo=nf(af,{c=Color3.fromRGB(18,22,32),s=UDim2.new(0.07,0,0.6,0),p=UDim2.new(0.92,0,0.2,0),n="AddBtn_Outer"})nc(abo,0.18)ns(abo,1,Color3.fromRGB(28,32,42))local ab=nb(abo,{c=Color3.fromRGB(50,130,210),bt=0,s=UDim2.new(0.9,0,0.8,0),p=UDim2.new(0.05,0,0.1,0),t="📥",tc=Color3.fromRGB(255,255,255),ts=12,n="AddBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})nc(ab,0.15)ng(ab,Color3.fromRGB(50,130,210),Color3.fromRGB(35,91,147))local mlf=nf(mup,{c=Color3.fromRGB(20,25,35),s=UDim2.new(0.95,0,0.48,0),p=UDim2.new(0.025,0,0.5,0),n="MusicListFrame"})nc(mlf,0.18)ns(mlf,2,Color3.fromRGB(35,39,54))sr1=nsf(mlf,{bt=1,s=UDim2.new(0.98,0,0.95,0),p=UDim2.new(0.01,0,0.025,0),sb=8,cs=UDim2.new(0,0,0,0),n="MusicListScroll",sic=Color3.fromRGB(50,130,210)})nc(sr1,0.02)vb2.MouseButton1Down:Connect(function()local mouse=game.Players.LocalPlayer:GetMouse()local conn conn=mouse.Button1Up:Connect(function()conn:Disconnect()end)local mconn mconn=mouse.Move:Connect(function()if conn.Connected then local rx=math.max(0,math.min(1,(mouse.X-vs.AbsolutePosition.X)/vs.AbsoluteSize.X))vh.Size=UDim2.new(rx,0,1,0)sv2(rx)local vl=vcf:FindFirstChild("VolumeLabel")if vl then vl.Text="🔊 Volume: "..math.floor(cv1*100).."%"end else mconn:Disconnect()end end)end)vb2.InputBegan:Connect(function(input)if input.UserInputType==Enum.UserInputType.Touch then local rx=math.max(0,math.min(1,(input.Position.X-vs.AbsolutePosition.X)/vs.AbsoluteSize.X))vh.Size=UDim2.new(rx,0,1,0)sv2(rx)local vl=vcf:FindFirstChild("VolumeLabel")if vl then vl.Text="🔊 Volume: "..math.floor(cv1*100).."%"end end end)pb3.MouseButton1Down:Connect(function()if not sk1 then sk1=true local mouse=game.Players.LocalPlayer:GetMouse()local conn conn=mouse.Button1Up:Connect(function()conn:Disconnect()sk1=false end)local mconn mconn=mouse.Move:Connect(function()if conn.Connected then local rx=math.max(0,math.min(1,(mouse.X-pf.AbsolutePosition.X)/pf.AbsoluteSize.X))sk2(rx)else mconn:Disconnect()end end)end end)pb3.InputBegan:Connect(function(input)if input.UserInputType==Enum.UserInputType.Touch and not sk1 then sk1=true local rx=math.max(0,math.min(1,(input.Position.X-pf.AbsolutePosition.X)/pf.AbsoluteSize.X))sk2(rx)spawn(function()wait(0.1)sk1=false end)end end)plb.MouseButton1Click:Connect(function()if cp1 then pp1()else w.sa("Info","No music selected!",2)end end)stb.MouseButton1Click:Connect(function()st1()end)shb.MouseButton1Click:Connect(function()local mks={}for nm,_ in pairs(ml1)do table.insert(mks,nm)end if#mks>0 then local rnd=mks[math.random(1,#mks)]pm1(rnd)else w.sa("Info","No music available!",2)end end)rfb.MouseButton1Click:Connect(function()ml1=gl1()fl1=ml1 um1()end)lpb.MouseButton1Click:Connect(function()tl1()lpb.BackgroundColor3=lp1 and Color3.fromRGB(255,200,100)or Color3.fromRGB(100,100,150)lpb.Text=lp1 and"🔁"or"🔁"ng(lpb,lpb.BackgroundColor3,Color3.fromRGB(lpb.BackgroundColor3.R*255*0.7,lpb.BackgroundColor3.G*255*0.7,lpb.BackgroundColor3.B*255*0.7))end)ab.MouseButton1Click:Connect(function()local nm=ni1.Text local url=ui1.Text if nm~=""and url~=""then ad1(nm,url)ni1.Text=""ui1.Text=""else w.sa("Error","Please enter name and URL!",2)end end)si1.Changed:Connect(function(prop)if prop=="Text"then ft2(si1.Text)end end)ml1=gl1()fl1=ml1 um1()updateMusicInterface("No music selected","⏹ Stopped",Color3.fromRGB(200,200,200))updateProgressBar()spawn(function()wait(2)w.sa("Success","🎵 Music system loaded!",2)end)return mup end
 w.ul=function(src,ln)if src and src.Text then local lns=src.Text:split("\n")local txt=""for i=1,#lns do txt=txt..tostring(i)if i<#lns then txt=txt.."\n"end end if ln then ln.Text=txt end end end
 w.ctb=function(tscr,nm,cont)local td={name=nm or"Tab "..tc,content=cont or"-- New Tab\nprint('Hello from "..(nm or"Tab "..tc).."!')",id=tc}local tf=nf(tscr,{c=Color3.fromRGB(20,25,32),s=UDim2.new(0,140,0.7,0),p=UDim2.new(0,0,0.15,0),n="TabFrame"..td.id})nc(tf,0.2)ns(tf,1,Color3.fromRGB(35,39,54))ng(tf,Color3.fromRGB(166,190,255),Color3.fromRGB(93,117,160))local tbb=nb(tf,{bt=1,s=UDim2.new(0.8,0,1,0),p=UDim2.new(0,0,0,0),t=td.name,tc=Color3.fromRGB(29,29,38),ts=16,n="TabBtn"..td.id,sc=true,z=2,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(tbb,16)local cb=nf(tf,{c=Color3.fromRGB(200,100,100),s=UDim2.new(0,18,0,18),p=UDim2.new(1,-22,0,4),n="CloseFrame",z=3})nc(cb,0.4)ng(cb,Color3.fromRGB(200,100,100),Color3.fromRGB(150,50,50))local cbb=nb(cb,{bt=1,s=UDim2.new(1,0,1,0),t="×",tc=Color3.fromRGB(255,255,255),ts=14,n="CloseBtn",z=4,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(cbb,14)td.button,td.closeButton,td.frame=tbb,cbb,tf tb[td.id]=td tbb.MouseButton1Click:Connect(function()w.swt(td.id)end)cbb.MouseButton1Click:Connect(function()w.clt(td.id,tscr)end)tscr.CanvasSize=UDim2.new(0,tscr.UIListLayout.AbsoluteContentSize.X,0,0)tc=tc+1 w.st()return td.id,tbb,cbb end
@@ -244,95 +369,30 @@ w.gct=function()return ct end
 w.gt=function()return tb end
 w.sh=function()w.aio()end
 w.hd=function()w.aic()end
-
-w.ckv=function()
-    local vf=nf(g["11"],{c=Color3.fromRGB(16,19,27),s=UDim2.new(1,0,1,0),p=UDim2.new(0,0,0,0),n="KeyVerify",z=100})
-    local mf=nf(vf,{c=Color3.fromRGB(25,30,40),s=UDim2.new(0.4,0,0.5,0),p=UDim2.new(0.3,0,0.25,0),n="MainFrame"})nc(mf,0.03)ns(mf,2,Color3.fromRGB(60,70,90))
-    local tl=nt(mf,{t="🔐 Key Verification",ts=24,tc=Color3.fromRGB(255,255,255),bt=1,s=UDim2.new(0.9,0,0.15,0),p=UDim2.new(0.05,0,0.05,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal)})ntc(tl,24)
-    local sl=nt(mf,{t="Verifying access...",ts=16,tc=Color3.fromRGB(200,200,200),bt=1,s=UDim2.new(0.9,0,0.1,0),p=UDim2.new(0.05,0,0.22,0),sc=true,ff=Font.new(c[1],Enum.FontWeight.Medium,Enum.FontStyle.Normal),n="StatusLabel"})ntc(sl,16)
-    local ib=ntb(mf,{c=Color3.fromRGB(35,40,50),s=UDim2.new(0.9,0,0.12,0),p=UDim2.new(0.05,0,0.35,0),t="",ts=16,tc=Color3.fromRGB(255,255,255),pc=Color3.fromRGB(150,150,150),n="KeyInput",cf=true,v=false})nc(ib,0.02)ns(ib,1,Color3.fromRGB(60,70,90))
-    local sb=nb(mf,{c=Color3.fromRGB(100,200,100),s=UDim2.new(0.9,0,0.12,0),p=UDim2.new(0.05,0,0.5,0),t="Submit Key",tc=Color3.fromRGB(255,255,255),ts=16,n="SubmitBtn",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal),v=false})nc(sb,0.02)
-    local l1=nb(mf,{c=Color3.fromRGB(40,120,220),s=UDim2.new(0.43,0,0.1,0),p=UDim2.new(0.05,0,0.65,0),t="Get Key (Linkvertise)",tc=Color3.fromRGB(255,255,255),ts=14,n="Link1",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal),v=false})nc(l1,0.02)
-    local l2=nb(mf,{c=Color3.fromRGB(220,40,40),s=UDim2.new(0.43,0,0.1,0),p=UDim2.new(0.52,0,0.65,0),t="Get Key (Lootlabs)",tc=Color3.fromRGB(255,255,255),ts=14,n="Link2",ff=Font.new(c[1],Enum.FontWeight.Bold,Enum.FontStyle.Normal),v=false})nc(l2,0.02)
-    local pb=nf(mf,{c=Color3.fromRGB(30,35,45),s=UDim2.new(0.9,0,0.08,0),p=UDim2.new(0.05,0,0.8,0),n="ProgressBg"})nc(pb,0.1)
-    local pr=nf(pb,{c=Color3.fromRGB(100,150,255),s=UDim2.new(0,0,1,0),p=UDim2.new(0,0,0,0),n="ProgressBar"})nc(pr,0.1)ng(pr,Color3.fromRGB(100,150,255),Color3.fromRGB(50,100,200))
-    
-    local function ukv(k)
-        if#k==32 then
-            sl.Text="Checking key..."
-            local tw=tws:Create(pr,TweenInfo.new(1,Enum.EasingStyle.Quad),{Size=UDim2.new(0.7,0,1,0)})tw:Play()
-            local st=api.check_key(k)
-            if st.code=="KEY_VALID"then
-                if st.data.note==""then
-                    tw=tws:Create(pr,TweenInfo.new(0.5,Enum.EasingStyle.Quad),{Size=UDim2.new(1,0,1,0)})tw:Play()
-                    sl.Text="✅ Key Valid! Loading..."
-                    s(k)
-                    at=st.data.auth_expire
-                    kv=true
-                    dtc.pushautoexec()
-                    w.sa("Success","Access granted! Time left: "..string.format("%dh %dm %ds",f(at)),3)
-                    spawn(function()wait(2)vf:Destroy()w.iwa()end)
-                else
-                    sl.Text="❌ HWID Reset Required"
-                    w.sa("Error",st.data.note,5)
-                end
-            else
-                sl.Text="❌ Invalid Key"
-                w.sa("Error","Invalid key provided!",3)
-            end
-        else
-            sl.Text="❌ Key must be 32 characters"
-            w.sa("Error","Key must be 32 characters!",2)
-        end
-    end
-    
-    sb.MouseButton1Click:Connect(function()ukv(ib.Text)end)
-    ib.FocusLost:Connect(function(ep)if ep then ukv(ib.Text)end end)
-    l1.MouseButton1Click:Connect(function()e.sc("https://ads.luarmor.net/v/cb/dwQQOBvvyFOS/GwwwrPjgoGMNFjlB")w.sa("Success","Linkvertise link copied!",2)end)
-    l2.MouseButton1Click:Connect(function()e.sc("https://ads.luarmor.net/v/cb/OwAyyGgObIDY/MHkWoGnuWBlfakdA")w.sa("Success","Lootlabs link copied!",2)end)
-    
-    local saved=g()
-    if saved then
-        sl.Text="Checking saved key..."
-        local tw=tws:Create(pr,TweenInfo.new(1,Enum.EasingStyle.Quad),{Size=UDim2.new(0.5,0,1,0)})tw:Play()
-        local st=api.check_key(saved)
-        if st.code=="KEY_VALID"then
-            if st.data.note==""then
-                tw=tws:Create(pr,TweenInfo.new(0.5,Enum.EasingStyle.Quad),{Size=UDim2.new(1,0,1,0)})tw:Play()
-                sl.Text="✅ Saved Key Valid! Loading..."
-                at=st.data.auth_expire
-                kv=true
-                dtc.pushautoexec()
-                w.sa("Success","Access granted! Time left: "..string.format("%dh %dm %ds",f(at)),3)
-                spawn(function()wait(2)vf:Destroy()w.iwa()end)
-            else
-                sl.Text="❌ HWID Reset Required"
-                ib.Visible,sb.Visible,l1.Visible,l2.Visible=true,true,true,true
-                ib.PlaceholderText="Enter your key..."
-                w.sa("Error",st.data.note,5)
-            end
-        else
-            sl.Text="❌ Saved Key Invalid - Enter New Key"
-            ib.Visible,sb.Visible,l1.Visible,l2.Visible=true,true,true,true
-            ib.PlaceholderText="Enter your key..."
-            w.sa("Error","Saved key is invalid!",3)
-        end
-    else
-        sl.Text="No saved key found - Enter Key"
-        ib.Visible,sb.Visible,l1.Visible,l2.Visible=true,true,true,true
-        ib.PlaceholderText="Enter your key..."
-    end
-    
-    return vf
-end
-
-w.iwa=function()ha=true local sb,uc,edc,coc,exc,scc,muc,sl=w.csid()spawn(function()local ed,src,ln,tscr,at,eb,cb,pb,ecb,svb,aeb=w.ce()local cop=w.ccp()local exp=w.cep()local scp,updateScriptList=w.cscp()local mup=w.cmu()local se=function()local tr=w.rt(tscr)if not tr then local mt=w.ctb(tscr,"Main","-- FrostWare V2 Editor\nprint('Hello World!')")w.swt(mt)else local ct=w.gct()w.swt(ct)end w.ul(src,ln)src:GetPropertyChangedSignal("Text"):Connect(function()w.ul(src,ln)local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=src.Text spawn(function()wait(0.5)w.st()end)end end)at.MouseButton1Click:Connect(function()local ni,tbb,cbb=w.ctb(tscr,"New Tab","-- New Tab\nprint('Hello!')")w.swt(ni)end)end local sbt=function()eb.MouseButton1Click:Connect(function()if not kv then w.sa("Error","Key verification required!",2)return end local cd=src.Text if cd and cd~=""then ee=true local suc,res=pcall(function()return loadstring(cd)end)if suc and res then local es,er=pcall(res)if es then w.al("Script executed successfully","editor",true,true)else w.al("Execution error: "..tostring(er),"error",true,true)end else w.al("Compilation error: "..tostring(res),"error",true,true)end ee=false end end)cb.MouseButton1Click:Connect(function()src.Text=""local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=""end w.ul(src,ln)w.st()end)pb.MouseButton1Click:Connect(function()local cb=e.gc()if cb~=""then src.Text=cb local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=cb end w.ul(src,ln)w.st()end end)ecb.MouseButton1Click:Connect(function()if not kv then w.sa("Error","Key verification required!",2)return end local cb=e.gc()if cb~=""then ee=true local suc,res=pcall(function()return loadstring(cb)end)if suc and res then local es,er=pcall(res)if es then w.al("Clipboard script executed successfully","editor",true,true)else w.al("Clipboard execution error: "..tostring(er),"error",true,true)end else w.al("Clipboard compilation error: "..tostring(res),"error",true,true)end ee=false end end)svb.MouseButton1Click:Connect(function()local script=src.Text if script~=""then w.showSaveDialog(script,function(name,script)ssv[name]=script if sul then sul()end w.ss()w.sa("Success","Script save: "..name,2)end)else w.sa("Error","Editor is empty!",2)end end)aeb.MouseButton1Click:Connect(function()w.autoExec()end)end local sbc=function()edc.MouseButton1Click:Connect(function()w.sp("Editor",sb)end)coc.MouseButton1Click:Connect(function()w.sp("Console",sb)end)exc.MouseButton1Click:Connect(function()w.sp("Extra",sb)end)scc.MouseButton1Click:Connect(function()w.sp("Scripts",sb)updateScriptList()end)muc.MouseButton1Click:Connect(function()w.sp("Music",sb)end)sl.MouseButton1Click:Connect(function()w.hd()end)end se()sbt()sbc()w.sp("Editor",sb)w.sh()end)end
-
+w.iwa=function()if not key_verified then return end ha=true local sb,uc,edc,coc,exc,scc,muc,sl=w.csid()spawn(function()local ed,src,ln,tscr,at,eb,cb,pb,ecb,svb,aeb=w.ce()local cop=w.ccp()local exp=w.cep()local scp,updateScriptList=w.cscp()local mup=w.cmu()local se=function()local tr=w.rt(tscr)if not tr then local mt=w.ctb(tscr,"Main","-- FrostWare V2 Editor\nprint('Hello World!')")w.swt(mt)else local ct=w.gct()w.swt(ct)end w.ul(src,ln)src:GetPropertyChangedSignal("Text"):Connect(function()w.ul(src,ln)local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=src.Text spawn(function()wait(0.5)w.st()end)end end)at.MouseButton1Click:Connect(function()local ni,tbb,cbb=w.ctb(tscr,"New Tab","-- New Tab\nprint('Hello!')")w.swt(ni)end)end local sbt=function()eb.MouseButton1Click:Connect(function()local cd=src.Text if cd and cd~=""then ee=true local suc,res=pcall(function()return loadstring(cd)end)if suc and res then local es,er=pcall(res)if es then w.al("Script executed successfully","editor",true,true)else w.al("Execution error: "..tostring(er),"error",true,true)end else w.al("Compilation error: "..tostring(res),"error",true,true)end ee=false end end)cb.MouseButton1Click:Connect(function()src.Text=""local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=""end w.ul(src,ln)w.st()end)pb.MouseButton1Click:Connect(function()local cb=e.gc()if cb~=""then src.Text=cb local ct=w.gct()local tb=w.gt()if tb[ct]then tb[ct].content=cb end w.ul(src,ln)w.st()end end)ecb.MouseButton1Click:Connect(function()local cb=e.gc()if cb~=""then ee=true local suc,res=pcall(function()return loadstring(cb)end)if suc and res then local es,er=pcall(res)if es then w.al("Clipboard script executed successfully","editor",true,true)else w.al("Clipboard execution error: "..tostring(er),"error",true,true)end else w.al("Clipboard compilation error: "..tostring(res),"error",true,true)end ee=false end end)svb.MouseButton1Click:Connect(function()local script=src.Text if script~=""then w.showSaveDialog(script,function(name,script)ssv[name]=script if sul then sul()end w.ss()w.sa("Success","Script saved: "..name,2)end)else w.sa("Warn","No script to save!",2)end end)aeb.MouseButton1Click:Connect(function()w.autoExec()end)end local sn=function()edc.MouseButton1Click:Connect(function()w.sp("Editor",sb)end)coc.MouseButton1Click:Connect(function()w.sp("Console",sb)end)exc.MouseButton1Click:Connect(function()w.sp("Extra",sb)end)scc.MouseButton1Click:Connect(function()w.sp("Scripts",sb)end)muc.MouseButton1Click:Connect(function()w.sp("Music",sb)end)sl.MouseButton1Click:Connect(function()w.hd()end)end se()sbt()sn()w.sp("Editor",sb)spawn(function()wait(1)w.al("FrostWare Console initialized","info")w.al("Console captures print(), warn(), and error() automatically","info")w.al("Loading saved scripts...","info")local cnt=0 for _ in pairs(ssv)do cnt=cnt+1 end w.al("Loaded "..cnt.." saved scripts","info")w.al("Anti AFK enabled by default","info")w.al("Auto Rejoin enabled by default","info")w.al("Music system loaded! 🎵","info")print("FrostWare V2 Enhanced loaded successfully!")end)end)end
 op,ow,oe=print,warn,error
 print=function(...)local ar={...}local mg=""for i,v in ipairs(ar)do mg=mg..tostring(v)if i<#ar then mg=mg.." "end end if not ee then w.al(mg,"info")end op(...)end
 warn=function(...)local ar={...}local mg=""for i,v in ipairs(ar)do mg=mg..tostring(v)if i<#ar then mg=mg.." "end end if not ee then w.al(mg,"warn")end ow(...)end
 error=function(...)local ar={...}local mg=""for i,v in ipairs(ar)do mg=mg..tostring(v)if i<#ar then mg=mg.." "end end if not ee then w.al(mg,"error")end oe(...)end
 ls.MessageOut:Connect(function(msg,mt)if not ee then if mt==Enum.MessageType.MessageError then w.al(msg,"error")elseif mt==Enum.MessageType.MessageWarning then w.al(msg,"warn")elseif mt==Enum.MessageType.MessageInfo then w.al(msg,"info")else w.al(msg,"info")end end end)
 
-w.cbu() -- Initialize the main UI elements (g["1"], g["3"], etc.)
-w.ckv() -- Start the key verification process
+local function ki()
+    key_api=loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
+    key_api.script_id="87fdf6d3de83847864dfa76f8eb36be6"
+    
+    if kv() then
+        local ui,oc=w.cbu()
+        spawn(function()while wait(1)do w.ut()end end)
+        w.sh()
+        w.iwa()
+        w.startAntiAfk()
+        w.startAutoRejoin()
+        if abn then abn.BackgroundColor3=are and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)end
+        if bbn then bbn.BackgroundColor3=ben and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)end
+        if ncn then ncn.BackgroundColor3=nce and Color3.fromRGB(93,117,160)or Color3.fromRGB(166,190,255)end
+        oc.MouseButton1Click:Connect(function()w.sh()end)
+        spawn(function()repeat wait(0.1)until game:IsLoaded()and game.Players.LocalPlayer and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")w.autoExec()end)
+    end
+end
+
+ki()
