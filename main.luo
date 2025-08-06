@@ -1,9 +1,3 @@
-setreadonly(dtc,false)
-dtc.securestring=function()end
-dtc._securestring=function()end
-setreadonly(dtc,true)
-dtc.pushautoexec()
-
 local w={}
 local e={}
 local s={"RunService","Players","TweenService","MarketplaceService","UserInputService","LogService","CoreGui","HttpService","Lighting"}
@@ -45,9 +39,6 @@ local play_status_label=nil
 local progress_bar=nil
 local time_label=nil
 
-local api=loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
-api.script_id="87fdf6d3de83847864dfa76f8eb36be6"
-
 local ap=function(o,pr)if pr then for k,v in pairs(pr)do o[m[k]or k]=v end end return o end
 local ni=function(t,p,pr)return ap(Instance.new(t,p),pr)end
 local nf=function(p,pr)return ni(u[2],p,pr)end
@@ -62,11 +53,7 @@ local nc=function(p,r)return ap(ni(u[10],p),{CornerRadius=UDim.new(r or 0,0)})en
 local ns=function(p,th,col)return ap(ni(u[11],p),{Thickness=th,Color=col,ApplyStrokeMode=Enum.ApplyStrokeMode.Border})end
 local ntc=function(p,max)return ap(ni(u[12],p),{MaxTextSize=max})end
 local nar=function(p,ratio)return ap(ni(u[13],p),{AspectRatio=ratio})end
-
-local function gk()return e.iff("FrostWare/key.txt")and e.rf("FrostWare/key.txt")or nil end
-local function ft(e)local d=e-os.time()if d<=0 then return 999,59,59 end local M=math.floor(d/2592000)d=d%2592000 local D=math.floor(d/86400)d=d%86400 local H=math.floor(d/3600)d=d%3600 local m=math.floor(d/60)local s=d%60 return H,m,s end
-local function vk()local saved=gk()if saved then local status=api.check_key(saved)if status.code=="KEY_VALID"and status.data.note==""then return ft(status.data.auth_expire)end end return 999,59,59 end
-local gvt=e.f(vk)
+local gvt=e.f(function()return 999,59,59 end)
 
 local function ed1(dir)if not e.isf(dir)then e.mf(dir)end end
 local function ft1(sec)local m=math.floor((sec or 0)/60)local s=math.floor((sec or 0)%60)return string.format("%02d:%02d",m,s)end
