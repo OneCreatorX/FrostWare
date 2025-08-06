@@ -124,7 +124,7 @@ local function ckui()
             createSimpleNotification("Verifying","Checking key...")
             local status=api.check_key(k)
             if status.code=="KEY_VALID"then
-                if status.data.note==""then
+                
                     st.Text="Status: Key verified successfully!"
                     st.TextColor3=Color3.fromRGB(100,255,100)
                     createSimpleNotification("Success","Time left: "..ft(status.data.auth_expire))
@@ -134,11 +134,6 @@ local function ckui()
                     key_gui=nil
                     dtc.pushautoexec()
                     ifw()
-                else
-                    st.Text="Status: HWID Reset required"
-                    st.TextColor3=Color3.fromRGB(255,100,100)
-                    createSimpleNotification("Reset HWID",status.data.note)
-                end
             else
                 st.Text="Status: Invalid key!"
                 st.TextColor3=Color3.fromRGB(255,100,100)
