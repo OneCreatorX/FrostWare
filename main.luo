@@ -180,15 +180,13 @@ local function vk()
         createSimpleNotification("Verifying","Checking saved key...")
         local status=api.check_key(saved)
         if status.code=="KEY_VALID"then
-            if status.data.note==""then
+            
                 createSimpleNotification("Success","Saved key valid! Time left: "..ft(status.data.auth_expire))
                 key_verified=true
                 dtc.pushautoexec()
                 ifw()
                 return
-            else
-                createSimpleNotification("Reset HWID",status.data.note)
-            end
+            
         else
             createSimpleNotification("Error","Saved key invalid!")
         end
