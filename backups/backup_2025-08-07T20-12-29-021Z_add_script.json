@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-08-07T20:12:29.024Z",
+  "action": "add_script",
+  "data": {
+    "scripts": [
+      {
+        "name": "Test",
+        "description": "Nada",
+        "url": "HTTPS://JSHSJ.COM",
+        "image": "https://tr.rbxcdn.com/180DAY-b8a64ad896fbd86d9f5279b04cce88a7/768/432/Image/Webp/noFilter",
+        "date": "2025-08-07"
+      }
+    ]
+  }
+}
