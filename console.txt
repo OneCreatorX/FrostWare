@@ -47,11 +47,19 @@ local limit=50
 local enabled=true
 local entries={}
 local setcb=setclipboard or toclipboard or (syn and syn.write_clipboard)
-local function autoscroll()
-task.defer(function()
-list.CanvasPosition=Vector2.new(0,math.max(0,list.AbsoluteCanvasSize.Y-list.AbsoluteSize.Y))
-end)
+local function isNearBottom()
+local maxY=math.max(0,list.AbsoluteCanvasSize.Y-list.AbsoluteSize.Y)
+return list.CanvasPosition.Y>=maxY-24
 end
+local follow=false
+list:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+follow=isNearBottom()
+end)
+list:GetPropertyChangedSignal("AbsoluteCanvasSize"):Connect(function()
+if follow then
+list.CanvasPosition=Vector2.new(0,math.max(0,list.AbsoluteCanvasSize.Y-list.AbsoluteSize.Y))
+end
+end)
 local function mkEntry(text,color)
 local row=x("fr",list,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0,0),ps=u(0,0,0,0),AutomaticSize=Enum.AutomaticSize.Y})
 x("uc",row,{cr=D(0.12,0)})
@@ -75,7 +83,9 @@ if #entries>limit then
 local first=table.remove(entries,1)
 if first and first.node then first.node:Destroy() end
 end
-autoscroll()
+if follow then
+list.CanvasPosition=Vector2.new(0,math.max(0,list.AbsoluteCanvasSize.Y-list.AbsoluteSize.Y))
+end
 end
 y(btnEn,function()
 enabled=not enabled
