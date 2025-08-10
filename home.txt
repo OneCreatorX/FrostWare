@@ -1,4 +1,4 @@
-addTab("Home",{icon=A.d},function(frame)
+addTab("Home ❄️",{icon=A.d},function(frame)
   local title=x("tl",frame,{n="Title",tx="Home",txw=true,tfx=E.lx,tfy=E.ly,txsc=true,txs=26,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=UDim2.new(0.9,0,0,36),ps=UDim2.new(0.05,0,0.06,0)})
   local card=x("fr",frame,{n="HomeCard",bs=0,bc=C.g1,bt=0,sz=UDim2.new(0.9,0,0.7,0),ps=UDim2.new(0.05,0,0.18,0)})
   x("uc",card,{cr=D(0.04,0)})
