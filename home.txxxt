@@ -1,36 +1,59 @@
-addTab("Home",A.e,function(page)
-local wrap=x("fr",page,{bs=0,bc=C.w,bt=1,sz=u(0.92,0,0.92,0),ps=u(0.04,0,0.04,0)})
-local title=x("tl",wrap,{txw=true,tfx=E.lx,tfy=E.ly,txs=28,ft=F(R..A.i,E.b,E.n),tc=C.w,bt=1,sz=u(0.5,0,0,32),ps=u(0,0,0,0),tx="Home"})
-local info=x("tl",wrap,{txw=true,tfx=E.lx,tfy=E.ly,txs=18,ft=F(R..A.i,E.r,E.n),tc=C.t2,bt=1,sz=u(1,0,0,130),ps=u(0,0,0,40),tx="Cargando..."})
-local cards=x("fr",wrap,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,110),ps=u(0,0,0,180)})
-local function mkcard(p,lab,clr,posX)
-local c=x("fr",p,{bs=0,bc=C.g2,bt=0,sz=u(0.32,0,1,0),ps=u(posX,0,0,0)})
+addTab("Home","https://img.icons8.com/ios-filled/256/ffffff/home.png",function(page)
+if not T.sf then T.sf="ScrollingFrame" end
+local sc=x("sf",page,{bs=0,bc=C.w,bt=1,sz=u(1,0,1,0),ps=u(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarImageTransparency=0.4})
+sc.Active=true
+local pad=Instance.new("UIPadding")
+pad.PaddingLeft=D(0,16) pad.PaddingRight=D(0,16) pad.PaddingTop=D(0,16) pad.PaddingBottom=D(0,16)
+pad.Parent=sc
+local layout=Instance.new("UIListLayout")
+layout.Parent=sc
+layout.FillDirection=Enum.FillDirection.Vertical
+layout.HorizontalAlignment=Enum.HorizontalAlignment.Left
+layout.SortOrder=Enum.SortOrder.LayoutOrder
+layout.Padding=D(0,12)
+local title=x("tl",sc,{txw=true,tfx=E.lx,tfy=E.ly,txs=28,ft=F(R..A.i,E.b,E.n),tc=C.w,bt=1,sz=u(1,0,0,36),ps=u(0,0,0,0),tx="Home"})
+local info=x("tl",sc,{txw=true,tfx=E.lx,tfy=E.ly,txs=18,ft=F(R..A.i,E.r,E.n),tc=C.t2,bt=1,sz=u(1,0,0,0),ps=u(0,0,0,0),tx="Loading...",AutomaticSize=Enum.AutomaticSize.Y})
+local cards=x("fr",sc,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,0),ps=u(0,0,0,0),AutomaticSize=Enum.AutomaticSize.Y})
+local grid=Instance.new("UIGridLayout")
+grid.Parent=cards
+grid.FillDirection=Enum.FillDirection.Horizontal
+grid.SortOrder=Enum.SortOrder.LayoutOrder
+grid.HorizontalAlignment=Enum.HorizontalAlignment.Left
+grid.CellPadding=U2 and U2.new or UDim2.new
+grid.CellPadding=UDim2.new(0,10,0,10)
+grid.CellSize=UDim2.new(0.32,0,0,90)
+local function mkcard(p,lab,clr)
+local c=x("fr",p,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0,90)})
 x("uc",c,{cr=D(0.16,0)})
 x("us",c,{ar=E.a,th=1,Color=C.st})
-local l=x("tl",c,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=u(1,-20,0,22),ps=u(0,10,0,10),tx=lab})
+x("tl",c,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=u(1,-20,0,22),ps=u(0,10,0,10),tx=lab})
 local v=x("tl",c,{txw=true,tfx=E.lx,tfy=E.ly,txs=26,ft=F(R..A.i,E.b,E.n),tc=clr,bt=1,sz=u(1,-20,0,40),ps=u(0,10,0,40),tx="0"})
 return v
 end
-local vFps=mkcard(cards,"FPS",C.a1,0.0)
-local vPing=mkcard(cards,"Ping (ms)",C.t2,0.34)
-local vMem=mkcard(cards,"Memoria (MB)",r(255,180,120),0.68)
-local graphs=x("fr",wrap,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,200),ps=u(0,0,0,300)})
-local function mkspark(p,lab,clr,posY)
-local box=x("fr",p,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0,90),ps=u(0,0,0,posY)})
+local vFps=mkcard(cards,"FPS",C.a1)
+local vPing=mkcard(cards,"Ping (ms)",C.t2)
+local vMem=mkcard(cards,"Memory (MB)",r(255,180,120))
+local graphs=x("fr",sc,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,0),ps=u(0,0,0,0),AutomaticSize=Enum.AutomaticSize.Y})
+local gl=Instance.new("UIListLayout")
+gl.Parent=graphs
+gl.FillDirection=Enum.FillDirection.Vertical
+gl.HorizontalAlignment=Enum.HorizontalAlignment.Left
+gl.SortOrder=Enum.SortOrder.LayoutOrder
+gl.Padding=D(0,10)
+local function mkspark(p,lab,clr)
+local box=x("fr",p,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0,90)})
 x("uc",box,{cr=D(0.12,0)})
 x("us",box,{ar=E.a,th=1,Color=C.st})
 x("tl",box,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=u(1,-20,0,20),ps=u(0,10,0,8),tx=lab})
 local area=x("fr",box,{bs=0,bc=C.w,bt=1,sz=u(1,-20,0,40),ps=u(0,10,0,38),ci=true})
 local n=60
-local slots={}
 local fills={}
+local vals={}
 for i=0,n-1 do
 local sl=x("fr",area,{bs=0,bc=C.w,bt=1,sz=u(1/n,0,1,0),ps=u(i/n,0,0,0)})
 local fi=x("fr",sl,{bs=0,bc=clr,bt=0,sz=u(1,0,0.1,0),ps=u(0,0,0.9,0)})
-slots[#slots+1]=sl
 fills[#fills+1]=fi
 end
-local vals={}
 local function push(v)
 vals[#vals+1]=v
 if #vals>n then table.remove(vals,1) end
@@ -45,14 +68,12 @@ end
 end
 return push
 end
-local pushFps=mkspark(graphs,"FPS",C.a1,0)
-local pushPing=mkspark(graphs,"Ping",C.t2,98)
+local pushFps=mkspark(graphs,"FPS",C.a1)
+local pushPing=mkspark(graphs,"Ping",C.t2)
 local RS=G.RunService
 local PS=G.Players
 local ST=G.Stats
-local plr=PS.LocalPlayer
 local fps=60
-local last=os.clock()
 RS.RenderStepped:Connect(function(dt)
 local inst=1/math.max(dt,1/1000)
 fps=fps*0.9+inst*0.1
@@ -77,7 +98,7 @@ end)
 vFps.Text=tostring(math.floor(fps+0.5))
 vPing.Text=tostring(math.floor(ping+0.5))
 vMem.Text=tostring(mem)
-info.Text="Bienvenido\n\nEstado del juego:\nJugadores: "..cnt.."/"..maxp.."\nPlaceId: "..place.."\nJobId: "..job.."\nVersión: "..ver.."\nHora: "..now
+info.Text="Welcome\n\nGame status:\nPlayers: "..cnt.."/"..maxp.."\nPlaceId: "..place.."\nJobId: "..job.."\nVersion: "..ver.."\nTime: "..now
 pushFps(fps/120)
 pushPing(ping/300)
 task.wait(0.25)
