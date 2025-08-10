@@ -1,1 +1,16 @@
-FrostWare Exploit level 8 - This is v2 UI Beta - Rebuild
+addTab("Home",A.e,function(frame)
+    local cont=x("fr",frame,{n="HomeFrame",bs=0,bc=C.w,bt=1,sz=u(0.9,0,0.9,0),ps=u(0.05,0,0.05,0)})
+    local txt=x("tl",cont,{n="HomeText",txw=true,tfx=E.lx,tfy=E.ly,txs=18,ft=F(R..A.i,E.n,E.n),tc=C.w,bt=1,sz=u(1,0,1,0),ps=u(0,0,0,0),tx=[[
+Welcome FrostWare
+
+Exploit Level 8
+
+OP Exploit 100% compatible - Fast Key System
+]]})
+    x("ux",txt,{mx=40})
+    txt.TextWrapped=true
+    txt.TextXAlignment=Enum.TextXAlignment.Left
+    txt.TextYAlignment=Enum.TextYAlignment.Top
+    txt.BackgroundTransparency=1
+    txt.Visible=true
+end)
