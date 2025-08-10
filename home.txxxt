@@ -1,23 +1,86 @@
-addTab("Home",{icon=A.d},function(frame)
-  local title=x("tl",frame,{n="Title",tx="Frostwere UI 2 - Beta ❄️",txw=true,tfx=E.lx,tfy=E.ly,txsc=true,txs=26,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=UDim2.new(0.9,0,0,36),ps=UDim2.new(0.05,0,0.06,0)})
-  local card=x("fr",frame,{n="HomeCard",bs=0,bc=C.g1,bt=0,sz=UDim2.new(0.9,0,0.7,0),ps=UDim2.new(0.05,0,0.18,0)})
-  x("uc",card,{cr=D(0.04,0)})
-  local stroke=x("us",card,{ar=E.a,th=10})
-  stroke.Color=C.st
- terr = " Welcome FrostWare Exploit level 8 - Ultimate use"
-  local homeLabel=Instance.new("TextLabel")
-  homeLabel.Name="HomeText"
-  homeLabel.Parent=card
-  homeLabel.BackgroundTransparency=1
-  homeLabel.Size=UDim2.new(1,-24,1,-24)
-  homeLabel.Position=UDim2.new(0,12,0,12)
-  homeLabel.TextWrapped=true
-  homeLabel.TextXAlignment=E.lx
-  homeLabel.TextYAlignment=Enum.TextYAlignment.Top
-  homeLabel.FontFace=F(A.j,E.r,E.n)
-  homeLabel.TextSize=18
-  homeLabel.TextColor3=C.w
-  homeLabel.Text = terr 
-  homeLabel.Visible=true
-  x("ux",homeLabel,{mx=40})
+addTab("Home",A.e,function(page)
+local wrap=x("fr",page,{bs=0,bc=C.w,bt=1,sz=u(0.92,0,0.92,0),ps=u(0.04,0,0.04,0)})
+local title=x("tl",wrap,{txw=true,tfx=E.lx,tfy=E.ly,txs=28,ft=F(R..A.i,E.b,E.n),tc=C.w,bt=1,sz=u(0.5,0,0,32),ps=u(0,0,0,0),tx="Home"})
+local info=x("tl",wrap,{txw=true,tfx=E.lx,tfy=E.ly,txs=18,ft=F(R..A.i,E.r,E.n),tc=C.t2,bt=1,sz=u(1,0,0,130),ps=u(0,0,0,40),tx="Cargando..."})
+local cards=x("fr",wrap,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,110),ps=u(0,0,0,180)})
+local function mkcard(p,lab,clr,posX)
+local c=x("fr",p,{bs=0,bc=C.g2,bt=0,sz=u(0.32,0,1,0),ps=u(posX,0,0,0)})
+x("uc",c,{cr=D(0.16,0)})
+x("us",c,{ar=E.a,th=1,Color=C.st})
+local l=x("tl",c,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=u(1,-20,0,22),ps=u(0,10,0,10),tx=lab})
+local v=x("tl",c,{txw=true,tfx=E.lx,tfy=E.ly,txs=26,ft=F(R..A.i,E.b,E.n),tc=clr,bt=1,sz=u(1,-20,0,40),ps=u(0,10,0,40),tx="0"})
+return v
+end
+local vFps=mkcard(cards,"FPS",C.a1,0.0)
+local vPing=mkcard(cards,"Ping (ms)",C.t2,0.34)
+local vMem=mkcard(cards,"Memoria (MB)",r(255,180,120),0.68)
+local graphs=x("fr",wrap,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,200),ps=u(0,0,0,300)})
+local function mkspark(p,lab,clr,posY)
+local box=x("fr",p,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0,90),ps=u(0,0,0,posY)})
+x("uc",box,{cr=D(0.12,0)})
+x("us",box,{ar=E.a,th=1,Color=C.st})
+x("tl",box,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=u(1,-20,0,20),ps=u(0,10,0,8),tx=lab})
+local area=x("fr",box,{bs=0,bc=C.w,bt=1,sz=u(1,-20,0,40),ps=u(0,10,0,38),ci=true})
+local n=60
+local slots={}
+local fills={}
+for i=0,n-1 do
+local sl=x("fr",area,{bs=0,bc=C.w,bt=1,sz=u(1/n,0,1,0),ps=u(i/n,0,0,0)})
+local fi=x("fr",sl,{bs=0,bc=clr,bt=0,sz=u(1,0,0.1,0),ps=u(0,0,0.9,0)})
+slots[#slots+1]=sl
+fills[#fills+1]=fi
+end
+local vals={}
+local function push(v)
+vals[#vals+1]=v
+if #vals>n then table.remove(vals,1) end
+for i=1,n do
+local h=vals[i] or 0
+if h<0 then h=0 end
+if h>1 then h=1 end
+local fi=fills[i]
+fi.Size=u(1,0,h,0)
+fi.Position=u(0,0,1-h,0)
+end
+end
+return push
+end
+local pushFps=mkspark(graphs,"FPS",C.a1,0)
+local pushPing=mkspark(graphs,"Ping",C.t2,98)
+local RS=G.RunService
+local PS=G.Players
+local ST=G.Stats
+local plr=PS.LocalPlayer
+local fps=60
+local last=os.clock()
+RS.RenderStepped:Connect(function(dt)
+local inst=1/math.max(dt,1/1000)
+fps=fps*0.9+inst*0.1
+end)
+task.spawn(function()
+while page and page.Parent do
+local now=os.date("%X")
+local place=game.PlaceId
+local job=game.JobId
+local ver=game.PlaceVersion
+local cnt=#PS:GetPlayers()
+local maxp=PS.MaxPlayers
+local ping=0
+pcall(function()
+local s=ST.Network.ServerStatsItem["Data Ping"]:GetValueString()
+if s then local n=tonumber((s:match("%d+%.?%d*"))) if n then ping=n end end
+end)
+local mem=0
+pcall(function()
+mem=math.floor(ST:GetTotalMemoryUsageMb())
+end)
+vFps.Text=tostring(math.floor(fps+0.5))
+vPing.Text=tostring(math.floor(ping+0.5))
+vMem.Text=tostring(mem)
+info.Text="Bienvenido\n\nEstado del juego:\nJugadores: "..cnt.."/"..maxp.."\nPlaceId: "..place.."\nJobId: "..job.."\nVersión: "..ver.."\nHora: "..now
+pushFps(fps/120)
+pushPing(ping/300)
+task.wait(0.25)
+end
+end)
 end)
