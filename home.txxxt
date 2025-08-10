@@ -2,6 +2,7 @@ addTab("Home","https://img.icons8.com/ios-filled/256/ffffff/home.png",function(p
 if not T.sf then T.sf="ScrollingFrame" end
 local sc=x("sf",page,{bs=0,bc=C.w,bt=1,sz=u(1,0,1,0),ps=u(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarImageTransparency=0.4})
 sc.Active=true
+sc.ScrollBarThickness=6
 local pad=Instance.new("UIPadding")
 pad.PaddingLeft=D(0,16) pad.PaddingRight=D(0,16) pad.PaddingTop=D(0,16) pad.PaddingBottom=D(0,16)
 pad.Parent=sc
@@ -19,8 +20,8 @@ grid.Parent=cards
 grid.FillDirection=Enum.FillDirection.Horizontal
 grid.SortOrder=Enum.SortOrder.LayoutOrder
 grid.HorizontalAlignment=Enum.HorizontalAlignment.Left
-grid.CellPadding=U2 and U2.new or UDim2.new
 grid.CellPadding=UDim2.new(0,10,0,10)
+grid.FillDirectionMaxCells=3
 grid.CellSize=UDim2.new(0.32,0,0,90)
 local function mkcard(p,lab,clr)
 local c=x("fr",p,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0,90)})
@@ -70,6 +71,7 @@ return push
 end
 local pushFps=mkspark(graphs,"FPS",C.a1)
 local pushPing=mkspark(graphs,"Ping",C.t2)
+local pushMem=mkspark(graphs,"Memory",r(255,180,120))
 local RS=G.RunService
 local PS=G.Players
 local ST=G.Stats
@@ -85,7 +87,7 @@ local place=game.PlaceId
 local job=game.JobId
 local ver=game.PlaceVersion
 local cnt=#PS:GetPlayers()
-local maxp=PS.MaxPlayers
+local maxp=PS.MaxPlayers or 0
 local ping=0
 pcall(function()
 local s=ST.Network.ServerStatsItem["Data Ping"]:GetValueString()
@@ -99,8 +101,9 @@ vFps.Text=tostring(math.floor(fps+0.5))
 vPing.Text=tostring(math.floor(ping+0.5))
 vMem.Text=tostring(mem)
 info.Text="Welcome\n\nGame status:\nPlayers: "..cnt.."/"..maxp.."\nPlaceId: "..place.."\nJobId: "..job.."\nVersion: "..ver.."\nTime: "..now
-pushFps(fps/120)
-pushPing(ping/300)
+pushFps(math.clamp(fps/120,0,1))
+pushPing(math.clamp(ping/300,0,1))
+pushMem(math.clamp(mem/2048,0,1))
 task.wait(0.25)
 end
 end)
