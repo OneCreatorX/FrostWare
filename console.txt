@@ -1,0 +1,99 @@
+addTab("Console","https://img.icons8.com/ios-filled/256/ffffff/console.png",function(page)
+if not T.sf then T.sf="ScrollingFrame" end
+local sc=x("sf",page,{bs=0,bc=C.w,bt=1,sz=u(1,0,1,0),ps=u(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarImageTransparency=0.4})
+sc.Active=true
+sc.ScrollBarThickness=6
+local pad=Instance.new("UIPadding")
+pad.PaddingLeft=D(0,16) pad.PaddingRight=D(0,16) pad.PaddingTop=D(0,16) pad.PaddingBottom=D(0,16)
+pad.Parent=sc
+local layout=Instance.new("UIListLayout")
+layout.Parent=sc
+layout.FillDirection=Enum.FillDirection.Vertical
+layout.HorizontalAlignment=Enum.HorizontalAlignment.Left
+layout.SortOrder=Enum.SortOrder.LayoutOrder
+layout.Padding=D(0,12)
+local title=x("tl",sc,{txw=true,tfx=E.lx,tfy=E.ly,txs=28,ft=F(R..A.i,E.b,E.n),tc=C.w,bt=1,sz=u(1,0,0,36),ps=u(0,0,0,0),tx="Console"})
+local actions=x("fr",sc,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,0),ps=u(0,0,0,0),AutomaticSize=Enum.AutomaticSize.Y})
+local al=Instance.new("UIListLayout")
+al.Parent=actions
+al.FillDirection=Enum.FillDirection.Horizontal
+al.HorizontalAlignment=Enum.HorizontalAlignment.Left
+al.VerticalAlignment=Enum.VerticalAlignment.Center
+al.SortOrder=Enum.SortOrder.LayoutOrder
+al.Padding=D(0,10)
+local function mkbtn(parent,label)
+local b=x("tb",parent,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.s,E.n),tc=C.w,bt=0,bc=C.g2,bs=0,sz=u(0,140,0,36),ps=u(0,0,0,0),tx=label})
+x("uc",b,{cr=D(0.16,0)})
+x("us",b,{ar=E.a,th=1,Color=C.st})
+return b
+end
+local btnToggle=mkbtn(actions,"Disable")
+local btnClear=mkbtn(actions,"Clear")
+local btnCopyAll=mkbtn(actions,"Copy All")
+local list=x("sf",sc,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,0),ps=u(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarImageTransparency=0.5})
+list.Active=true
+list.ScrollBarThickness=6
+local lpad=Instance.new("UIPadding")
+lpad.PaddingLeft=D(0,0) lpad.PaddingRight=D(0,0) lpad.PaddingTop=D(0,0) lpad.PaddingBottom=D(0,0)
+lpad.Parent=list
+local ll=Instance.new("UIListLayout")
+ll.Parent=list
+ll.FillDirection=Enum.FillDirection.Vertical
+ll.HorizontalAlignment=Enum.HorizontalAlignment.Left
+ll.SortOrder=Enum.SortOrder.LayoutOrder
+ll.Padding=D(0,8)
+local LogService=G.LogService
+local limit=50
+local enabled=true
+local entries={}
+local setcb=setclipboard or toclipboard or (syn and syn.write_clipboard)
+local function autoscroll()
+task.defer(function()
+list.CanvasPosition=Vector2.new(0,math.max(0,list.AbsoluteCanvasSize.Y-list.AbsoluteSize.Y))
+end)
+end
+local function mkEntry(text,color)
+local btn=x("tb",list,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.r,E.n),tc=color,bt=0,bc=C.g2,bs=0,sz=u(1,0,0,0),ps=u(0,0,0,0),tx=text,AutomaticSize=Enum.AutomaticSize.Y})
+x("uc",btn,{cr=D(0.12,0)})
+x("us",btn,{ar=E.a,th=1,Color=C.st})
+y(btn,function()
+if setcb then pcall(function() setcb(text) end) end
+end)
+return btn
+end
+local function addLog(kind,msg)
+local color=C.t2
+if kind=="warn" then color=r(255,214,102) elseif kind=="error" then color=r(255,110,110) end
+local txt=msg
+local btn=mkEntry(txt,color)
+entries[#entries+1]={msg=txt,btn=btn}
+if #entries>limit then
+local first=table.remove(entries,1)
+if first and first.btn then first.btn:Destroy() end
+end
+autoscroll()
+end
+y(btnToggle,function()
+enabled=not enabled
+btnToggle.Text=enabled and "Disable" or "Enable"
+end)
+y(btnClear,function()
+for i=#entries,1,-1 do
+local it=entries[i]
+if it.btn then it.btn:Destroy() end
+entries[i]=nil
+end
+end)
+y(btnCopyAll,function()
+local acc={}
+for i=1,#entries do acc[i]=entries[i].msg end
+local text=table.concat(acc,"\n")
+if setcb and #text>0 then pcall(function() setcb(text) end) end
+end)
+LogService.MessageOut:Connect(function(message,messageType)
+if not enabled then return end
+local k="info"
+if messageType==Enum.MessageType.MessageWarning then k="warn" elseif messageType==Enum.MessageType.MessageError then k="error" end
+addLog(k,message)
+end)
+end)
