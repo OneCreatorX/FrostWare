@@ -14,72 +14,65 @@ layout.SortOrder=Enum.SortOrder.LayoutOrder
 layout.Padding=D(0,12)
 local title=x("tl",sc,{txw=true,tfx=E.lx,tfy=E.ly,txs=28,ft=F(R..A.i,E.b,E.n),tc=C.w,bt=1,sz=u(1,0,0,36),ps=u(0,0,0,0),tx="Home"})
 local info=x("tl",sc,{txw=true,tfx=E.lx,tfy=E.ly,txs=18,ft=F(R..A.i,E.r,E.n),tc=C.t2,bt=1,sz=u(1,0,0,0),ps=u(0,0,0,0),tx="Loading...",AutomaticSize=Enum.AutomaticSize.Y})
-local cards=x("fr",sc,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,0),ps=u(0,0,0,0),AutomaticSize=Enum.AutomaticSize.Y})
+local toolsTitle=x("tl",sc,{txw=true,tfx=E.lx,tfy=E.ly,txs=20,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=u(1,0,0,0),ps=u(0,0,0,0),tx="Quick Tools",AutomaticSize=Enum.AutomaticSize.Y})
+local tools=x("fr",sc,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,0),ps=u(0,0,0,0),AutomaticSize=Enum.AutomaticSize.Y})
 local grid=Instance.new("UIGridLayout")
-grid.Parent=cards
+grid.Parent=tools
 grid.FillDirection=Enum.FillDirection.Horizontal
 grid.SortOrder=Enum.SortOrder.LayoutOrder
 grid.HorizontalAlignment=Enum.HorizontalAlignment.Left
 grid.CellPadding=UDim2.new(0,10,0,10)
-grid.FillDirectionMaxCells=3
-grid.CellSize=UDim2.new(0.32,0,0,90)
-local function mkcard(p,lab,clr)
-local c=x("fr",p,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0,90)})
-x("uc",c,{cr=D(0.16,0)})
+grid.FillDirectionMaxCells=2
+grid.CellSize=UDim2.new(0.49,0,0,80)
+local function mktool(p,lab,iconUrl,cb)
+local c=x("fr",p,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0,80)})
+x("uc",c,{cr=D(0.14,0)})
 x("us",c,{ar=E.a,th=1,Color=C.st})
-x("tl",c,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=u(1,-20,0,22),ps=u(0,10,0,10),tx=lab})
-local v=x("tl",c,{txw=true,tfx=E.lx,tfy=E.ly,txs=26,ft=F(R..A.i,E.b,E.n),tc=clr,bt=1,sz=u(1,-20,0,40),ps=u(0,10,0,40),tx="0"})
-return v
+local ic=x("il",c,{st=E.f,ib=getIm(iconUrl),sz=u(0,56,0,56),ps=u(0,12,0,12),bt=1})
+local l=x("tl",c,{txw=true,tfx=E.lx,tfy=E.ly,txs=18,ft=F(R..A.i,E.s,E.n),tc=C.w,bt=1,sz=u(1,-88,1,-24),ps=u(0,80,0,12),tx=lab})
+local b=x("tb",c,{txw=true,bs=0,txs=14,tc=C.k,txsc=true,bc=C.w,ft=F(A.j,E.b,E.n),sz=u(1,0,1,0),bt=1,bd=C.k,tx=""})
+x("uc",b,{cr=D(0,16)})
+y(b,function() cb(b) end)
+return c
 end
-local vFps=mkcard(cards,"FPS",C.a1)
-local vPing=mkcard(cards,"Ping (ms)",C.t2)
-local vMem=mkcard(cards,"Memory (MB)",r(255,180,120))
-local graphs=x("fr",sc,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,0),ps=u(0,0,0,0),AutomaticSize=Enum.AutomaticSize.Y})
-local gl=Instance.new("UIListLayout")
-gl.Parent=graphs
-gl.FillDirection=Enum.FillDirection.Vertical
-gl.HorizontalAlignment=Enum.HorizontalAlignment.Left
-gl.SortOrder=Enum.SortOrder.LayoutOrder
-gl.Padding=D(0,10)
-local function mkspark(p,lab,clr)
-local box=x("fr",p,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0,90)})
-x("uc",box,{cr=D(0.12,0)})
-x("us",box,{ar=E.a,th=1,Color=C.st})
-x("tl",box,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=u(1,-20,0,20),ps=u(0,10,0,8),tx=lab})
-local area=x("fr",box,{bs=0,bc=C.w,bt=1,sz=u(1,-20,0,40),ps=u(0,10,0,38),ci=true})
-local n=60
-local fills={}
-local vals={}
-for i=0,n-1 do
-local sl=x("fr",area,{bs=0,bc=C.w,bt=1,sz=u(1/n,0,1,0),ps=u(i/n,0,0,0)})
-local fi=x("fr",sl,{bs=0,bc=clr,bt=0,sz=u(1,0,0.1,0),ps=u(0,0,0.9,0)})
-fills[#fills+1]=fi
-end
-local function push(v)
-vals[#vals+1]=v
-if #vals>n then table.remove(vals,1) end
-for i=1,n do
-local h=vals[i] or 0
-if h<0 then h=0 end
-if h>1 then h=1 end
-local fi=fills[i]
-fi.Size=u(1,0,h,0)
-fi.Position=u(0,0,1-h,0)
-end
-end
-return push
-end
-local pushFps=mkspark(graphs,"FPS",C.a1)
-local pushPing=mkspark(graphs,"Ping",C.t2)
-local pushMem=mkspark(graphs,"Memory",r(255,180,120))
+local iyUrl="https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"
+local dexUrl="https://raw.githubusercontent.com/peyton2465/Dex/master/out.lua"
+local iyIcon="https://img.icons8.com/ios-filled/100/ffffff/console.png"
+local dexIcon="https://img.icons8.com/ios-filled/100/ffffff/source-code.png"
+local launchedIY=false
+local launchedDex=false
+mktool(tools,"Launch Infinite Yield",iyIcon,function(btn)
+if launchedIY then return end
+launchedIY=true
+pcall(function()loadstring(game:HttpGet(iyUrl))()end)
+end)
+mktool(tools,"Launch Dex Explorer",dexIcon,function(btn)
+if launchedDex then return end
+launchedDex=true
+pcall(function()loadstring(game:HttpGet(dexUrl))()end)
+end)
+local detailsTitle=x("tl",sc,{txw=true,tfx=E.lx,tfy=E.ly,txs=20,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=u(1,0,0,0),ps=u(0,0,0,0),tx="Session Details",AutomaticSize=Enum.AutomaticSize.Y})
+local details=x("fr",sc,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0,0),ps=u(0,0,0,0),AutomaticSize=Enum.AutomaticSize.Y})
+x("uc",details,{cr=D(0.14,0)})
+x("us",details,{ar=E.a,th=1,Color=C.st})
+local detailText=x("tl",details,{txw=true,tfx=E.lx,tfy=E.ly,txs=18,ft=F(R..A.i,E.r,E.n),tc=C.w,bt=1,sz=u(1,-20,0,0),ps=u(0,10,0,10),tx="Loading...",AutomaticSize=Enum.AutomaticSize.Y})
 local RS=G.RunService
 local PS=G.Players
 local ST=G.Stats
-local fps=60
-RS.RenderStepped:Connect(function(dt)
-local inst=1/math.max(dt,1/1000)
-fps=fps*0.9+inst*0.1
+local MS=G.MarketplaceService
+local plr=PS.LocalPlayer
+local started=os.clock()
+local lastPlaceName="Place"
+task.spawn(function()
+pcall(function()
+local info=MS:GetProductInfo(game.PlaceId,Enum.InfoType.Asset)
+if info and info.Name then lastPlaceName=tostring(info.Name) end
 end)
+end)
+local function fmtVec3(v)
+if not v then return "N/A" end
+return tostring(math.floor(v.X))..","..tostring(math.floor(v.Y))..","..tostring(math.floor(v.Z))
+end
 task.spawn(function()
 while page and page.Parent do
 local now=os.date("%X")
@@ -88,23 +81,25 @@ local job=game.JobId
 local ver=game.PlaceVersion
 local cnt=#PS:GetPlayers()
 local maxp=PS.MaxPlayers or 0
-local ping=0
+local team="None"
+pcall(function() if plr.Team and plr.Team.Name then team=plr.Team.Name end end)
+local health="N/A"
+local posStr="N/A"
 pcall(function()
-local s=ST.Network.ServerStatsItem["Data Ping"]:GetValueString()
-if s then local n=tonumber((s:match("%d+%.?%d*"))) if n then ping=n end end
+local char=plr.Character
+if char then
+local hum=char:FindFirstChildOfClass("Humanoid")
+if hum then health=tostring(math.floor(hum.Health)) end
+local hrp=char:FindFirstChild("HumanoidRootPart")
+if hrp and hrp.Position then posStr=fmtVec3(hrp.Position) end
+end
 end)
-local mem=0
-pcall(function()
-mem=math.floor(ST:GetTotalMemoryUsageMb())
-end)
-vFps.Text=tostring(math.floor(fps+0.5))
-vPing.Text=tostring(math.floor(ping+0.5))
-vMem.Text=tostring(mem)
-info.Text="Welcome\n\nGame status:\nPlayers: "..cnt.."/"..maxp.."\nPlaceId: "..place.."\nJobId: "..job.."\nVersion: "..ver.."\nTime: "..now
-pushFps(math.clamp(fps/120,0,1))
-pushPing(math.clamp(ping/300,0,1))
-pushMem(math.clamp(mem/2048,0,1))
-task.wait(0.25)
+local cam=workspace:FindFirstChildWhichIsA("Camera")
+local fov="N/A"
+pcall(function() if cam then fov=tostring(math.floor(cam.FieldOfView)) end end)
+info.Text="Welcome\n\nUse Quick Tools below to open commonly used utilities."
+detailText.Text="Game: "..lastPlaceName.."\nPlaceId: "..place.."\nVersion: "..ver.."\nTime: "..now.."\nServer Uptime (s): "..tostring(math.floor(os.clock()-started)).."\nJobId: "..job.."\nPlayers: "..cnt.."/"..maxp.."\n\nPlayer: "..plr.Name.." ("..plr.UserId..")\nAccount Age (days): "..tostring(plr.AccountAge).."\nTeam: "..team.."\nHealth: "..health.."\nPosition: "..posStr.."\nCamera FOV: "..fov
+task.wait(0.5)
 end
 end)
 end)
