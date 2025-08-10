@@ -1,27 +1,23 @@
-addTab("Home ❄️",{icon=A.d},function(frame)
+addTab("Home",{icon=A.d},function(frame)
   local title=x("tl",frame,{n="Title",tx="Home",txw=true,tfx=E.lx,tfy=E.ly,txsc=true,txs=26,ft=F(R..A.i,E.s,E.n),tc=C.t2,bt=1,sz=UDim2.new(0.9,0,0,36),ps=UDim2.new(0.05,0,0.06,0)})
   local card=x("fr",frame,{n="HomeCard",bs=0,bc=C.g1,bt=0,sz=UDim2.new(0.9,0,0.7,0),ps=UDim2.new(0.05,0,0.18,0)})
   x("uc",card,{cr=D(0.04,0)})
   local stroke=x("us",card,{ar=E.a,th=10})
   stroke.Color=C.st
 
-  local homeText=Instance.new("TextLabel")
-  homeText.Name="HomeText"
-  homeText.Parent=card
-  homeText.BackgroundTransparency=1
-  homeText.Size=UDim2.new(1,-24,1,-24)
-  homeText.Position=UDim2.new(0,12,0,12)
-  homeText.ClearTextOnFocus=false
-  homeText.MultiLine=true
-  homeText.TextWrapped=true
-  homeText.TextXAlignment=E.lx
-  homeText.TextYAlignment=E.ly
-  homeText.FontFace=F(A.j,E.r,E.n)
-  homeText.TextSize=18
-  homeText.TextColor3=C.w
-  homeText.Text="Welcome FrostWare 
-Exploit Level 8
-
-Join community Discord .gg/getfrost"
-  homeText.Visible=true
+  local homeLabel=Instance.new("TextLabel")
+  homeLabel.Name="HomeText"
+  homeLabel.Parent=card
+  homeLabel.BackgroundTransparency=1
+  homeLabel.Size=UDim2.new(1,-24,1,-24)
+  homeLabel.Position=UDim2.new(0,12,0,12)
+  homeLabel.TextWrapped=true
+  homeLabel.TextXAlignment=E.lx
+  homeLabel.TextYAlignment=Enum.TextYAlignment.Top
+  homeLabel.FontFace=F(A.j,E.r,E.n)
+  homeLabel.TextSize=18
+  homeLabel.TextColor3=C.w
+  homeLabel.Text = "" 
+  homeLabel.Visible=true
+  x("ux",homeLabel,{mx=40})
 end)
