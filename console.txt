@@ -1,1 +1,114 @@
-spawn(function()pcall(function()repeat task.wait() until game:IsLoaded()local P=game:GetService("Players")local lp=P.LocalPlayer or P:GetPropertyChangedSignal("LocalPlayer"):Wait()local function gp()local c=lp and lp.Character or nil if not c then return nil end local hrp=c:FindFirstChild("HumanoidRootPart")or c:FindFirstChildWhichIsA("BasePart")return hrp and hrp.Position or nil end if not T.sf then T.sf="ScrollingFrame" end addTab("Home",function(pg)local sc=x("sf",pg,{bs=0,bc=C.w,bt=1,sz=U(1,0,1,0),ps=U(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarImageTransparency=0.4})sc.Active=true sc.ScrollBarThickness=6 local pad=Instance.new("UIPadding")pad.PaddingLeft=D(0,16)pad.PaddingRight=D(0,16)pad.PaddingTop=D(0,16)pad.PaddingBottom=D(0,16)pad.Parent=sc local ly=Instance.new("UIListLayout")ly.Parent=sc ly.FillDirection=Enum.FillDirection.Vertical ly.HorizontalAlignment=Enum.HorizontalAlignment.Left ly.SortOrder=Enum.SortOrder.LayoutOrder ly.Padding=D(0,12)local t=x("tl",sc,{txw=true,tfx=E.lx,tfy=E.ly,txs=28,ft=F(R..A.i,E.b,E.n),tc=C.w,bt=1,sz=U(1,0,0,36),ps=U(0,0,0,0),tx="Home"})local function mk(pa,tx)local c1=x("fr",pa,{bs=0,bc=C.w,bt=0,sz=U(1,0,0,44),ps=U(0,0,0,0)})x("uc",c1,{cr=D(0.18,0)})x("ug",c1,{rt=90,Color=s(r(166,190,255),r(93,117,160))})x("us",c1,{ar=E.a,th=1,Color=C.st})local l1=x("tl",c1,{txw=true,tfx=E.lx,tfy=E.ly,txs=18,ft=F(R..A.i,E.s,E.n),tc=C.t1,bt=1,sz=U(1,-24,1,-16),ps=U(0,12,0,8),tx=tx})local b1=x("tb",c1,{txw=true,bs=0,txs=14,tc=C.k,txsc=true,bc=C.w,ft=F(A.j,E.b,E.n),sz=U(1,0,1,0),bt=1,bd=C.k,tx=""})x("uc",b1,{cr=D(0,18)})return c1,b1,l1 end local capP,btnP,lblP=mk(sc,"Players 0/0")local capL,btnL,lblL=mk(sc,"Position: 0,0,0")local capJ,btnJ,lblJ=mk(sc,"Join: Teleport")local bl=x("fr",sc,{bs=0,bc=C.g2,bt=0,sz=U(1,0,0,0),ps=U(0,0,0,0),AutomaticSize=Enum.AutomaticSize.Y})x("uc",bl,{cr=D(0.12,0)})x("us",bl,{ar=E.a,th=1,Color=C.st})local tx=x("tl",bl,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.r,E.n),tc=C.w,bt=1,sz=U(1,-24,0,0),ps=U(0,12,0,12),AutomaticSize=Enum.AutomaticSize.Y,tx="Notas:\n\u2022 Texto a placer con saltos de línea.\n\u2022 Actualiza este bloque desde el repositorio cuando lo necesites."})local cb=setclipboard or toclipboard or (syn and syn.write_clipboard)task.spawn(function()while task.wait(0.5)do local c=#P:GetPlayers()local m=P.MaxPlayers or 0 lblP[M.tx]="Players "..tostring(c).."/"..tostring(m)local pos=gp()if pos then lblL[M.tx]="Position: "..tostring(math.floor(pos.X))..","..tostring(math.floor(pos.Y))..","..tostring(math.floor(pos.Z))end lblJ[M.tx]="Job: "..tostring(game.JobId)end end)y(btnP,function()local c=#P:GetPlayers()local m=P.MaxPlayers or 0 local s="Players "..tostring(c).."/"..tostring(m)if cb then pcall(function()cb(s)end)end end)y(btnL,function()local pos=gp()local s=pos and("Position: "..tostring(math.floor(pos.X))..","..tostring(math.floor(pos.Y))..","..tostring(math.floor(pos.Z)))or"Position: N/A"if cb then pcall(function()cb(s)end)end end)y(btnJ,function()local s="game:GetService('TeleportService'):TeleportToPlaceInstance("..tostring(game.PlaceId)..", '"..tostring(game.JobId).."', game:GetService('Players').LocalPlayer)"if cb then pcall(function()cb(s)end)end end)end)end)end)
+addTab("Console","https://img.icons8.com/ios-filled/256/ffffff/console.png",function(page)
+if not T.sf then T.sf="ScrollingFrame" end
+local sc=x("sf",page,{bs=0,bc=C.w,bt=1,sz=u(1,0,1,0),ps=u(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarImageTransparency=0.4})
+sc.Active=true
+sc.ScrollBarThickness=6
+local pad=Instance.new("UIPadding")
+pad.PaddingLeft=D(0,16) pad.PaddingRight=D(0,16) pad.PaddingTop=D(0,16) pad.PaddingBottom=D(0,16)
+pad.Parent=sc
+local layout=Instance.new("UIListLayout")
+layout.Parent=sc
+layout.FillDirection=Enum.FillDirection.Vertical
+layout.HorizontalAlignment=Enum.HorizontalAlignment.Left
+layout.SortOrder=Enum.SortOrder.LayoutOrder
+layout.Padding=D(0,12)
+local title=x("tl",sc,{txw=true,tfx=E.lx,tfy=E.ly,txs=28,ft=F(R..A.i,E.b,E.n),tc=C.w,bt=1,sz=u(1,0,0,36),ps=u(0,0,0,0),tx="Console"})
+local actions=x("fr",sc,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,60),ps=u(0,0,0,0)})
+local al=Instance.new("UIListLayout")
+al.Parent=actions
+al.FillDirection=Enum.FillDirection.Horizontal
+al.HorizontalAlignment=Enum.HorizontalAlignment.Left
+al.VerticalAlignment=Enum.VerticalAlignment.Center
+al.SortOrder=Enum.SortOrder.LayoutOrder
+al.Padding=D(0,12)
+local function mkAction(parent,label)
+local cap=x("fr",parent,{bs=0,bc=C.w,bt=0,sz=u(0,164,0,44)})
+x("uc",cap,{cr=D(0.18,0)})
+x("ug",cap,{rt=90,Color=s(r(166,190,255),r(93,117,160))})
+x("us",cap,{ar=E.a,th=1,Color=C.st})
+local lbl=x("tl",cap,{txw=true,tfx=E.lx,tfy=E.ly,txs=18,ft=F(R..A.i,E.s,E.n),tc=C.t1,bt=1,sz=u(1,-24,1,-16),ps=u(0,12,0,8),tx=label})
+local btn=x("tb",cap,{txw=true,bs=0,txs=14,tc=C.k,txsc=true,bc=C.w,ft=F(A.j,E.b,E.n),sz=u(1,0,1,0),bt=1,bd=C.k,tx=""})
+x("uc",btn,{cr=D(0,18)})
+return cap,btn,lbl
+end
+local btnEnCap,btnEn,btnEnLbl=mkAction(actions,"Disable")
+local btnClCap,btnCl,btnClLbl=mkAction(actions,"Clear")
+local btnCpCap,btnCp,btnCpLbl=mkAction(actions,"Copy All")
+local list=x("sf",sc,{bs=0,bc=C.w,bt=1,sz=u(1,0,0,260),ps=u(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarImageTransparency=0.5})
+list.Active=true
+list.ScrollBarThickness=6
+local ll=Instance.new("UIListLayout")
+ll.Parent=list
+ll.FillDirection=Enum.FillDirection.Vertical
+ll.HorizontalAlignment=Enum.HorizontalAlignment.Left
+ll.SortOrder=Enum.SortOrder.LayoutOrder
+ll.Padding=D(0,8)
+local limit=50
+local enabled=true
+local entries={}
+local setcb=setclipboard or toclipboard or (syn and syn.write_clipboard)
+local function isNearBottom()
+local maxY=math.max(0,list.AbsoluteCanvasSize.Y-list.AbsoluteSize.Y)
+return list.CanvasPosition.Y>=maxY-24
+end
+local follow=false
+list:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+follow=isNearBottom()
+end)
+list:GetPropertyChangedSignal("AbsoluteCanvasSize"):Connect(function()
+if follow then
+list.CanvasPosition=Vector2.new(0,math.max(0,list.AbsoluteCanvasSize.Y-list.AbsoluteSize.Y))
+end
+end)
+local function mkEntry(text,color)
+local row=x("fr",list,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0,0),ps=u(0,0,0,0),AutomaticSize=Enum.AutomaticSize.Y})
+x("uc",row,{cr=D(0.12,0)})
+x("us",row,{ar=E.a,th=1,Color=C.st})
+local lbl=x("tl",row,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.r,E.n),tc=color,bt=1,sz=u(1,-24,0,0),ps=u(0,12,0,10),tx=text,AutomaticSize=Enum.AutomaticSize.Y})
+local click=x("tb",row,{txw=true,bs=0,txs=14,tc=C.k,txsc=true,bc=C.w,ft=F(A.j,E.b,E.n),sz=u(1,0,1,0),bt=1,bd=C.k,tx=""})
+x("uc",click,{cr=D(0,12)})
+y(click,function()
+if setcb then pcall(function() setcb(text) end) end
+end)
+return row
+end
+local function push(kind,msg)
+local color=C.w
+if kind=="warn" then color=r(255,214,102) elseif kind=="error" then color=r(255,110,110) else color=C.t2 end
+local now=os.date("%X")
+local txt="["..kind:upper().."] "..now.."  "..msg
+local node=mkEntry(txt,color)
+entries[#entries+1]={msg=txt,node=node}
+if #entries>limit then
+local first=table.remove(entries,1)
+if first and first.node then first.node:Destroy() end
+end
+if follow then
+list.CanvasPosition=Vector2.new(0,math.max(0,list.AbsoluteCanvasSize.Y-list.AbsoluteSize.Y))
+end
+end
+y(btnEn,function()
+enabled=not enabled
+btnEnLbl.Text=enabled and "Disable" or "Enable"
+end)
+y(btnCl,function()
+for i=#entries,1,-1 do
+local it=entries[i]
+if it.node then it.node:Destroy() end
+entries[i]=nil
+end
+end)
+y(btnCp,function()
+local acc={}
+for i=1,#entries do acc[i]=entries[i].msg end
+local text=table.concat(acc,"\n")
+if setcb and #text>0 then pcall(function() setcb(text) end) end
+end)
+local LogService=G.LogService
+LogService.MessageOut:Connect(function(message,messageType)
+if not enabled then return end
+local k="info"
+if messageType==Enum.MessageType.MessageWarning then k="warn" elseif messageType==Enum.MessageType.MessageError then k="error" end
+push(k,message)
+end)
+end)
