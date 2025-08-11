@@ -1,1 +1,546 @@
-addTab("Console","https://img.icons8.com/ios-filled/256/ffffff/console.png",function(page)if not T.sf then T.sf="ScrollingFrame" end;local header=x("fr",page,{bs=0,bc=C.w,bt=1,sz=u(1,0,0.2,0),ps=u(0,0,0,0)})local pad1=Instance.new("UIPadding")pad1.PaddingLeft=D(0.03,0)pad1.PaddingRight=D(0.03,0)pad1.PaddingTop=D(0.02,0)pad1.PaddingBottom=D(0.02,0)pad1.Parent=header;local lay1=Instance.new("UIListLayout")lay1.Parent=header lay1.FillDirection=Enum.FillDirection.Vertical lay1.HorizontalAlignment=Enum.HorizontalAlignment.Left lay1.SortOrder=Enum.SortOrder.LayoutOrder lay1.Padding=D(0.01,0)local title=x("tl",header,{txw=true,tfx=E.lx,tfy=E.ly,txs=28,ft=F(R..A.i,E.b,E.n),tc=C.w,bt=1,sz=u(1,0,0.35,0),tx="Debug Console"})local desc=x("tl",header,{txw=true,tfx=E.lx,tfy=E.ly,txs=16,ft=F(R..A.i,E.r,E.n),tc=C.t2,bt=1,sz=u(1,0,0.25,0),tx="Monitor and filter application logs"})local controls=x("fr",header,{bs=0,bc=C.w,bt=1,sz=u(1,0,0.4,0)})local cl=Instance.new("UIListLayout")cl.Parent=controls cl.FillDirection=Enum.FillDirection.Horizontal cl.HorizontalAlignment=Enum.HorizontalAlignment.Left cl.VerticalAlignment=Enum.VerticalAlignment.Center cl.SortOrder=Enum.SortOrder.LayoutOrder cl.Padding=D(0.02,0)local function mkBtn(parent,label,color)local cap=x("fr",parent,{bs=0,bc=color or C.g2,bt=0,sz=u(0.18,0,0.8,0)})x("uc",cap,{cr=D(0.2,0)})x("us",cap,{ar=E.a,th=1,Color=C.st})local lbl=x("tl",cap,{txw=true,tfx=Enum.TextXAlignment.Center,tfy=Enum.TextYAlignment.Center,txs=14,ft=F(R..A.i,E.s,E.n),tc=C.w,bt=1,sz=u(0.9,0,0.7,0),ps=u(0.05,0,0.15,0),tx=label})local btn=x("tb",cap,{bs=0,bt=1,sz=u(1,0,1,0),tx=""})x("uc",btn,{cr=D(0.2,0)})return cap,btn,lbl end;local btnEnCap,btnEn,btnEnLbl=mkBtn(controls,"Enabled",C.a1)local btnClCap,btnCl,btnClLbl=mkBtn(controls,"Clear",C.g2)local btnCpCap,btnCp,btnCpLbl=mkBtn(controls,"Copy",C.g2)local filters=x("fr",page,{bs=0,bc=C.g2,bt=0,sz=u(1,0,0.12,0),ps=u(0,0,0.2,0)})x("us",filters,{ar=E.a,th=1,Color=C.st})local fp=Instance.new("UIPadding")fp.PaddingLeft=D(0.03,0)fp.PaddingRight=D(0.03,0)fp.PaddingTop=D(0.02,0)fp.PaddingBottom=D(0.02,0)fp.Parent=filters;local fl=Instance.new("UIListLayout")fl.Parent=filters fl.FillDirection=Enum.FillDirection.Horizontal fl.HorizontalAlignment=Enum.HorizontalAlignment.Left fl.VerticalAlignment=Enum.VerticalAlignment.Center fl.SortOrder=Enum.SortOrder.LayoutOrder fl.Padding=D(0.03,0)local function mkFilter(parent,label,active)local cap=x("fr",parent,{bs=0,bc=active and C.st or C.g1,bt=0,sz=u(0.12,0,0.6,0)})x("uc",cap,{cr=D(0.25,0)})x("us",cap,{ar=E.a,th=1,Color=C.st})local lbl=x("tl",cap,{txw=true,tfx=Enum.TextXAlignment.Center,tfy=Enum.TextYAlignment.Center,txs=12,ft=F(R..A.i,E.s,E.n),tc=C.w,bt=1,sz=u(1,0,1,0),tx=label})local btn=x("tb",cap,{bs=0,bt=1,sz=u(1,0,1,0),tx=""})x("uc",btn,{cr=D(0.25,0)})return cap,btn,lbl end;local printCap,printBtn,printLbl=mkFilter(filters,"PRINT",true)local warnCap,warnBtn,warnLbl=mkFilter(filters,"WARN",true)local errCap,errBtn,errLbl=mkFilter(filters,"ERROR",true)local limitLbl=x("tl",filters,{txw=true,tfx=E.lx,tfy=E.ly,txs=12,ft=F(R..A.i,E.r,E.n),tc=C.t2,bt=1,sz=u(0.1,0,0.4,0),tx="Limit:"})local limitBox=Instance.new("TextBox")limitBox.Parent=filters limitBox.BorderSizePixel=0 limitBox.BackgroundColor3=C.g1 limitBox.TextColor3=C.w limitBox.TextSize=12 limitBox.FontFace=F(R..A.i,E.r,E.n)limitBox.Size=u(0.08,0,0.6,0)limitBox.Text="100"limitBox.TextXAlignment=Enum.TextXAlignment.Center limitBox.TextYAlignment=Enum.TextYAlignment.Center x("uc",limitBox,{cr=D(0.2,0)})x("us",limitBox,{ar=E.a,th=1,Color=C.st})local countLbl=x("tl",filters,{txw=true,tfx=E.lx,tfy=E.ly,txs=12,ft=F(R..A.i,E.r,E.n),tc=C.t2,bt=1,sz=u(0.15,0,0.4,0),tx="Count: 0"})local list=x("sf",page,{bs=0,bc=C.w,bt=1,sz=u(1,0,0.68,0),ps=u(0,0,0.32,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollingDirection=Enum.ScrollingDirection.Y,ScrollBarImageTransparency=0.3})list.Active=true list.ScrollBarThickness=8 local lp=Instance.new("UIPadding")lp.PaddingLeft=D(0.02,0)lp.PaddingRight=D(0.02,0)lp.PaddingTop=D(0.02,0)lp.PaddingBottom=D(0.02,0)lp.Parent=list;local ll=Instance.new("UIListLayout")ll.Parent=list ll.FillDirection=Enum.FillDirection.Vertical ll.HorizontalAlignment=Enum.HorizontalAlignment.Left ll.SortOrder=Enum.SortOrder.LayoutOrder ll.Padding=D(0.01,0)local limit=100 local enabled=true local entries={}local filters_active={print=true,warn=true,error=true}local setcb=setclipboard or toclipboard or(syn and syn.write_clipboard)local function updateCount()countLbl.Text="Count: "..#entries end;local function isNearBottom()local maxY=math.max(0,list.AbsoluteCanvasSize.Y-list.AbsoluteSize.Y)return list.CanvasPosition.Y>=maxY-30 end;local follow=false list:GetPropertyChangedSignal("CanvasPosition"):Connect(function()follow=isNearBottom()end)list:GetPropertyChangedSignal("AbsoluteCanvasSize"):Connect(function()if follow then list.CanvasPosition=Vector2.new(0,math.max(0,list.AbsoluteCanvasSize.Y-list.AbsoluteSize.Y))end end)local function detectMessageType(message)if message:match("^%[error%]") or message:match("^%[ERROR%]") or message:lower():find("error") then return "error" elseif message:match("^%[print%]") or message:match("^%[PRINT%]") then return "print" elseif message:match("^%[warn%]") or message:match("^%[WARN%]") or message:lower():find("warning") then return "warn" else return "print" end end;local function cleanMessage(message)local cleaned=message:gsub("^%[error%]%s*",""):gsub("^%[ERROR%]%s*",""):gsub("^%[print%]%s*",""):gsub("^%[PRINT%]%s*",""):gsub("^%[warn%]%s*",""):gsub("^%[WARN%]%s*","")return cleaned end;local function mkEntry(text,kind)local cleanText=cleanMessage(text)local row=x("fr",list,{bs=0,bc=C.g1,bt=0,sz=u(1,0,0.08,0),v=filters_active[kind]})x("uc",row,{cr=D(0.15,0)})x("us",row,{ar=E.a,th=1,Color=C.st})local time=x("tl",row,{txw=true,tfx=E.lx,tfy=E.ly,txs=11,ft=F(R..A.i,E.r,E.n),tc=C.t2,bt=1,sz=u(0.15,0,0.4,0),ps=u(0.02,0,0.1,0),tx=os.date("%H:%M:%S")})local tag=x("tl",row,{txw=true,tfx=E.lx,tfy=E.ly,txs=11,ft=F(R..A.i,E.b,E.n),tc=kind=="error" and r(255,120,120) or kind=="warn" and r(255,200,120) or C.t2,bt=1,sz=u(0.12,0,0.4,0),ps=u(0.17,0,0.1,0),tx=kind:upper()})local msg=x("tl",row,{txw=true,tfx=E.lx,tfy=E.ly,txs=13,ft=F(R..A.i,E.r,E.n),tc=C.w,bt=1,sz=u(0.68,0,0.8,0),ps=u(0.3,0,0.1,0),tx=cleanText})local click=x("tb",row,{bs=0,bt=1,sz=u(1,0,1,0),tx=""})x("uc",click,{cr=D(0.15,0)})y(click,function()if setcb then pcall(function()setcb(cleanText)end)end end)return row,kind end;local function push(kind,msg)if not enabled then return end;local detectedKind=detectMessageType(msg)local node,nodeKind=mkEntry(msg,detectedKind)entries[#entries+1]={msg=msg,node=node,kind=nodeKind,text="["..detectedKind:upper().."] "..os.date("%H:%M:%S").." "..cleanMessage(msg)}while #entries>limit do local first=table.remove(entries,1)if first and first.node then first.node:Destroy()end end;updateCount()if follow then list.CanvasPosition=Vector2.new(0,math.max(0,list.AbsoluteCanvasSize.Y-list.AbsoluteSize.Y))end end;local function updateFilters()for _,entry in ipairs(entries)do if entry.node then entry.node.Visible=filters_active[entry.kind]end end end;y(btnEn,function()enabled=not enabled btnEnLbl.Text=enabled and"Enabled"or"Disabled"btnEnCap.BackgroundColor3=enabled and C.a1 or C.g2 end)y(btnCl,function()for i=#entries,1,-1 do local it=entries[i]if it.node then it.node:Destroy()end entries[i]=nil end updateCount()end)y(btnCp,function()local acc={}for i=1,#entries do acc[i]=entries[i].text end local text=table.concat(acc,"\n")if setcb and #text>0 then pcall(function()setcb(text)end)end end)y(printBtn,function()filters_active.print=not filters_active.print printCap.BackgroundColor3=filters_active.print and C.st or C.g1 updateFilters()end)y(warnBtn,function()filters_active.warn=not filters_active.warn warnCap.BackgroundColor3=filters_active.warn and C.st or C.g1 updateFilters()end)y(errBtn,function()filters_active.error=not filters_active.error errCap.BackgroundColor3=filters_active.error and C.st or C.g1 updateFilters()end)limitBox:GetPropertyChangedSignal("Text"):Connect(function()local newLimit=tonumber(limitBox.Text)if newLimit and newLimit>0 and newLimit<=1000 then limit=newLimit while #entries>limit do local first=table.remove(entries,1)if first and first.node then first.node:Destroy()end end updateCount()end end)local LogService=G.LogService LogService.MessageOut:Connect(function(message,messageType)local k="print"if messageType==Enum.MessageType.MessageWarning then k="warn"elseif messageType==Enum.MessageType.MessageError then k="error"end push(k,message)end)updateCount()end)
+addTab("Console", "https://img.icons8.com/ios-filled/256/ffffff/console.png", function(page)
+    if not T.sf then T.sf = "ScrollingFrame" end
+    
+    local Colors = {
+        primary = Color3.fromRGB(59, 130, 246),
+        success = Color3.fromRGB(34, 197, 94),
+        warning = Color3.fromRGB(251, 191, 36),
+        error = Color3.fromRGB(239, 68, 68),
+        background = Color3.fromRGB(17, 24, 39),
+        surface = Color3.fromRGB(31, 41, 55),
+        surfaceHover = Color3.fromRGB(55, 65, 81),
+        text = Color3.fromRGB(243, 244, 246),
+        textSecondary = Color3.fromRGB(156, 163, 175),
+        border = Color3.fromRGB(75, 85, 99)
+    }
+    
+    local headerFrame = x("fr", page, {
+        bs = 0,
+        bc = Colors.surface,
+        bt = 1,
+        sz = u(1, 0, 0.22, 0),
+        ps = u(0, 0, 0, 0)
+    })
+    
+    local headerPadding = Instance.new("UIPadding")
+    headerPadding.PaddingLeft = D(0.04, 0)
+    headerPadding.PaddingRight = D(0.04, 0)
+    headerPadding.PaddingTop = D(0.03, 0)
+    headerPadding.PaddingBottom = D(0.03, 0)
+    headerPadding.Parent = headerFrame
+    
+    local headerLayout = Instance.new("UIListLayout")
+    headerLayout.Parent = headerFrame
+    headerLayout.FillDirection = Enum.FillDirection.Vertical
+    headerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    headerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    headerLayout.Padding = D(0.015, 0)
+    
+    local titleLabel = x("tl", headerFrame, {
+        txw = true,
+        tfx = E.lx,
+        tfy = E.ly,
+        txs = 32,
+        ft = F(R..A.i, E.b, E.n),
+        tc = Colors.text,
+        bt = 1,
+        sz = u(1, 0, 0.35, 0),
+        tx = "🖥️ Debug Console"
+    })
+    
+    local descriptionLabel = x("tl", headerFrame, {
+        txw = true,
+        tfx = E.lx,
+        tfy = E.ly,
+        txs = 18,
+        ft = F(R..A.i, E.r, E.n),
+        tc = Colors.textSecondary,
+        bt = 1,
+        sz = u(1, 0, 0.25, 0),
+        tx = "Monitor and filter application logs in real-time"
+    })
+    
+    local controlsFrame = x("fr", headerFrame, {
+        bs = 0,
+        bc = Colors.surface,
+        bt = 1,
+        sz = u(1, 0, 0.4, 0)
+    })
+    
+    local controlsLayout = Instance.new("UIListLayout")
+    controlsLayout.Parent = controlsFrame
+    controlsLayout.FillDirection = Enum.FillDirection.Horizontal
+    controlsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    controlsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    controlsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    controlsLayout.Padding = D(0.025, 0)
+    
+    local function createStyledButton(parent, label, color, icon)
+        local buttonContainer = x("fr", parent, {
+            bs = 0,
+            bc = color or Colors.surface,
+            bt = 0,
+            sz = u(0.2, 0, 0.85, 0)
+        })
+        
+        x("uc", buttonContainer, {cr = D(0.25, 0)})
+        x("us", buttonContainer, {ar = E.a, th = 2, Color = Colors.border})
+        
+        local buttonLayout = Instance.new("UIListLayout")
+        buttonLayout.Parent = buttonContainer
+        buttonLayout.FillDirection = Enum.FillDirection.Horizontal
+        buttonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        buttonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        buttonLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        buttonLayout.Padding = D(0.02, 0)
+        
+        if icon then
+            local iconLabel = x("tl", buttonContainer, {
+                txw = true,
+                tfx = Enum.TextXAlignment.Center,
+                tfy = Enum.TextYAlignment.Center,
+                txs = 16,
+                ft = F(R..A.i, E.b, E.n),
+                tc = Colors.text,
+                bt = 1,
+                sz = u(0, 20, 1, 0),
+                tx = icon
+            })
+        end
+        
+        local buttonLabel = x("tl", buttonContainer, {
+            txw = true,
+            tfx = Enum.TextXAlignment.Center,
+            tfy = Enum.TextYAlignment.Center,
+            txs = 16,
+            ft = F(R..A.i, E.s, E.n),
+            tc = Colors.text,
+            bt = 1,
+            sz = u(1, icon and -25 or 0, 0.8, 0),
+            tx = label
+        })
+        
+        local clickButton = x("tb", buttonContainer, {
+            bs = 0,
+            bt = 1,
+            sz = u(1, 0, 1, 0),
+            tx = ""
+        })
+        
+        x("uc", clickButton, {cr = D(0.25, 0)})
+        
+        return buttonContainer, clickButton, buttonLabel
+    end
+    
+    local enabledButtonContainer, enabledButton, enabledLabel = createStyledButton(controlsFrame, "Enabled", Colors.success, "✓")
+    local clearButtonContainer, clearButton, clearLabel = createStyledButton(controlsFrame, "Clear", Colors.surface, "🗑️")
+    local copyButtonContainer, copyButton, copyLabel = createStyledButton(controlsFrame, "Copy", Colors.surface, "📋")
+    
+    local filtersFrame = x("fr", page, {
+        bs = 0,
+        bc = Colors.surface,
+        bt = 0,
+        sz = u(1, 0, 0.14, 0),
+        ps = u(0, 0, 0.22, 0)
+    })
+    
+    x("us", filtersFrame, {ar = E.a, th = 2, Color = Colors.border})
+    
+    local filtersPadding = Instance.new("UIPadding")
+    filtersPadding.PaddingLeft = D(0.04, 0)
+    filtersPadding.PaddingRight = D(0.04, 0)
+    filtersPadding.PaddingTop = D(0.025, 0)
+    filtersPadding.PaddingBottom = D(0.025, 0)
+    filtersPadding.Parent = filtersFrame
+    
+    local filtersLayout = Instance.new("UIListLayout")
+    filtersLayout.Parent = filtersFrame
+    filtersLayout.FillDirection = Enum.FillDirection.Horizontal
+    filtersLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    filtersLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    filtersLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    filtersLayout.Padding = D(0.035, 0)
+    
+    local function createFilterButton(parent, label, active, color, icon)
+        local filterContainer = x("fr", parent, {
+            bs = 0,
+            bc = active and color or Colors.surface,
+            bt = 0,
+            sz = u(0.14, 0, 0.7, 0)
+        })
+        
+        x("uc", filterContainer, {cr = D(0.3, 0)})
+        x("us", filterContainer, {ar = E.a, th = 2, Color = active and color or Colors.border})
+        
+        local filterLayout = Instance.new("UIListLayout")
+        filterLayout.Parent = filterContainer
+        filterLayout.FillDirection = Enum.FillDirection.Horizontal
+        filterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        filterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        filterLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        filterLayout.Padding = D(0.02, 0)
+        
+        if icon then
+            local iconLabel = x("tl", filterContainer, {
+                txw = true,
+                tfx = Enum.TextXAlignment.Center,
+                tfy = Enum.TextYAlignment.Center,
+                txs = 14,
+                ft = F(R..A.i, E.b, E.n),
+                tc = Colors.text,
+                bt = 1,
+                sz = u(0, 18, 1, 0),
+                tx = icon
+            })
+        end
+        
+        local filterLabel = x("tl", filterContainer, {
+            txw = true,
+            tfx = Enum.TextXAlignment.Center,
+            tfy = Enum.TextYAlignment.Center,
+            txs = 14,
+            ft = F(R..A.i, E.s, E.n),
+            tc = Colors.text,
+            bt = 1,
+            sz = u(1, icon and -23 or 0, 1, 0),
+            tx = label
+        })
+        
+        local filterButton = x("tb", filterContainer, {
+            bs = 0,
+            bt = 1,
+            sz = u(1, 0, 1, 0),
+            tx = ""
+        })
+        
+        x("uc", filterButton, {cr = D(0.3, 0)})
+        
+        return filterContainer, filterButton, filterLabel
+    end
+    
+    local printFilterContainer, printFilterButton, printFilterLabel = createFilterButton(filtersFrame, "PRINT", true, Colors.primary, "📄")
+    local warnFilterContainer, warnFilterButton, warnFilterLabel = createFilterButton(filtersFrame, "WARN", true, Colors.warning, "⚠️")
+    local errorFilterContainer, errorFilterButton, errorFilterLabel = createFilterButton(filtersFrame, "ERROR", true, Colors.error, "❌")
+    
+    local limitLabel = x("tl", filtersFrame, {
+        txw = true,
+        tfx = E.lx,
+        tfy = E.ly,
+        txs = 14,
+        ft = F(R..A.i, E.r, E.n),
+        tc = Colors.textSecondary,
+        bt = 1,
+        sz = u(0.12, 0, 0.5, 0),
+        tx = "📊 Limit:"
+    })
+    
+    local limitTextBox = Instance.new("TextBox")
+    limitTextBox.Parent = filtersFrame
+    limitTextBox.BorderSizePixel = 0
+    limitTextBox.BackgroundColor3 = Colors.surface
+    limitTextBox.TextColor3 = Colors.text
+    limitTextBox.TextSize = 14
+    limitTextBox.FontFace = F(R..A.i, E.r, E.n)
+    limitTextBox.Size = u(0.1, 0, 0.7, 0)
+    limitTextBox.Text = "100"
+    limitTextBox.TextXAlignment = Enum.TextXAlignment.Center
+    limitTextBox.TextYAlignment = Enum.TextYAlignment.Center
+    limitTextBox.PlaceholderText = "Max entries"
+    limitTextBox.PlaceholderColor3 = Colors.textSecondary
+    
+    x("uc", limitTextBox, {cr = D(0.25, 0)})
+    x("us", limitTextBox, {ar = E.a, th = 2, Color = Colors.border})
+    
+    local countLabel = x("tl", filtersFrame, {
+        txw = true,
+        tfx = E.lx,
+        tfy = E.ly,
+        txs = 14,
+        ft = F(R..A.i, E.r, E.n),
+        tc = Colors.textSecondary,
+        bt = 1,
+        sz = u(0.18, 0, 0.5, 0),
+        tx = "📈 Count: 0"
+    })
+    
+    local logScrollFrame = x("sf", page, {
+        bs = 0,
+        bc = Colors.background,
+        bt = 1,
+        sz = u(1, 0, 0.64, 0),
+        ps = u(0, 0, 0.36, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        ScrollBarImageTransparency = 0.2
+    })
+    
+    logScrollFrame.Active = true
+    logScrollFrame.ScrollBarThickness = 12
+    
+    local logPadding = Instance.new("UIPadding")
+    logPadding.PaddingLeft = D(0.025, 0)
+    logPadding.PaddingRight = D(0.025, 0)
+    logPadding.PaddingTop = D(0.025, 0)
+    logPadding.PaddingBottom = D(0.025, 0)
+    logPadding.Parent = logScrollFrame
+    
+    local logLayout = Instance.new("UIListLayout")
+    logLayout.Parent = logScrollFrame
+    logLayout.FillDirection = Enum.FillDirection.Vertical
+    logLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    logLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    logLayout.Padding = D(0.015, 0)
+    
+    local maxEntries = 100
+    local consoleEnabled = true
+    local logEntries = {}
+    local activeFilters = {print = true, warn = true, error = true}
+    local clipboardFunction = setclipboard or toclipboard or (syn and syn.write_clipboard)
+    
+    local function updateEntryCount()
+        countLabel.Text = "📈 Count: " .. #logEntries
+    end
+    
+    local function isScrolledToBottom()
+        local maxScrollY = math.max(0, logScrollFrame.AbsoluteCanvasSize.Y - logScrollFrame.AbsoluteSize.Y)
+        return logScrollFrame.CanvasPosition.Y >= maxScrollY - 40
+    end
+    
+    local shouldAutoScroll = false
+    
+    logScrollFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+        shouldAutoScroll = isScrolledToBottom()
+    end)
+    
+    logScrollFrame:GetPropertyChangedSignal("AbsoluteCanvasSize"):Connect(function()
+        if shouldAutoScroll then
+            logScrollFrame.CanvasPosition = Vector2.new(0, math.max(0, logScrollFrame.AbsoluteCanvasSize.Y - logScrollFrame.AbsoluteSize.Y))
+        end
+    end)
+    
+    local function detectLogType(message)
+        local lowerMessage = message:lower()
+        if message:match("^%[error%]") or message:match("^%[ERROR%]") or lowerMessage:find("error") then
+            return "error"
+        elseif message:match("^%[warn%]") or message:match("^%[WARN%]") or lowerMessage:find("warning") then
+            return "warn"
+        else
+            return "print"
+        end
+    end
+    
+    local function cleanLogMessage(message)
+        return message:gsub("^%[error%]%s*", ""):gsub("^%[ERROR%]%s*", ""):gsub("^%[print%]%s*", ""):gsub("^%[PRINT%]%s*", ""):gsub("^%[warn%]%s*", ""):gsub("^%[WARN%]%s*", "")
+    end
+    
+    local function createLogEntry(text, logType)
+        local cleanText = cleanLogMessage(text)
+        local timestamp = os.date("%H:%M:%S")
+        
+        local entryFrame = x("fr", logScrollFrame, {
+            bs = 0,
+            bc = Colors.surface,
+            bt = 0,
+            sz = u(1, 0, 0.1, 0),
+            v = activeFilters[logType]
+        })
+        
+        x("uc", entryFrame, {cr = D(0.2, 0)})
+        x("us", entryFrame, {ar = E.a, th = 1, Color = Colors.border})
+        
+        local entryPadding = Instance.new("UIPadding")
+        entryPadding.PaddingLeft = D(0.02, 0)
+        entryPadding.PaddingRight = D(0.02, 0)
+        entryPadding.PaddingTop = D(0.015, 0)
+        entryPadding.PaddingBottom = D(0.015, 0)
+        entryPadding.Parent = entryFrame
+        
+        local entryLayout = Instance.new("UIListLayout")
+        entryLayout.Parent = entryFrame
+        entryLayout.FillDirection = Enum.FillDirection.Horizontal
+        entryLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        entryLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        entryLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        entryLayout.Padding = D(0.02, 0)
+        
+        local typeIcon = logType == "error" and "❌" or logType == "warn" and "⚠️" or "📄"
+        local typeColor = logType == "error" and Colors.error or logType == "warn" and Colors.warning or Colors.primary
+        
+        local iconLabel = x("tl", entryFrame, {
+            txw = true,
+            tfx = Enum.TextXAlignment.Center,
+            tfy = Enum.TextYAlignment.Center,
+            txs = 16,
+            ft = F(R..A.i, E.b, E.n),
+            tc = Colors.text,
+            bt = 1,
+            sz = u(0, 25, 1, 0),
+            tx = typeIcon
+        })
+        
+        local timestampLabel = x("tl", entryFrame, {
+            txw = true,
+            tfx = E.lx,
+            tfy = E.ly,
+            txs = 12,
+            ft = F(R..A.i, E.r, E.n),
+            tc = Colors.textSecondary,
+            bt = 1,
+            sz = u(0.15, 0, 0.5, 0),
+            tx = "🕐 " .. timestamp
+        })
+        
+        local typeLabel = x("tl", entryFrame, {
+            txw = true,
+            tfx = E.lx,
+            tfy = E.ly,
+            txs = 12,
+            ft = F(R..A.i, E.b, E.n),
+            tc = typeColor,
+            bt = 1,
+            sz = u(0.12, 0, 0.5, 0),
+            tx = logType:upper()
+        })
+        
+        local messageLabel = x("tl", entryFrame, {
+            txw = true,
+            tfx = E.lx,
+            tfy = E.ly,
+            txs = 14,
+            ft = F(R..A.i, E.r, E.n),
+            tc = Colors.text,
+            bt = 1,
+            sz = u(0.68, 0, 0.9, 0),
+            tx = cleanText
+        })
+        
+        local clickArea = x("tb", entryFrame, {
+            bs = 0,
+            bt = 1,
+            sz = u(1, 0, 1, 0),
+            tx = ""
+        })
+        
+        x("uc", clickArea, {cr = D(0.2, 0)})
+        
+        y(clickArea, function()
+            if clipboardFunction then
+                pcall(function()
+                    clipboardFunction(cleanText)
+                end)
+            end
+        end)
+        
+        return entryFrame, logType
+    end
+    
+    local function addLogEntry(logType, message)
+        if not consoleEnabled then return end
+        
+        local detectedType = detectLogType(message)
+        local entryNode, nodeType = createLogEntry(message, detectedType)
+        
+        logEntries[#logEntries + 1] = {
+            message = message,
+            node = entryNode,
+            type = nodeType,
+            fullText = "[" .. detectedType:upper() .. "] " .. os.date("%H:%M:%S") .. " " .. cleanLogMessage(message)
+        }
+        
+        while #logEntries > maxEntries do
+            local firstEntry = table.remove(logEntries, 1)
+            if firstEntry and firstEntry.node then
+                firstEntry.node:Destroy()
+            end
+        end
+        
+        updateEntryCount()
+        
+        if shouldAutoScroll then
+            logScrollFrame.CanvasPosition = Vector2.new(0, math.max(0, logScrollFrame.AbsoluteCanvasSize.Y - logScrollFrame.AbsoluteSize.Y))
+        end
+    end
+    
+    local function updateFilterVisibility()
+        for _, entry in ipairs(logEntries) do
+            if entry.node then
+                entry.node.Visible = activeFilters[entry.type]
+            end
+        end
+    end
+    
+    y(enabledButton, function()
+        consoleEnabled = not consoleEnabled
+        enabledLabel.Text = consoleEnabled and "Enabled" or "Disabled"
+        enabledButtonContainer.BackgroundColor3 = consoleEnabled and Colors.success or Colors.surface
+    end)
+    
+    y(clearButton, function()
+        for i = #logEntries, 1, -1 do
+            local entry = logEntries[i]
+            if entry.node then
+                entry.node:Destroy()
+            end
+            logEntries[i] = nil
+        end
+        updateEntryCount()
+    end)
+    
+    y(copyButton, function()
+        local allText = {}
+        for i = 1, #logEntries do
+            allText[i] = logEntries[i].fullText
+        end
+        local combinedText = table.concat(allText, "\n")
+        if clipboardFunction and #combinedText > 0 then
+            pcall(function()
+                clipboardFunction(combinedText)
+            end)
+        end
+    end)
+    
+    y(printFilterButton, function()
+        activeFilters.print = not activeFilters.print
+        printFilterContainer.BackgroundColor3 = activeFilters.print and Colors.primary or Colors.surface
+        updateFilterVisibility()
+    end)
+    
+    y(warnFilterButton, function()
+        activeFilters.warn = not activeFilters.warn
+        warnFilterContainer.BackgroundColor3 = activeFilters.warn and Colors.warning or Colors.surface
+        updateFilterVisibility()
+    end)
+    
+    y(errorFilterButton, function()
+        activeFilters.error = not activeFilters.error
+        errorFilterContainer.BackgroundColor3 = activeFilters.error and Colors.error or Colors.surface
+        updateFilterVisibility()
+    end)
+    
+    limitTextBox:GetPropertyChangedSignal("Text"):Connect(function()
+        local newLimit = tonumber(limitTextBox.Text)
+        if newLimit and newLimit > 0 and newLimit <= 1000 then
+            maxEntries = newLimit
+            while #logEntries > maxEntries do
+                local firstEntry = table.remove(logEntries, 1)
+                if firstEntry and firstEntry.node then
+                    firstEntry.node:Destroy()
+                end
+            end
+            updateEntryCount()
+        end
+    end)
+    
+    local LogService = G.LogService
+    LogService.MessageOut:Connect(function(message, messageType)
+        local logType = "print"
+        if messageType == Enum.MessageType.MessageWarning then
+            logType = "warn"
+        elseif messageType == Enum.MessageType.MessageError then
+            logType = "error"
+        end
+        addLogEntry(logType, message)
+    end)
+    
+    updateEntryCount()
+end)
